@@ -1,0 +1,36 @@
+# Required:
+[[plugins]]
+repo = 'Shougo/dein.vim'
+
+[[plugins]]
+repo = 'Shougo/neosnippet-snippets'
+
+[[plugins]] # <Ctrl + -->(Ctrlキー押しながらハイフン2度押し)で選択した行をコメントアウトしてくれる
+repo = 'tomtom/tcomment_vim'
+
+[[plugins]] # コマンドモードで、cs'"と打つと'を"に置換してくれる("の代わりに<p>もできる)
+repo = 'tpope/vim-surround'
+
+[[plugins]] # :NERDTree でカレントディレクトリをツリー表示してくれる
+repo = 'scrooloose/nerdtree'
+
+[[plugins]] # インデントを可視化
+repo = 'nathanaelkane/vim-indent-guides'
+hook_add = '''
+	let g:indent_guides_enable_on_vim_startup = 1
+	let g:indent_guides_start_level= 1
+	let g:indent_guides_guide_size = 0
+	autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd	ctermbg=248
+	autocmd VimEnter,Colorscheme * :hi IndentGuidesEven	ctermbg=246
+'''
+
+[[plugins]] # 自動で閉じ括弧とかを補完してくれるやつ
+repo = 'cohama/lexima.vim'
+
+[[plugins]] # 構文エラーチェッカー
+repo = 'w0rp/ale'
+hook_add = '''
+	let g:ale_sign_column_always = 1
+	let g:ale_sign_error = '☠︎'
+	let g:ale_sign_warning = '⚠︎'
+'''

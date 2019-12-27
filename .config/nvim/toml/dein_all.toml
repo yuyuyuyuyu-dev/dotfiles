@@ -1,0 +1,101 @@
+# Required:
+[[plugins]]
+repo = 'Shougo/dein.vim'
+
+[[plugins]]
+repo = 'Shougo/neosnippet-snippets'
+
+[[plugins]] # <Ctrl + -->(Ctrlキー押しながらハイフン2度押し)で選択した行をコメントアウトしてくれる
+repo = 'tomtom/tcomment_vim'
+
+[[plugins]] # コマンドモードで、cs'"と打つと'を"に置換してくれる("の代わりに<p>もできる)
+repo = 'tpope/vim-surround'
+
+[[plugins]] # :NERDTree でカレントディレクトリをツリー表示してくれる
+repo = 'scrooloose/nerdtree'
+
+[[plugins]] # インデントを可視化
+repo = 'nathanaelkane/vim-indent-guides'
+hook_add = '''
+	let g:indent_guides_enable_on_vim_startup = 1
+	let g:indent_guides_start_level= 1
+	let g:indent_guides_guide_size = 0
+	autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd	ctermbg=248
+	autocmd VimEnter,Colorscheme * :hi IndentGuidesEven	ctermbg=246
+'''
+
+[[plugins]] # 自動で閉じ括弧とかを補完してくれるやつ
+repo = 'cohama/lexima.vim'
+
+[[plugins]]
+repo = 'Shougo/deoplete.nvim'
+hook_add = '''
+  let g:deoplete#enable_at_startup = 1
+'''
+#on_i = 1
+
+[[plugins]]
+repo = 'Shougo/neosnippet.vim'
+#on_i  = 1
+#on_ft = ['snippet']
+#depends = ['neosnippet-snippets']
+
+[[plugins]]
+repo = 'Shougo/neco-vim'
+#on_path = '\.vim$'
+#depends = ['deoplete.nvim']
+
+[[plugins]]
+repo = 'zchee/deoplete-jedi'
+hook_add = '''
+	let g:python_host_prog = '/usr/bin/python'
+	let g:python3_host_prog = '/usr/local/bin/python3'
+'''
+#on_ft = ['python']
+#depends = ['deoplete.nvim']
+
+[[plugins]]
+repo = 'zchee/deoplete-clang'
+hook_add = '''
+	let g:deoplete#sources#clang#libclang_path='/Library/Developer/CommandLineTools/usr/lib/libclang.dylib'
+	let g:deoplete#sources#clang#clang_header='/Library/Developer/CommandLineTools/usr/lib/clang'
+'''
+#on_ft = ['c', 'cpp', 'cmake']
+#depends = ['deoplete.nvim']
+
+[[plugins]]
+repo = 'landaire/deoplete-swift'
+hook_add = '''
+	let g:deoplete#sources#swift#daemon_autostart = 1
+'''
+#depends = ['deoplete.nvim']
+
+[[plugins]]
+repo = 'andviro/flake8-vim'
+#on_ft = ['python']
+
+[[plugins]]
+repo = 'hynek/vim-python-pep8-indent'
+#on_ft = ['python']
+
+[[plugins]]
+repo = 'keith/swift.vim'
+
+[[plugins]]
+repo = 'w0rp/ale'
+hook_source = '''
+	let g:ale_sign_column_always = 1
+'''
+
+# [[plugins]] # 構文エラーチェックしてくれるやつ
+# repo = 'vim-syntastic/syntastic'
+# hook_add = '''
+# 	set statusline+=%#warningmsg#
+# 	set statusline+=%{SyntasticStatuslineFlag()}
+# 	set statusline+=%*
+#
+# 	let g:syntastic_always_populate_loc_list = 1
+# 	let g:syntastic_auto_loc_list = 1
+# 	let g:syntastic_check_on_open = 1
+# 	let g:syntastic_check_on_wq = 0
+# '''
