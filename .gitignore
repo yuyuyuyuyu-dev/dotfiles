@@ -5,3 +5,4 @@
 .config/NuGet/
 .config/stetic/
 .config/xbuild/
+.python_history
