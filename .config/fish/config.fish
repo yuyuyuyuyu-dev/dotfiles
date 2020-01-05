@@ -1,5 +1,5 @@
 # 文字コードをUTF-8にする
-set -x LANG ja_JP.UTF-8
+set -x LC_ALL ja_JP.UTF-8
 
 # パスの設定
 set -x PATH {$PATH} {$HOME}/myCommands
