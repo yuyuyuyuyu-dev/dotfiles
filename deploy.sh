@@ -13,5 +13,10 @@ for i in .*; do
     fi
   done
 
-  ln -fns ${HOME}/dotfiles/${i} ${HOME}/${i}
+  # もともとファイルがあるとリンクを貼れないから削除
+  if [ -e ${HOME}/${i} ]; then
+    rm -r ${HOME}/${i}
+  fi
+
+  ln -fns ${HOME}/dotfiles/${i} ${HOME}/
 done
