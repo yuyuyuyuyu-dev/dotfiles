@@ -4,7 +4,7 @@
 
 
 # リンクを貼りたくないものをここに入れておく
-readonly EXCEPTION_ARRAY=('.' '..' '.DS_Store' '.git')
+readonly EXCEPTION_ARRAY=('.' '..' '.DS_Store' '.git' '.gitconfig' '.gitignore')
 
 for i in .*; do
   for j in ${EXCEPTION_ARRAY[@]}; do
