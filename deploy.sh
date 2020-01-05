@@ -15,7 +15,7 @@ for i in .*; do
 
   # もともとファイルがあるとリンクを貼れないから削除
   if [ -e ${HOME}/${i} ]; then
-    rm -r ${HOME}/${i}
+    rm -rf ${HOME}/${i}
   fi
 
   ln -fns ${HOME}/dotfiles/${i} ${HOME}/
