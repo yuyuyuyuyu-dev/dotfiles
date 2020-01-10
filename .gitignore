@@ -5,3 +5,5 @@
 !.config/brewfile/
 .python_history
 .bash_history
+.latest_brew_doctor_result
+.ok_brew_doctor_result

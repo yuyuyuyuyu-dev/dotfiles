@@ -2,7 +2,7 @@
 set -x LC_ALL ja_JP.UTF-8
 
 # パスの設定
-set -x PATH {$PATH} {$HOME}/myCommands
+set -x PATH {$PATH} {$HOME}/myCommands /usr/local/sbin
 
 # prompt_pwdでパスを省略しない
 set -g fish_prompt_pwd_dir_length 0
