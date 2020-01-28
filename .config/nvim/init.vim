@@ -75,6 +75,7 @@ source ~/.vimrc
 " 環境によってパスが変わるからとりあえずコメントアウト
 " これを使うなら代入する値を'which python3'の実行結果にしないといけない
 " let g:python3_host_prog = '/usr/local/bin/python3'
+let g:python3_host_prog = system('(which python3)')
 
 " filetypeの追加
 autocmd BufNewFile,BufRead *.fish setfiletype fish
