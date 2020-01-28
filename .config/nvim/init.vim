@@ -72,9 +72,6 @@ source ~/.vimrc
 
 " neovimの設定
 " python3のパスを指定
-" 環境によってパスが変わるからとりあえずコメントアウト
-" これを使うなら代入する値を'which python3'の実行結果にしないといけない
-" let g:python3_host_prog = '/usr/local/bin/python3'
 let g:python3_host_prog = system('(echo -n $(which python3))')
 
 " filetypeの追加
