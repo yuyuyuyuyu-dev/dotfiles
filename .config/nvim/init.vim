@@ -72,7 +72,12 @@ source ~/.vimrc
 
 " neovimの設定
 " python3のパスを指定
-let g:python3_host_prog = system('(echo -n $(which python3))')
+if system('echo -n $SHELL') =~ "fish$"
+  let g:python3_host_prog = system('echo -n (which python3)')
+else
+  let g:python3_host_prog = system('echo -n $(which python3)')
+endif
+
 
 " filetypeの追加
 autocmd BufNewFile,BufRead *.fish setfiletype fish
