@@ -5,10 +5,10 @@ set -x LC_ALL ja_JP.UTF-8
 if [ -d {$HOME}/myCommands ]
   set -x PATH {$PATH} {$HOME}/myCommands
 end
-if [ -d {$HOME}.sdkman/candidates/java/current/bin ]
+if [ -d {$HOME}/.sdkman/candidates/java/current/bin ]
   set -x PATH {$PATH} {$HOME}/.sdkman/candidates/java/current/bin
 end
-if [ -d {$HOME}.sdkman/candidates/kotlin/current/bin ]
+if [ -d {$HOME}/.sdkman/candidates/kotlin/current/bin ]
   set -x PATH {$PATH} {$HOME}/.sdkman/candidates/kotlin/current/bin
 end
 
