@@ -31,7 +31,7 @@ depends = ['deoplete.nvim']
 
 
 [[plugins]]
-repo = 'zchee/deoplete-jedi'
+repo = 'deoplete-plugins/deoplete-jedi'
 hook_source = '''
 	let g:python_host_prog = '/usr/bin/python'
 	" /* let g:python3_host_prog = '/usr/local/bin/python3' */
@@ -41,7 +41,7 @@ depends = ['deoplete.nvim']
 
 
 [[plugins]]
-repo = 'zchee/deoplete-clang'
+repo = 'deoplete-plugins/deoplete-clang'
 hook_source = '''
 	let g:deoplete#sources#clang#libclang_path='/Library/Developer/CommandLineTools/usr/lib/libclang.dylib'
 	let g:deoplete#sources#clang#clang_header='/Library/Developer/CommandLineTools/usr/lib/clang'
