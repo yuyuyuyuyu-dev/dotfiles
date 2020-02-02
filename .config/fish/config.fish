@@ -2,7 +2,15 @@
 set -x LC_ALL ja_JP.UTF-8
 
 # パスの設定
-set -x PATH {$PATH} {$HOME}/myCommands /usr/local/sbin
+if [ -d {$HOME}/myCommands ]
+  set -x PATH {$PATH} {$HOME}/myCommands
+end
+if [ -d {$HOME}.sdkman/candidates/java/current/bin ]
+  set -x PATH {$PATH} {$HOME}/.sdkman/candidates/java/current/bin
+end
+if [ -d {$HOME}.sdkman/candidates/kotlin/current/bin ]
+  set -x PATH {$PATH} {$HOME}/.sdkman/candidates/kotlin/current/bin
+end
 
 # prompt_pwdでパスを省略しない
 set -g fish_prompt_pwd_dir_length 0
