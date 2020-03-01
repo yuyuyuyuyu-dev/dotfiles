@@ -32,10 +32,6 @@ depends = ['deoplete.nvim']
 
 [[plugins]]
 repo = 'deoplete-plugins/deoplete-jedi'
-hook_source = '''
-	let g:python_host_prog = '/usr/bin/python'
-	" /* let g:python3_host_prog = '/usr/local/bin/python3' */
-'''
 on_ft = ['python']
 depends = ['deoplete.nvim']
 
@@ -43,8 +39,13 @@ depends = ['deoplete.nvim']
 [[plugins]]
 repo = 'deoplete-plugins/deoplete-clang'
 hook_source = '''
-	let g:deoplete#sources#clang#libclang_path='/Library/Developer/CommandLineTools/usr/lib/libclang.dylib'
-	let g:deoplete#sources#clang#clang_header='/Library/Developer/CommandLineTools/usr/lib/clang'
+  if system('echo -n $SHELL') =~ "fish$"
+    let g:deoplete#sources#clang#libclang_path = system('echo -n (find / -name libclang.so -or -name libclang.so.1 2> /dev/null | head -n 1)')
+  else
+    let g:deoplete#sources#clang#libclang_path = system('echo -n $(find / -name libclang.so -or -name libclang.so.1 2> /dev/null | head -n 1)')
+  endif
+
+  let g:deoplete#sources#clang#clang_header = /usr/lib/clang
 '''
 on_ft = ['c', 'cpp', 'cmake']
 depends = ['deoplete.nvim']
@@ -53,7 +54,7 @@ depends = ['deoplete.nvim']
 [[plugins]]
 repo = 'landaire/deoplete-swift'
 hook_source = '''
-	let g:deoplete#sources#swift#daemon_autostart = 1
+  let g:deoplete#sources#swift#daemon_autostart = 1
 '''
 on_ft = ['swift']
 depends = ['deoplete.nvim']
