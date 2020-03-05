@@ -1,76 +1,20 @@
-" dein.vimが無かったらインストール
-let s:cache_home    = empty($XDG_CACHE_HOME) ? expand('~/.cache') : $XDG_CACHE_HOME
-let s:dein_dir      = s:cache_home . '/dein'
-let s:dein_repo_dir = s:dein_dir . '/repos/github.com/Shougo/dein.vim'
-
-if !isdirectory(s:dein_repo_dir)
-  call system('git clone https://github.com/Shougo/dein.vim ' . shellescape(s:dein_repo_dir))
+" vim-plugがインストールされていなかったらインストールする
+if !filereadable(expand('~/.local/share/nvim/site/autoload/plug.vim'))
+  call system('curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim')
 endif
 
 
-" deinを使うために必要な設定
-if &compatible
-  set nocompatible               " Be iMproved
-endif
-
-" Required:
-let &runtimepath = &runtimepath .",". s:dein_repo_dir
-
-" Required:
-if dein#load_state(s:dein_dir)
-  call dein#begin(s:dein_dir)
-
-  " Let dein manage dein
-  " Required:
-  call dein#add(s:dein_repo_dir)
-
-  " Add or remove your plugins here:
-  let s:config_home = empty($XDG_CONFIG_HOME) ? expand('~/.config') : $XDG_CONFIG_HOME
-  let s:toml_dir    = s:config_home . '/nvim/toml' 
-  let s:toml        = s:toml_dir . '/dein.toml'
-  let s:lazy_toml   = s:toml_dir . '/dein_lazy.toml'
-  let s:all_toml    = s:toml_dir . '/dein_all.toml'
-
-  call dein#load_toml(s:toml,      {'lazy': 0})
-  call dein#load_toml(s:lazy_toml, {'lazy': 1})
-
-  " call dein#load_toml(s:all_toml,  {'lazy': 0})
-
-  "call dein#add('Shougo/neosnippet.vim')
-  "call dein#add('Shougo/neosnippet-snippets')
-
-  " You can specify revision/branch/tag.
-  "call dein#add('Shougo/deol.nvim', { 'rev': '01203d4c9' })
-
-  " Required:
-  call dein#end()
-  call dein#save_state()
-endif
-
-" Required:
-filetype plugin indent on
-syntax enable
-
-" If you want to install not installed plugins on startup.
-if dein#check_install()
-  call dein#install()
-endif
-
-
-"deopleteとneosnippetの競合を回避するための設定
-imap <C-k> <Plug>(neosnippet_expand_or_jump)
-smap <C-k> <Plug>(neosnippet_expand_or_jump)
-xmap <C-k> <Plug>(neosnippet_expand_target)
-if has('conceal')
-	set conceallevel=2 concealcursor=niv
-endif
-
-
-" vimの設定
+" vimの設定を読み込む
 source ~/.vimrc
 
 
-" neovimの設定
+" ここからneovim向けの設定
+" デバッグ用
+set cmdheight=2
+
+" 開いたファイルがあるディレクトリに自動でcdする
+set autochdir
+
 " python3のパスを指定
 if system('echo -n $SHELL') =~ "fish$"
   let g:python3_host_prog = system('echo -n (which python3)')
@@ -86,6 +30,51 @@ autocmd BufNewFile,BufRead *.swift setfiletype swift
 autocmd BufNewFile,BufRead *.kt setfiletype kotlin
 
 
-" メモ
+" vim-plugの設定
+call plug#begin(stdpath('data') . '/plugged')
+Plug 'tomtom/tcomment_vim'
+Plug 'tpope/vim-surround'
+Plug 'nathanaelkane/vim-indent-guides'
+Plug 'cohama/lexima.vim'
+Plug 'w0rp/ale'
+
+Plug 'prabirshrestha/async.vim'
+Plug 'prabirshrestha/vim-lsp'
+Plug 'mattn/vim-lsp-settings'
+Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+Plug 'lighttiger2505/deoplete-vim-lsp'
+Plug 'deoplete-plugins/deoplete-jedi'
+Plug 'Shougo/neosnippet.vim'
+Plug 'Shougo/neosnippet-snippets'
+call plug#end()
+
+
+" vim-indent-guidesの設定
+let g:indent_guides_enable_on_vim_startup = 1
+let g:indent_guides_start_level= 1
+let g:indent_guides_guide_size = 0
+autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd	ctermbg=248
+autocmd VimEnter,Colorscheme * :hi IndentGuidesEven	ctermbg=246
+
+
+" aleの設定
+let g:ale_sign_column_always = 1
+let g:ale_sign_error = '☠︎'
+let g:ale_sign_warning = '⚠︎'
+
+
+"deopleteとneosnippetの競合を回避するための設定
+imap <C-k> <Plug>(neosnippet_expand_or_jump)
+smap <C-k> <Plug>(neosnippet_expand_or_jump)
+xmap <C-k> <Plug>(neosnippet_expand_target)
+if has('conceal')
+	set conceallevel=2 concealcursor=niv
+  endif
+
+
+" deoplete.nvimの設定
+let g:deoplete#enable_at_startup = 1
+
+
 " pythonのneovimが見つからなくてdeopleteとかがエラーになっていたときは、pipでインストールした
 " neovim, greenlet, pynvim, mspackgesをインストールし直したら治った
