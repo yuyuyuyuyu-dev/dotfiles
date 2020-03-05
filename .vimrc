@@ -37,6 +37,14 @@ endif
 set ambiwidth=double
 
 
+" シェルをfishに設定する
+if system('echo -n $SHELL') =~ "fish$"
+  set shell=call system('echo -n (which fish)')
+else
+  set shell=call system('echo -n $(which fish)')
+endif
+
+
 " test
 " if isdirectory('%:h/.vimundo')
 "   echo 'true'
