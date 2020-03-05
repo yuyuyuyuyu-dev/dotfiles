@@ -15,6 +15,13 @@ set cmdheight=2
 " 開いたファイルがあるディレクトリに自動でcdする
 set autochdir
 
+" シェルをfishに設定する
+if system("bash -c 'echo -n $(uname)'") == "Darwin"
+  set shell=/usr/local/bin/fish
+else
+  set shell=/usr/bin/fish
+endif
+
 " python3のパスを指定
 if system('echo -n $SHELL') =~ "fish$"
   let g:python3_host_prog = system('echo -n (which python3)')
