@@ -12,22 +12,22 @@ source ~/.vimrc
 " デバッグ用
 set cmdheight=2
 
+
 " 開いたファイルがあるディレクトリに自動でcdする
 set autochdir
 
+
 " シェルをfishに設定する
-if system("bash -c 'echo -n $(uname)'") == "Darwin"
+let s:os_type = system("bash -c 'echo -n $(uname)'")
+if s:os_type ==# "Darwin"
   set shell=/usr/local/bin/fish
 else
   set shell=/usr/bin/fish
 endif
 
+
 " python3のパスを指定
-if system('echo -n $SHELL') =~ "fish$"
-  let g:python3_host_prog = system('echo -n (which python3)')
-else
-  let g:python3_host_prog = system('echo -n $(which python3)')
-endif
+let g:python3_host_prog = system("bash -c 'echo -n $(which python3)'")
 
 
 " filetypeの追加
@@ -39,12 +39,18 @@ autocmd BufNewFile,BufRead *.kt setfiletype kotlin
 
 " vim-plugの設定
 call plug#begin(stdpath('data') . '/plugged')
+" <C--><C-->でコメントインアウトを切替できるようにするプラグイン
 Plug 'tomtom/tcomment_vim'
+" ノーマルモードで cs"' ってやったら"を'に置換してくれる
 Plug 'tpope/vim-surround'
+" インデントを可視化してくれるやつ
 Plug 'nathanaelkane/vim-indent-guides'
+" 自動で閉じ括弧とか入力してくれるやつ
 Plug 'cohama/lexima.vim'
+" lintしてくれるやつ
 Plug 'w0rp/ale'
 
+" 補完に使うプラグインたち
 Plug 'prabirshrestha/async.vim'
 Plug 'prabirshrestha/vim-lsp'
 Plug 'mattn/vim-lsp-settings'
