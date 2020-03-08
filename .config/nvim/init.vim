@@ -39,19 +39,19 @@ autocmd BufNewFile,BufRead *.kt setfiletype kotlin
 
 " プラグインの設定
 " vim-plugの設定を読み込む
-source $XDG_CONFIG_HOME/nvim/plugin_settings/vim-plug_setting.vim
+source ~/.config/nvim/plugin_settings/vim-plug_setting.vim
 
 " vim-indent-guidesの設定を読み込む
-source $XDG_CONFIG_HOME/nvim/plugin_settings/vim-indent-guides_setting.vim
+source ~/.config/nvim/plugin_settings/vim-indent-guides_setting.vim
 
 " aleの設定を読み込む
-source $XDG_CONFIG_HOME/nvim/plugin_settings/ale_setting.vim
+source ~/.config/nvim/plugin_settings/ale_setting.vim
 
 " deoplete.nvimの設定を読み込む
-source $XDG_CONFIG_HOME/nvim/plugin_settings/deoplete_setting.vim
+source ~/.config/nvim/plugin_settings/deoplete_setting.vim
 
 " vim-lspの設定を読み込む
-source $XDG_CONFIG_HOME/nvim/plugin_settings/vim-lsp_setting.vim
+source ~/.config/nvim/plugin_settings/vim-lsp_setting.vim
 
 
 "deopleteとneosnippetの競合を回避するための設定
