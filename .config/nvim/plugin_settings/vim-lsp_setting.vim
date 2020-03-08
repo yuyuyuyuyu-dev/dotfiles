@@ -14,10 +14,11 @@ if executable('bash-language-server')
         \ })
 endif
 
-if executable('omnisharp-lsp')
+let s:omnisharp_lsp = expand('~/omnisharp-lsp/run')
+if executable(s:omnisharp_lsp)
   au User lsp_setup call lsp#register_server({
         \ 'name': 'omnisharp-lsp',
-        \ 'cmd': {server_info->['omnisharp-lsp', '-lsp']},
+        \ 'cmd': {server_info->[omnisharp_lsp, '-lsp']},
         \ 'whitelist': ['cs']
         \ })
 endif
