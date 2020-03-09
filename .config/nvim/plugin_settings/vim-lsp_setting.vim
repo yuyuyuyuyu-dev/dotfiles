@@ -43,13 +43,14 @@ if executable('typescript-language-server')
         \ })
 endif
 
-if executable('/home/myde/myCommands/eclipse-jdt-ls')
-  au User lsp_setup call lsp#register_server({
-        \ 'name': 'myde-eclipse-jdt-ls',
-        \ 'cmd': {server_info->['/home/myde/myCommands/eclipse-jdt-ls']},
-        \ 'whitelist': ['java']
-        \ })
-endif
+" なんかうまく動かないからコメントアウト
+" if executable('/home/myde/myCommands/eclipse-jdt-ls')
+"   au User lsp_setup call lsp#register_server({
+"         \ 'name': 'myde-eclipse-jdt-ls',
+"         \ 'cmd': {server_info->['/home/myde/myCommands/eclipse-jdt-ls']},
+"         \ 'whitelist': ['java']
+"         \ })
+" endif
 
 if executable('vim-language-server')
   au User lsp_setup call lsp#register_server({
