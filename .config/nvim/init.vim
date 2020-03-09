@@ -51,7 +51,11 @@ source ~/.config/nvim/plugin_settings/ale_setting.vim
 source ~/.config/nvim/plugin_settings/deoplete_setting.vim
 
 " vim-lspの設定を読み込む
-source ~/.config/nvim/plugin_settings/vim-lsp_setting.vim
+" dockerコンテナ向けの設定しか書いてないから、
+" Linuxのときだけ読み込むようにする
+if system("bash -c 'echo -n $(uname)'") ==# 'Linux'
+  source ~/.config/nvim/plugin_settings/vim-lsp_setting.vim
+endif
 
 
 "deopleteとneosnippetの競合を回避するための設定
