@@ -14,11 +14,13 @@ if executable('bash-language-server')
         \ })
 endif
 
-let s:omnisharp_lsp = expand('~/omnisharp-lsp/run')
-if executable(s:omnisharp_lsp)
+" windowsのdockerで動かしたらなぜか動かなかったからパスを直で書く
+" そのうち修正したい
+" let s:omnisharp_lsp = expand('~/omnisharp-lsp/run')
+if executable('/home/myde/omnisharp-lsp/run')
   au User lsp_setup call lsp#register_server({
         \ 'name': 'omnisharp-lsp',
-        \ 'cmd': {server_info->[s:omnisharp_lsp, '-lsp']},
+        \ 'cmd': {server_info->['/home/myde/omnisharp-lsp/run', '-lsp']},
         \ 'whitelist': ['cs']
         \ })
 endif
