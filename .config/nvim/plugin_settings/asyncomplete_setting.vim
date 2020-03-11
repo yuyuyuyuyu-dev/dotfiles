@@ -1,3 +1,3 @@
-set completeopt-=preview
+set completeopt+=preview
 
 autocmd! CompleteDone * if pumvisible() == 0 | pclose | endif
