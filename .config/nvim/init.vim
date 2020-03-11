@@ -44,22 +44,22 @@ source ~/.config/nvim/plugin_settings/vim-plug_setting.vim
 " vim-indent-guidesの設定を読み込む
 source ~/.config/nvim/plugin_settings/vim-indent-guides_setting.vim
 
+" asyncompleteの設定を読み込む
+source ~/.config/nvim/plugin_settings/asyncomplete_setting.vim
+
 " aleの設定を読み込む
 source ~/.config/nvim/plugin_settings/ale_setting.vim
 
-" deoplete.nvimの設定を読み込む
-source ~/.config/nvim/plugin_settings/deoplete_setting.vim
-
 " vim-lspの設定を読み込む
-" dockerコンテナ向けの設定しか書いてないから、
-" コンテナ内のときだけ読み込むようにする
-" $container_nameはdockerfileで設定してある
+source ~/.config/nvim/plugin_settings/vim-lsp_setting.vim
+
+" myDE向けの設定を読み込む
 if !empty($container_name)
-  source ~/.config/nvim/plugin_settings/vim-lsp_setting.vim
+  source ~/.config/nvim/plugin_settings/settings_for_myde.vim
 endif
 
 
-"deopleteとneosnippetの競合を回避するための設定
+" 補完の設定
 imap <C-k> <Plug>(neosnippet_expand_or_jump)
 smap <C-k> <Plug>(neosnippet_expand_or_jump)
 xmap <C-k> <Plug>(neosnippet_expand_target)
