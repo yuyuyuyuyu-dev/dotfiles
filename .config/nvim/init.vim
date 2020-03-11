@@ -9,7 +9,7 @@ source ~/.vimrc
 
 
 " ここからneovim向けの設定
-" デバッグ用
+" コマンドラインを２行にする
 set cmdheight=2
 
 
@@ -52,8 +52,9 @@ source ~/.config/nvim/plugin_settings/deoplete_setting.vim
 
 " vim-lspの設定を読み込む
 " dockerコンテナ向けの設定しか書いてないから、
-" Linuxのときだけ読み込むようにする
-if system("bash -c 'echo -n $(uname)'") ==# 'Linux'
+" コンテナ内のときだけ読み込むようにする
+" $container_nameはdockerfileで設定してある
+if !empty($container_name)
   source ~/.config/nvim/plugin_settings/vim-lsp_setting.vim
 endif
 
