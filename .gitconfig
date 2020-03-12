@@ -1,13 +1,6 @@
-[user]
-	name = yu-ko-ba
-	email = n74_cjpxjljg.tcnp7jy@icloud.com
 [core]
-	excludesfile = /Users/yukobayashi/.gitignore_global
-[difftool "sourcetree"]
-	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
-	path = 
-[mergetool "sourcetree"]
-	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
-	trustExitCode = true
-[commit]
-	template = /Users/yukobayashi/.stCommitMsg
+    # 改行コードを変更しないようにする
+    autocrlf = false
+
+[alias]
+     diff = "diff -w"
