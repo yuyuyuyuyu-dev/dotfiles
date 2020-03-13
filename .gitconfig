@@ -2,5 +2,9 @@
     # 改行コードを変更しないようにする
     autocrlf = false
 
+    # git diffしたときの文字コードをutf-8にする
+    pager = "LESSCHARSET=utf-8 less"
+
 [alias]
-     diff = "diff -w"
+    # git diffしたときに、改行コードを気にしないようにする
+    diff = "diff -w"
