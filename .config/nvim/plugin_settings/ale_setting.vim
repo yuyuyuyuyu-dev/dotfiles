@@ -1,3 +1,9 @@
-let g:ale_sign_column_always = 1
-let g:ale_sign_error = '☠︎'
-let g:ale_sign_warning = '⚠︎'
+" let g:ale_sign_column_always = 1
+set signcolumn=yes
+highlight SignColumn ctermbg=229
+highlight SignColumn ctermfg=229
+highlight SignColumn guisp=229
+highlight SignColumn guifg=229
+highlight SignColumn guibg=229
+let g:ale_sign_error = '☠️'
+let g:ale_sign_warning = '⚠️'
