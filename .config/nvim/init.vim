@@ -1,6 +1,37 @@
+" XDG Base Directoryの設定
+let g:config_home = empty($XDG_CONFIG_HOME) ? expand('~/.config') : $XDG_CONFIG_HOME
+
+
 " vim-plugがインストールされていなかったらインストールする
 if !filereadable(expand('~/.local/share/nvim/site/autoload/plug.vim'))
-  call system('curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim')
+    call system('curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim')
+endif
+
+
+" カラースキームの"gruvbox"が無かったら用意する
+if !filereadable(g:config_home . '/nvim/colors/gruvbox.vim')
+    " ~/.vim/colorsの中にあったらリンクを貼る
+    if filereadable(expand('~/.vim/colors/gruvbox.vim'))
+        " $XDG_CONFIG_HOMEが設定されているかによってリンク先を変える
+        if empty($XDG_CONFIG_HOME)
+            call system('ln -fns ~/.vim/colors ~/.config/nvim/')
+        else
+            call system('ln -fns ~/.vim/colors $XDG_CONFIG_HOME/nvim/')
+        endif
+    else
+        " ~/.vim/colorsの中にも無かったらダウンロードする
+        " ダウンロード先のフォルダが無かったら作る
+        if !isdirectory(g:config_home . '/nvim/colors')
+            call mkdir(g:config_home . '/nvim/colors', 'p')
+        endif
+
+        " $XDG_CONFIG_HOMEが設定されているかによってダウンロード先を変える
+        if empty($XDG_CONFIG_HOME)
+            call system('curl https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim -o ~/.config/nvim/colors/gruvbox.vim')
+        else
+            call system('curl https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim -o $XDG_CONFIG_HOME/nvim/colors/gruvbox.vim')
+        endif
+    endif
 endif
 
 
@@ -20,9 +51,9 @@ set autochdir
 " シェルをfishに設定する
 let s:os_type = system("bash -c 'echo -n $(uname)'")
 if s:os_type ==# "Darwin"
-  set shell=/usr/local/bin/fish
+    set shell=/usr/local/bin/fish
 else
-  set shell=/usr/bin/fish
+    set shell=/usr/bin/fish
 endif
 
 
@@ -55,7 +86,7 @@ source ~/.config/nvim/plugin_settings/vim-lsp_setting.vim
 
 " myDE向けの設定を読み込む
 if !empty($container_name)
-  source ~/.config/nvim/plugin_settings/settings_for_myde.vim
+    source ~/.config/nvim/plugin_settings/settings_for_myde.vim
 endif
 
 
@@ -64,5 +95,5 @@ imap <C-k> <Plug>(neosnippet_expand_or_jump)
 smap <C-k> <Plug>(neosnippet_expand_or_jump)
 xmap <C-k> <Plug>(neosnippet_expand_target)
 if has('conceal')
-  set conceallevel=2 concealcursor=niv
+    set conceallevel=2 concealcursor=niv
 endif

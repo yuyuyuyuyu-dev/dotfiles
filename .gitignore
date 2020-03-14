@@ -4,6 +4,8 @@
 !.config/fish/
 !.config/brewfile/
 .vim/
+.config/nvim/colors
+.config/nvim/colors/
 .python_history
 .bash_history
 .latest_brew_doctor_result
