@@ -26,11 +26,6 @@ set number
 syntax enable 
 
 
-" たぶんcolortarmをtrue colorの256色にする設定
-" いらないっぽい？
-" set t_Co=256
-
-
 " カラースキームの設定
 " neovimの設定ファイルが入ってるフォルダを取得する
 let s:neovim_config_dir = empty($XDG_CONFIG_HOME) ? expand('~/.config/nvim') : $XDG_CONFIG_HOME . '/nvim'
@@ -97,3 +92,38 @@ endif
 
 " 全角文字をちゃんと表示する
 set ambiwidth=double
+
+
+" 折り返したときの設定
+" 折り返したときにインデントする
+set breakindent
+" 折り返したときの追加のインデントの深さを指定する
+set breakindentopt=shift:0
+
+" vimの横幅を指定する
+set columns=103
+
+
+" 行末にセミコロンを挿入する
+function! InsertEndSemicolon() abort
+    " カーソルの現在位置を取得する
+    let s:currentPosition = getpos('.')
+
+    " 行末にセミコロンがなかったら挿入する
+    if !(getline('.') =~ ';$')
+        execute ':normal A;'
+    endif
+
+    " カーソル位置を戻す
+    call setpos('.', s:currentPosition)
+endfunction
+
+" ノーマルモードでセミコロン２度押しするとInsertEndSemicolon()が呼ばれるようにする
+nnoremap <silent> ;; :call InsertEndSemicolon()<CR>
+
+
+" ローカルのvimの設定を読み込む(set columnsの上書きとかをする)
+" ファイルがあるときだけ読み込む
+if filereadable(expand('~/.vimrc.local'))
+    source ~/.vimrc.local
+endif

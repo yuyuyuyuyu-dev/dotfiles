@@ -41,7 +41,7 @@ end
 set -x HOMEBREW_NO_ANALYTICS 1
 
 # エイリアスの設定
-alias less "less -N"
+alias less "less -cmN"
 alias del "delete"
 
 # OS毎の設定
