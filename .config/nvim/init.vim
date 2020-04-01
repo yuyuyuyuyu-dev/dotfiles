@@ -1,5 +1,5 @@
-" XDG Base Directoryの設定
-let g:config_home = empty($XDG_CONFIG_HOME) ? expand('~/.config') : $XDG_CONFIG_HOME
+" XDG Base Directory Specification
+let s:config_home = empty($XDG_CONFIG_HOME) ? expand('~/.config') : $XDG_CONFIG_HOME
 
 
 " vim-plugがインストールされていなかったらインストールする
@@ -9,7 +9,7 @@ endif
 
 
 " カラースキームの"gruvbox"が無かったら用意する
-if !filereadable(g:config_home . '/nvim/colors/gruvbox.vim')
+if !filereadable(s:config_home . '/nvim/colors/gruvbox.vim')
     " ~/.vim/colorsの中にあったらリンクを貼る
     if filereadable(expand('~/.vim/colors/gruvbox.vim'))
         " $XDG_CONFIG_HOMEが設定されているかによってリンク先を変える
@@ -21,8 +21,8 @@ if !filereadable(g:config_home . '/nvim/colors/gruvbox.vim')
     else
         " ~/.vim/colorsの中にも無かったらダウンロードする
         " ダウンロード先のフォルダが無かったら作る
-        if !isdirectory(g:config_home . '/nvim/colors')
-            call mkdir(g:config_home . '/nvim/colors', 'p')
+        if !isdirectory(s:config_home . '/nvim/colors')
+            call mkdir(s:config_home . '/nvim/colors', 'p')
         endif
 
         " $XDG_CONFIG_HOMEが設定されているかによってダウンロード先を変える
@@ -97,3 +97,9 @@ xmap <C-k> <Plug>(neosnippet_expand_target)
 if has('conceal')
     set conceallevel=2 concealcursor=niv
 endif
+
+
+" キーバインド
+tnoremap <silent> <ESC> <C-\><C-n>
+nnoremap <silent> <C-t><C-m> :split<CR> <C-w>j :terminal<CR> :resize 6<CR> i
+nnoremap <silent> def :LspDefinition<CR>
