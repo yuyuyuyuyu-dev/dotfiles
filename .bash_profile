@@ -15,3 +15,5 @@ if type tmux > /dev/null 2>&1; then # tmuxがインストールされている�
 else
   echo 'tmuxがインストールされていません。'
 fi
+
+export PATH="$HOME/.cargo/bin:$PATH"

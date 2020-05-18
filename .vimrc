@@ -119,8 +119,9 @@ function! InsertEndSemicolon() abort
 endfunction
 
 " ノーマルモードでセミコロン２度押しするとInsertEndSemicolon()が呼ばれるようにする
-nnoremap <silent> ;; :call InsertEndSemicolon()<CR>
-
+nnoremap <silent> ; :call InsertEndSemicolon()<CR>
+inoremap ;; <ESC>:call InsertEndSemicolon()<CR>a
+inoremap ;<ESC> <ESC>:call InsertEndSemicolon()<CR>
 
 " ローカルのvimの設定を読み込む(set columnsの上書きとかをする)
 " ファイルがあるときだけ読み込む
