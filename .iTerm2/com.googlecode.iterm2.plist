@@ -1421,6 +1421,34 @@
 			<key>Text</key>
 			<string></string>
 		</dict>
+		<key>0x2b-0x60000</key>
+		<dict>
+			<key>Action</key>
+			<integer>22</integer>
+			<key>Text</key>
+			<string></string>
+		</dict>
+		<key>0x4a-0x60000</key>
+		<dict>
+			<key>Action</key>
+			<integer>22</integer>
+			<key>Text</key>
+			<string></string>
+		</dict>
+		<key>0x53-0xa0000</key>
+		<dict>
+			<key>Action</key>
+			<integer>22</integer>
+			<key>Text</key>
+			<string></string>
+		</dict>
+		<key>0x5a-0xa0000</key>
+		<dict>
+			<key>Action</key>
+			<integer>22</integer>
+			<key>Text</key>
+			<string></string>
+		</dict>
 		<key>0x5b-0x40000</key>
 		<dict>
 			<key>Action</key>
@@ -1620,6 +1648,10 @@
 	<key>NeverWarnAboutShortLivedSessions_39BF3F66-61E0-48AE-B05B-FEAAC64A5CA8</key>
 	<true/>
 	<key>NeverWarnAboutShortLivedSessions_39BF3F66-61E0-48AE-B05B-FEAAC64A5CA8_selection</key>
+	<integer>0</integer>
+	<key>NeverWarnAboutShortLivedSessions_565C6DB5-DAAD-4DA3-A1B8-F20EF275FBA1</key>
+	<true/>
+	<key>NeverWarnAboutShortLivedSessions_565C6DB5-DAAD-4DA3-A1B8-F20EF275FBA1_selection</key>
 	<integer>0</integer>
 	<key>New Bookmarks</key>
 	<array>
@@ -2314,12 +2346,20 @@
 	<array>
 		<string>3.3.7</string>
 		<string>3.3.8</string>
+		<string>3.3.9</string>
 	</array>
 	<key>NoSyncBFPRecents</key>
 	<array>
 		<string>Nyashi</string>
 		<string>Menlo</string>
 	</array>
+	<key>NoSyncFrame_SessionsPreferences</key>
+	<dict>
+		<key>screenFrame</key>
+		<string>{{0, 0}, {1280, 800}}</string>
+		<key>topLeft</key>
+		<string>{337, 712}</string>
+	</dict>
 	<key>NoSyncFrame_SharedPreferences</key>
 	<dict>
 		<key>screenFrame</key>
@@ -2330,7 +2370,7 @@
 	<key>NoSyncInstallationId</key>
 	<string>AC87E7ED-3718-4BFA-8CB5-64C0B5D14630</string>
 	<key>NoSyncLaunchExperienceControllerRunCount</key>
-	<integer>8</integer>
+	<integer>11</integer>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile</key>
 	<true/>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile_selection</key>
@@ -3123,10 +3163,12 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2020-02-13T09:23:42Z</date>
+	<date>2020-05-16T03:11:27Z</date>
 	<key>SUSendProfileInfo</key>
 	<false/>
 	<key>SUUpdateRelaunchingMarker</key>
+	<false/>
+	<key>Secure Input</key>
 	<true/>
 	<key>ShowNewOutputIndicator</key>
 	<true/>
@@ -3145,6 +3187,6 @@
 	<key>WordCharacters</key>
 	<string>/-+\~_.</string>
 	<key>iTerm Version</key>
-	<string>3.3.8</string>
+	<string>3.3.9</string>
 </dict>
 </plist>

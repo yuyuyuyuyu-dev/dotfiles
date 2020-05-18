@@ -5,6 +5,9 @@ let s:config_home = empty($XDG_CONFIG_HOME) ? expand('~/.config') : $XDG_CONFIG_
 " vim-plugがインストールされていなかったらインストールする
 if !filereadable(expand('~/.local/share/nvim/site/autoload/plug.vim'))
     call system('curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim')
+    " ついでにプラグインもインストールする
+    source ~/.config/nvim/plugin_settings/vim-plug_setting.vim
+    PlugInstall
 endif
 
 

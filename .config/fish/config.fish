@@ -14,6 +14,12 @@ end
 if [ -d {$HOME}/.local/bin ]
   set -x PATH {$PATH} {$HOME}/.local/bin
 end
+if [ -d {$HOME}/.cargo/bin ]
+    set -x PATH {$PATH} {$HOME}/.cargo/bin
+end
+if [ -d {$HOME}/.nimble/bin ]
+    set -x PATH {$PATH} {$HOME}/.nimble/bin
+end
 
 # prompt_pwdでパスを省略しない
 set -g fish_prompt_pwd_dir_length 0
