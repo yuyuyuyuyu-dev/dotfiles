@@ -100,10 +100,6 @@ set breakindent
 " 折り返したときの追加のインデントの深さを指定する
 set breakindentopt=shift:0
 
-" vimの横幅を指定する
-set columns=103
-
-
 " 行末にセミコロンを挿入する
 function! InsertEndSemicolon() abort
     " カーソルの現在位置を取得する
@@ -125,6 +121,6 @@ inoremap ;<ESC> <ESC>:call InsertEndSemicolon()<CR>
 
 " ローカルのvimの設定を読み込む(set columnsの上書きとかをする)
 " ファイルがあるときだけ読み込む
-if filereadable(expand('~/.vimrc.local'))
-    source ~/.vimrc.local
+if filereadable(expand('~/.vimrc_local'))
+    source ~/.vimrc_local
 endif
