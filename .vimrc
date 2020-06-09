@@ -114,10 +114,12 @@ function! InsertEndSemicolon() abort
     call setpos('.', s:currentPosition)
 endfunction
 
-" ノーマルモードでセミコロン２度押しするとInsertEndSemicolon()が呼ばれるようにする
+" ノーマルモードでセミコロンを押すとInsertEndSemicolon()が呼ばれるようにする
 nnoremap <silent> ; :call InsertEndSemicolon()<CR>
-inoremap ;; <ESC>:call InsertEndSemicolon()<CR>a
-inoremap ;<ESC> <ESC>:call InsertEndSemicolon()<CR>
+" インサートモードではセミコロン２度押しでInsertEndSemicolon()
+inoremap <silent> ;; <ESC>:call InsertEndSemicolon()<CR>a
+" インサートモードでセミコロン押してからエスケープキーを押すと行末にセミコロンを挿入してからノーマルモードに戻る
+inoremap <silent> ;<ESC> <ESC>:call InsertEndSemicolon()<CR>
 
 " ローカルのvimの設定を読み込む(set columnsの上書きとかをする)
 " ファイルがあるときだけ読み込む
