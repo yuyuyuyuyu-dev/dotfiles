@@ -1,8 +1,6 @@
 .DS_Store
 .config/*
-!.config/nvim/init.vim
-!.config/nvim/plugin_settings/
-!.config/nvim/toml/
+!.config/nvim/
 !.config/fish/
 !.config/brewfile/
 .vim/
@@ -12,4 +10,3 @@
 .bash_history
 .latest_brew_doctor_result
 .ok_brew_doctor_result
-.config/nvim/HelloKt.class
