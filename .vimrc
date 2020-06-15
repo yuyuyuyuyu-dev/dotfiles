@@ -100,6 +100,7 @@ set breakindent
 " 折り返したときの追加のインデントの深さを指定する
 set breakindentopt=shift:0
 
+
 " 行末にセミコロンを挿入する
 function! InsertEndSemicolon() abort
     " カーソルの現在位置を取得する
@@ -120,6 +121,16 @@ nnoremap <silent> ; :call InsertEndSemicolon()<CR>
 inoremap <silent> ;; <ESC>:call InsertEndSemicolon()<CR>a
 " インサートモードでセミコロン押してからエスケープキーを押すと行末にセミコロンを挿入してからノーマルモードに戻る
 inoremap <silent> ;<ESC> <ESC>:call InsertEndSemicolon()<CR>
+
+
+" 言語ごとの設定
+" Java
+if &filetype ==? 'java'
+    if filereadable(expand('~/.vimrc_java'))
+        source ~/.vimrc_java
+    endif
+endif
+
 
 " ローカルのvimの設定を読み込む(set columnsの上書きとかをする)
 " ファイルがあるときだけ読み込む
