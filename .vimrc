@@ -117,8 +117,8 @@ endfunction
 
 " ノーマルモードでセミコロンを押すとInsertEndSemicolon()が呼ばれるようにする
 nnoremap <silent> ; :call InsertEndSemicolon()<CR>
-" インサートモードではセミコロン２度押しでInsertEndSemicolon()
-inoremap <silent> ;; <ESC>:call InsertEndSemicolon()<CR>a
+" インサートモードでセミコロン２度押しでその場にセミコロンを入力できるようにする
+inoremap <silent> ;; ;
 " インサートモードでセミコロン押してからエスケープキーを押すと行末にセミコロンを挿入してからノーマルモードに戻る
 inoremap <silent> ;<ESC> <ESC>:call InsertEndSemicolon()<CR>
 
