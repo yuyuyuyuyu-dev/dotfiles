@@ -74,6 +74,7 @@ set tabstop=4
 set shiftwidth=4
 
 " よくわからないけどとりあえず書いておく。
+" backspaceしたときに一度に消されるスペースの数らしい
 set softtabstop=4  
 
 " 改行したときにインデントしてくれる
@@ -123,13 +124,9 @@ inoremap <silent> ;; ;
 inoremap <silent> ;<ESC> <ESC>:call InsertEndSemicolon()<CR>
 
 
-" 言語ごとの設定
-" Java
-if &filetype ==? 'java'
-    if filereadable(expand('~/.vimrc_java'))
-        source ~/.vimrc_java
-    endif
-endif
+" 言語ごとのインデントの設定
+filetype indent on
+autocmd FileType java setlocal shiftwidth=2 softtabstop=2
 
 
 " ローカルのvimの設定を読み込む(set columnsの上書きとかをする)
