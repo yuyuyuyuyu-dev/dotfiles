@@ -1,8 +1,0 @@
-" Tab文字の長さの設定
-set tabstop=2
-
-" 一つのインデントのスペースの数
-set shiftwidth=2
-
-" よくわからないけどとりあえず書いておく。
-set softtabstop=2  
