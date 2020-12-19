@@ -1,6 +1,6 @@
 [core]
-    # 改行コードを変更しないようにする
-    autocrlf = false
+    # 改行コードを、リポジトリではLFに揃える、ローカルではOSに合わせるようにする
+    autocrlf = input
 
     # git diffしたときの文字コードをutf-8にする
     pager = "LESSCHARSET=utf-8 less -cmN"
@@ -22,4 +22,4 @@
 	name = yu-ko-ba
 	email = lily_lime_mint@outlook.com
 [commit]
-	template = /Users/yu/.stCommitMsg
+	# template = /Users/yu/.stCommitMsg
