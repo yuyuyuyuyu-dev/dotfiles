@@ -1,14 +1,14 @@
 [core]
-    # 改行コードを自動で変換しないようにする
+	# 改行コードを自動で変換しないようにする
 	autocrlf = false
 
-    # git diffしたときの文字コードをutf-8にする
-    pager = "LESSCHARSET=utf-8 less -cmN"
+	# git diffしたときの文字コードをutf-8にする
+	pager = "LESSCHARSET=utf-8 less -cmN"
 
 
 [alias]
-    # git diffしたときに、改行コードを気にしないようにする
-    diff = "diff -w"
+	# git diffしたときに、改行コードを気にしないようにする
+	diff = "diff -w"
 
 
 [difftool "sourcetree"]
