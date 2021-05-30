@@ -4,22 +4,23 @@
 
     # git diffしたときの文字コードをutf-8にする
     pager = "LESSCHARSET=utf-8 less -cmN"
-	excludesfile = /Users/yu/.gitignore_global
+	excludesfile = ~/.gitignore_global
+
 
 [alias]
     # git diffしたときに、改行コードを気にしないようにする
     diff = "diff -w"
 
-[include]
-    path = ~/.gitconfig.local
+
 [difftool "sourcetree"]
 	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
 	path = 
+
+
 [mergetool "sourcetree"]
 	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
 	trustExitCode = true
-[user]
-	name = yu-ko-ba
-	email = lily_lime_mint@outlook.com
-[commit]
-	# template = /Users/yu/.stCommitMsg
+
+
+[include]
+	path = ~/.gitconfig.local
