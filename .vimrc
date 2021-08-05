@@ -1,6 +1,8 @@
 " 文字コードの設定
 " バッファ内での文字コードの指定
 set encoding=utf-8
+" fileencodingの設定を適用できないとき用の対策
+set modifiable
 " 書き込むときのデフォルトの文字コードの指定
 set fileencoding=utf-8
 " 読み込むときの文字コードの指定(左の方が優先度が高い)
