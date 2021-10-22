@@ -1,6 +1,6 @@
 [core]
-	# 改行コードを自動で変換しないようにする
-	autocrlf = false
+	# プッシュするときに改行コードをLFで揃える
+	autocrlf = input
 
 	# git diffしたときの文字コードをutf-8にする
 	pager = "LESSCHARSET=utf-8 less -cmN"
