@@ -23,3 +23,6 @@
 
 [include]
 	path = ~/.gitconfig.local
+[user]
+	email = lily_lime_mint@outlook.com
+	name = yu-ko-ba
