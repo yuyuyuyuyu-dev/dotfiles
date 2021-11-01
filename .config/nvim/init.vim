@@ -52,11 +52,37 @@ set autochdir
 
 
 " シェルをfishに設定する
-let s:os_type = system("bash -c 'echo -n $(uname)'")
-if s:os_type ==# "Darwin"
-    set shell=/usr/local/bin/fish
-else
+" let s:linux_fish_path
+" let s:mac_fish_path
+" let s:linux_bash_path
+" let s:mac_bash_path
+" let s:os_type = system("bash -c 'echo -n $(uname)'")
+" if s:os_type ==# "Darwin"
+"     set shell=/usr/local/bin/fish
+" else
+"     set shell=/usr/bin/fish
+" endif
+
+let s:bash_path = system("bash -c 'echo -n $(which bash)'")
+let s:fish_path = system("bash -c 'echo -n $(which fish)'")
+
+" bash
+if s:bash_path ==# "/usr/bin/bash"
+    set shell=/usr/bin/bash
+endif
+
+" fish
+" Linux
+if s:fish_path ==# "/usr/bin/fish"
     set shell=/usr/bin/fish
+endif
+" Mac
+if s:fish_path ==# "/usr/local/bin/fish"
+    set shell=/usr/local/bin/fish
+endif
+" Linuxbrew
+if s:fish_path ==# "/home/linuxbrew/.linuxbrew/bin/fish"
+    set shell=/home/linuxbrew/.linuxbrew/bin/fish
 endif
 
 
