@@ -17,7 +17,7 @@ if [ ! -z ${SSH_CONNECTION} ]; then # SSHでのログインかを確認
         echo 'tmuxがインストールされていません。'
     fi
 elif type fish > /dev/null 2>&1; then
-    fish -login && exit
+    fish --login && exit
 fi
 
 case "$OSTYPE" in
