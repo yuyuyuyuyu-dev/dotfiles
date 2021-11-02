@@ -2,6 +2,23 @@
 set -x LC_ALL ja_JP.UTF-8
 
 
+if ! [ -z {$SSH_CONNECTION} ]
+    # SSH接続の場合
+    if type tmux > /dev/null 2>&1
+        if [ -z {$TMUX} ]
+            # tmuxのセッション外だったら
+            if tmux list-sessions > /dev/null 2>&1
+                # すでにセッションが存在したらそれにアタッチする
+                exec tmux -u attach
+            else
+                # セッションが存在しなかったら新しく作ってアタッチする
+                exec tmux -u
+            end
+        end
+    end
+end
+
+
 # パスの設定
 if ! [ -e {$HOME}/myCommands ]
     mkdir {$HOME}/myCommands
