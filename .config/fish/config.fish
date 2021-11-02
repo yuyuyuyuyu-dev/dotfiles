@@ -2,6 +2,18 @@
 set -x LC_ALL ja_JP.UTF-8
 
 
+# linuxbrewの設定
+if [ -d /home/linuxbrew/.linuxbrew ]
+    set -x HOMEBREW_PREFIX "/home/linuxbrew/.linuxbrew"
+    set -x HOMEBREW_CELLAR "/home/linuxbrew/.linuxbrew/Cellar"
+    set -x HOMEBREW_REPOSITORY "/home/linuxbrew/.linuxbrew/Homebrew"
+    set -x HOMEBREW_SHELLENV_PREFIX "/home/linuxbrew/.linuxbrew"
+    set -x PATH {$PATH} "/home/linuxbrew/.linuxbrew/bin" "/home/linuxbrew/.linuxbrew/sbin"
+    set -x MANPATH {$MANPATH} "/home/linuxbrew/.linuxbrew/share/man"
+    set -x INFOPATH {$INFOPATH} "/home/linuxbrew/.linuxbrew/share/info"
+end
+
+
 if ! [ -z {$SSH_CONNECTION} ]
     # SSH接続の場合
     if type tmux > /dev/null 2>&1
