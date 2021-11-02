@@ -101,7 +101,6 @@ switch (uname) # なぜかlinterに引っかかる
         alias ls "ls -FG"
         alias la "ls -aFG"
         alias ll "ls -FGl"
-        alias pushDotfiles "open -a /Applications/Safari.app https://www.github.com/yuu-kobayashi/dotfiles/ && cd {$HOME}/dotfiles/ && git add . && git commit && git push origin master"
     case Linux # Linuxのとき
         alias ls "ls -F --color=auto"
         alias la "ls -aF --color=auto"
