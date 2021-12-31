@@ -31,6 +31,10 @@ if ! [ -z {$SSH_CONNECTION} ]
 end
 
 
+# Goの設定
+set -x GOPATH {$HOME}/.go
+
+
 # パスの設定
 if ! [ -e {$HOME}/myCommands ]
     mkdir {$HOME}/myCommands
@@ -55,6 +59,10 @@ end
 
 if [ -d {$HOME}/.nimble/bin ]
     set -x PATH {$PATH} {$HOME}/.nimble/bin
+end
+
+if [ -d {$HOME}/.go/bin ]
+    set -x PATH {$PATH} {$GOPATH}/bin
 end
 
 
