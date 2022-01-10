@@ -21,7 +21,6 @@ export LANG=ja_JP.UTF-8
 
 # エイリアスの設定
 alias less="less -N"
-alias wakeValet="wakeonlan 08:62:66:7c:e6:ba"
 alias lsless="ls -CF | less -N"
 alias del="delete"
 
@@ -99,12 +98,3 @@ case "${OSTYPE}" in
     # linuxのときに読み込まれる設定
     ;;
 esac
-
-### Added by Zplugin's installer
-source "${HOME}/.zplugin/bin/zplugin.zsh"
-autoload -Uz _zplugin
-(( ${+_comps} )) && _comps[zplugin]=_zplugin
-### End of Zplugin's installer chunk
-
-# plugins
-zplugin load zsh-users/zsh-syntax-highlighting # コマンドが存在するかどうかで色付けしてくれる
