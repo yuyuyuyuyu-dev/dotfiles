@@ -20,3 +20,10 @@ for i in .*; do
 
   ln -fns ${HOME}/dotfiles/${i} ${HOME}/
 done
+
+
+# 端末固有のgit設定
+readonly GITCONFIGLOCAL='gitconfig.local'
+if ! [ -e ${HOME}/.${GITCONFIGLOCAL} ]; then
+    cp ${GITCONFIGLOCAL}.template ${HOME}/.${GITCONFIGLOCAL}
+fi
