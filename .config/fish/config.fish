@@ -61,7 +61,7 @@ if [ -d {$HOME}/.nimble/bin ]
     set -x PATH {$PATH} {$HOME}/.nimble/bin
 end
 
-if [ -d {$HOME}/.go/bin ]
+if [ -n {$GOPATH} ]
     set -x PATH {$PATH} {$GOPATH}/bin
 end
 
