@@ -93,7 +93,9 @@ end
 
 # HomebrewのAnalyticsを停止
 set -x HOMEBREW_NO_ANALYTICS 1
-eval (/opt/homebrew/bin/brew shellenv)
+if [ -x /opt/homebrew/bin/brew ]
+    eval (/opt/homebrew/bin/brew shellenv)
+end
 
 
 # エイリアスの設定
