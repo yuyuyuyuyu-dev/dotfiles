@@ -11,7 +11,8 @@ set fileencodings=utf-8,cp932,sjis,euc-jp
 
 " 改行コードの設定
 " 左の方が優先度が高い
-if system("bash -c 'echo -n $(uname -r)'") =~ 'Microsoft$'
+" if system("bash -c 'echo -n $(uname -r)'") =~ 'Microsoft$'
+if 0
     " Windows(Sub system for Linux)のときは<CR+LF>を最優先する
     set fileformats=dos,unix,mac
 else
