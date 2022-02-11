@@ -2,6 +2,9 @@
 	# プッシュするときに改行コードをLFで揃える
 	autocrlf = input
 
+	# 常に読み込まれるgitignoreファイルを指定する
+	excludesFile = ~/.config/git/ignore
+
 	# git diffしたときの文字コードをutf-8にする
 	pager = "LESSCHARSET=utf-8 less -cmN"
 

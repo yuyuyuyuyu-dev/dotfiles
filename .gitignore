@@ -3,6 +3,7 @@
 !.config/nvim/
 !.config/fish/
 !.config/brewfile/
+!.config/git/
 .vim/
 .config/nvim/colors
 .config/nvim/colors/
