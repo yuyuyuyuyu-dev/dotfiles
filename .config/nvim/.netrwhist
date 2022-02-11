@@ -1,3 +1,0 @@
-let g:netrw_dirhistmax  =10
-let g:netrw_dirhist_cnt =1
-let g:netrw_dirhist_1='/mnt/c/Users/k019c1262/Dropbox/2年次/Webアプリケーション開発/07(7)_配布(2020-07-13)/077b_Sources'
