@@ -41,7 +41,11 @@ if !filereadable(s:share_nvim_dir . '/site/autoload/plug.vim')
         source ~/AppData/Local/nvim/plugin_settings/vim-plug_setting.vim
     else
         " Windows以外の場合
-        source ~/.config/nvim/plugin_settings/vim-plug_setting.vim
+        if empty($XDG_CONFIG_HOME)
+            source ~/.config/nvim/plugin_settings/vim-plug_setting.vim
+        else
+            source $XDG_CONFIG_HOME/.config/nvim/plugin_settings/vim-plug_setting.vim
+        endif
     endif
     PlugInstall
 endif
