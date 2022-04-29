@@ -45,43 +45,19 @@ if !filereadable(s:share_nvim_dir . '/site/autoload/plug.vim')
     PlugInstall
 endif
 
+
 " カラースキームの"gruvbox"が無かったら用意する
 if !filereadable(s:config_home . '/nvim/colors/gruvbox.vim')
-    " ~/.vim/colorsの中にあったらリンクを貼る
     if filereadable($HOME . '/.vim/colors/gruvbox.vim')
-        " call system(has('win64') ? '')
-    else
-    endif
-endif
-
-if has('win64')
-    if !filereadable(expand('~/AppData/Local/nvim/colors/gruvbox.vim'))
-        call system('curl.exe -fLo %LOCALAPPDATA%\nvim\colors\gruvbox.vim --create-dirs https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim')
-    endif
-else
-    if !filereadable(s:config_home . '/nvim/colors/gruvbox.vim')
         " ~/.vim/colorsの中にあったらリンクを貼る
-        if filereadable(expand('~/.vim/colors/gruvbox.vim'))
-            " $XDG_CONFIG_HOMEが設定されているかによってリンク先を変える
-            if empty($XDG_CONFIG_HOME)
-                call system('ln -fns ~/.vim/colors ~/.config/nvim/')
-            else
-                call system('ln -fns ~/.vim/colors $XDG_CONFIG_HOME/nvim/')
-            endif
-        else
-            " ~/.vim/colorsの中にも無かったらダウンロードする
-            " ダウンロード先のフォルダが無かったら作る
-            if !isdirectory(s:config_home . '/nvim/colors')
-                call mkdir(s:config_home . '/nvim/colors', 'p')
-            endif
-
-            " $XDG_CONFIG_HOMEが設定されているかによってダウンロード先を変える
-            if empty($XDG_CONFIG_HOME)
-                call system('curl https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim -o ~/.config/nvim/colors/gruvbox.vim')
-            else
-                call system('curl https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim -o $XDG_CONFIG_HOME/nvim/colors/gruvbox.vim')
-            endif
+        if !isdirectory(s:config_home . '/nvim/colors')
+            call mkdir(s:config_home . '/nvim/colors', 'p')
         endif
+        call system(has('win64') ? 'mklink ' . s:config_home . '\nvim\colors\gruvbox.vim %HOMEPATH%\.vim/colors/gruvbox.vim' : 'ln -fs ~/.vim/colors/gruvbox.vim ' . s:config_home . '/nvim/colors/gruvbox.vim')
+    else
+        " ~/.vim/colorsの中にも無かったらダウンロードする
+        let s:curl_command = has('win64') ? 'curl.exe -fLo ' . s:config_home . '\nvim\colors\gruvbox.vim' : 'curl -o' . s:config_home . '/nvim/colors/gruvbox.vim'
+        call system(s:curl_command . ' --create-dirs https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim')
     endif
 endif
 
