@@ -88,3 +88,47 @@ if has('win64')
 else
     let g:python3_host_prog = system("bash -c 'echo -n $(which python3)'")
 endif
+
+
+" filetypeの追加
+autocmd BufNewFile,BufRead *.fish setfiletype fish
+autocmd BufNewFile,BufRead *.vim setfiletype vim
+autocmd BufNewFile,BufRead *.swift setfiletype swift
+autocmd BufNewFile,BufRead *.kt setfiletype kotlin
+
+
+" プラグインの設定
+" vim-plugの設定を読み込む
+" source ~/.config/nvim/plugin_settings/vim-plug_setting.vim
+
+" vim-indent-guidesの設定を読み込む
+" source ~/.config/nvim/plugin_settings/vim-indent-guides_setting.vim
+
+" asyncompleteの設定を読み込む
+" source ~/.config/nvim/plugin_settings/asyncomplete_setting.vim
+
+" aleの設定を読み込む
+" source ~/.config/nvim/plugin_settings/ale_setting.vim
+
+" vim-lspの設定を読み込む
+" source ~/.config/nvim/plugin_settings/vim-lsp_setting.vim
+
+" myDE向けの設定を読み込む
+if !empty($container_name)
+    source ~/.config/nvim/plugin_settings/settings_for_myde.vim
+endif
+
+
+" 補完の設定
+imap <C-k> <Plug>(neosnippet_expand_or_jump)
+smap <C-k> <Plug>(neosnippet_expand_or_jump)
+xmap <C-k> <Plug>(neosnippet_expand_target)
+if has('conceal')
+    set conceallevel=0 concealcursor=niv
+endif
+
+
+" キーバインド
+tnoremap <silent> <ESC> <C-\><C-n>
+nnoremap <silent> <C-t><C-m> :split<CR> <C-w>j :terminal<CR> :resize 6<CR> i
+nnoremap <silent> def :LspDefinition<CR>
