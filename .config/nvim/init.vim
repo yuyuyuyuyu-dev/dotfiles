@@ -1,5 +1,5 @@
 " XDG Base Directory Specification
-let s:config_home = empty($XDG_CONFIG_HOME) ? has('win64') ? $LOCALAPPDATA : expand('~/.config') : $XDG_CONFIG_HOME
+let s:config_home = has('win64') ? $LOCALAPPDATA : empty($XDG_CONFIG_HOME) ? expand('~/.config') : $XDG_CONFIG_HOME
 
 let s:share_nvim_dir = has('win64') ? $LOCALAPPDATA . '/nvim-data' : $HOME . '/.local/share/nvim'
 
