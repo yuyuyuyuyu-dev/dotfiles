@@ -69,3 +69,22 @@ if has('win64')
 else
     source ~/.vimrc
 endif
+
+
+" ここからneovim向けの設定
+" コマンドラインを２行にする
+set cmdheight=2
+
+
+" 開いたファイルがあるディレクトリに自動でcdする
+set autochdir
+
+
+" python3のパスを指定
+if has('win64')
+    if !empty(system('where /Q python && echo has'))
+        let g:python3_host_prog = s:config_home . '\Programs\Python\Python37-32\python.exe'
+    endif
+else
+    let g:python3_host_prog = system("bash -c 'echo -n $(which python3)'")
+endif
