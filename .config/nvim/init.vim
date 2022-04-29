@@ -99,23 +99,57 @@ autocmd BufNewFile,BufRead *.kt setfiletype kotlin
 
 " プラグインの設定
 " vim-plugの設定を読み込む
-" source ~/.config/nvim/plugin_settings/vim-plug_setting.vim
+if has('win64')
+    source ~/AppData/Local/nvim/plugin_settings/vim-plug_setting.vim
+elseif !empty($XDG_CONFIG_HOME)
+    source $XDG_CONFIG_HOME/.config/nvim/plugin_settings/vim-plug_setting.vim
+else
+    source ~/.config/nvim/plugin_settings/vim-plug_setting.vim
+endif
 
 " vim-indent-guidesの設定を読み込む
-" source ~/.config/nvim/plugin_settings/vim-indent-guides_setting.vim
+if has('win64')
+    source ~/AppData/Local/nvim/plugin_settings/vim-indent-guides_setting.vim
+elseif !empty($XDG_CONFIG_HOME)
+    source $XDG_CONFIG_HOME/.config/nvim/plugin_settings/vim-indent-guides_setting.vim
+else
+    source ~/.config/nvim/plugin_settings/vim-indent-guides_setting.vim
+endif
 
 " asyncompleteの設定を読み込む
-" source ~/.config/nvim/plugin_settings/asyncomplete_setting.vim
+if has('win64')
+    source ~/AppData/Local/nvim/plugin_settings/asyncomplete_setting.vim
+elseif !empty($XDG_CONFIG_HOME)
+    source $XDG_CONFIG_HOME/.config/nvim/plugin_settings/asyncomplete_setting.vim
+else
+    source ~/.config/nvim/plugin_settings/asyncomplete_setting.vim
+endif
 
 " aleの設定を読み込む
-" source ~/.config/nvim/plugin_settings/ale_setting.vim
+if has('win64')
+    source ~/AppData/Local/nvim/plugin_settings/ale_setting.vim
+elseif !empty($XDG_CONFIG_HOME)
+    source $XDG_CONFIG_HOME/.config/nvim/plugin_settings/ale_setting.vim
+else
+    source ~/.config/nvim/plugin_settings/ale_setting.vim
+endif
 
 " vim-lspの設定を読み込む
-" source ~/.config/nvim/plugin_settings/vim-lsp_setting.vim
+if has('win64')
+    source ~/AppData/Local/nvim/plugin_settings/vim-lsp_setting.vim
+elseif !empty($XDG_CONFIG_HOME)
+    source $XDG_CONFIG_HOME/.config/nvim/plugin_settings/vim-lsp_setting.vim
+else
+    source ~/.config/nvim/plugin_settings/vim-lsp_setting.vim
+endif
 
 " myDE向けの設定を読み込む
 if !empty($container_name)
-    source ~/.config/nvim/plugin_settings/settings_for_myde.vim
+    if !empty($XDG_CONFIG_HOME)
+        source $SDG_CONFIG_HOME/.config/nvim/plugin_settings/settings_for_myde.vim
+    else
+        source ~/.config/nvim/plugin_settings/settings_for_myde.vim
+    endif
 endif
 
 
