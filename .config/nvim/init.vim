@@ -32,16 +32,17 @@ endif
 
 " vim-plugがインストールされていなかったらインストールする
 if !filereadable(s:share_nvim_dir . '/site/autoload/plug.vim')
+    let s:curl_command = has('win64') ? 'curl.exe -fLo ' . s:share_nvim_dir . '\site\autoload\plug.vim' : 'curl -fLo ' . s:share_nvim_dir . '/site/autoload/plug.vim'
+    call system(s:curl_command . ' --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim')
+
+    " ついでにプラグインもインストールする
     if has('win64')
         " Windowsの場合
-        call system('curl.exe -fLo %LOCALAPPDATA%\nvim-data\site\autoload\plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim')
         source ~/AppData/Local/nvim/plugin_settings/vim-plug_setting.vim
     else
         " Windows以外の場合
-        call system('curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim')
         source ~/.config/nvim/plugin_settings/vim-plug_setting.vim
     endif
-    " ついでにプラグインもインストールする
     PlugInstall
 endif
 
