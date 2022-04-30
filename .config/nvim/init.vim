@@ -44,7 +44,7 @@ if !filereadable(s:share_nvim_dir . '/site/autoload/plug.vim')
         if empty($XDG_CONFIG_HOME)
             source ~/.config/nvim/plugin_settings/vim-plug_setting.vim
         else
-            source $XDG_CONFIG_HOME/.config/nvim/plugin_settings/vim-plug_setting.vim
+            source $XDG_CONFIG_HOME/nvim/plugin_settings/vim-plug_setting.vim
         endif
     endif
     PlugInstall
@@ -106,7 +106,7 @@ autocmd BufNewFile,BufRead *.kt setfiletype kotlin
 if has('win64')
     source ~/AppData/Local/nvim/plugin_settings/vim-plug_setting.vim
 elseif !empty($XDG_CONFIG_HOME)
-    source $XDG_CONFIG_HOME/.config/nvim/plugin_settings/vim-plug_setting.vim
+    source $XDG_CONFIG_HOME/nvim/plugin_settings/vim-plug_setting.vim
 else
     source ~/.config/nvim/plugin_settings/vim-plug_setting.vim
 endif
@@ -115,7 +115,7 @@ endif
 if has('win64')
     source ~/AppData/Local/nvim/plugin_settings/vim-indent-guides_setting.vim
 elseif !empty($XDG_CONFIG_HOME)
-    source $XDG_CONFIG_HOME/.config/nvim/plugin_settings/vim-indent-guides_setting.vim
+    source $XDG_CONFIG_HOME/nvim/plugin_settings/vim-indent-guides_setting.vim
 else
     source ~/.config/nvim/plugin_settings/vim-indent-guides_setting.vim
 endif
@@ -124,7 +124,7 @@ endif
 if has('win64')
     source ~/AppData/Local/nvim/plugin_settings/asyncomplete_setting.vim
 elseif !empty($XDG_CONFIG_HOME)
-    source $XDG_CONFIG_HOME/.config/nvim/plugin_settings/asyncomplete_setting.vim
+    source $XDG_CONFIG_HOME/nvim/plugin_settings/asyncomplete_setting.vim
 else
     source ~/.config/nvim/plugin_settings/asyncomplete_setting.vim
 endif
@@ -133,7 +133,7 @@ endif
 if has('win64')
     source ~/AppData/Local/nvim/plugin_settings/ale_setting.vim
 elseif !empty($XDG_CONFIG_HOME)
-    source $XDG_CONFIG_HOME/.config/nvim/plugin_settings/ale_setting.vim
+    source $XDG_CONFIG_HOME/nvim/plugin_settings/ale_setting.vim
 else
     source ~/.config/nvim/plugin_settings/ale_setting.vim
 endif
@@ -142,7 +142,7 @@ endif
 if has('win64')
     source ~/AppData/Local/nvim/plugin_settings/vim-lsp_setting.vim
 elseif !empty($XDG_CONFIG_HOME)
-    source $XDG_CONFIG_HOME/.config/nvim/plugin_settings/vim-lsp_setting.vim
+    source $XDG_CONFIG_HOME/nvim/plugin_settings/vim-lsp_setting.vim
 else
     source ~/.config/nvim/plugin_settings/vim-lsp_setting.vim
 endif
@@ -150,7 +150,7 @@ endif
 " myDE向けの設定を読み込む
 if !empty($container_name)
     if !empty($XDG_CONFIG_HOME)
-        source $SDG_CONFIG_HOME/.config/nvim/plugin_settings/settings_for_myde.vim
+        source $SDG_CONFIG_HOME/nvim/plugin_settings/settings_for_myde.vim
     else
         source ~/.config/nvim/plugin_settings/settings_for_myde.vim
     endif
