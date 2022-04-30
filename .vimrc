@@ -31,14 +31,14 @@ syntax enable
 " カラースキームの設定
 " gruvboxがなかったら用意する
 " neovimの設定ファイルが入ってるフォルダを取得する
-let s:neovim_config_dir = empty($XDG_CONFIG_HOME) ? expand('~/.config/nvim') : $XDG_CONFIG_HOME . '/nvim'
+let s:neovim_config_dir = empty($XDG_CONFIG_HOME) ? $HOME . '/.config/nvim' : $XDG_CONFIG_HOME . '/nvim'
 if has('win64')
     " Windows PCではvimは使ってないからNOOP
 else
-    if !filereadable(expand('~/.vim/colors/gruvbox.vim'))
+    if !filereadable($HOME . '/.vim/colors/gruvbox.vim')
         " ~/.vimが無かったら作る
-        if !isdirectory(expand('~/.vim'))
-            call mkdir(expand('~/.vim'), 'p')
+        if !isdirectory($HOME . '/.vim')
+            call mkdir($HOME . '/.vim', 'p')
         endif
 
         " neovimの方にあったらリンクを貼る
@@ -52,8 +52,8 @@ else
         else
             " 無かったらダウンロードする
             " ダウンロード先のディレクトリが無かったら作る
-            if !isdirectory(expand('~/.vim/colors'))
-                call mkdir(expand('~/.vim/colors'))
+            if !isdirectory($HOME . '/.vim/colors')
+                call mkdir($HOME . '/.vim/colors')
             endif
             " gruvboxをダウンロードする
             call system('curl https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim -o ~/.vim/colors/gruvbox.vim')
@@ -136,6 +136,6 @@ autocmd FileType java setlocal shiftwidth=2 softtabstop=2
 
 " ローカルのvimの設定を読み込む(set columnsの上書きとかをする)
 " ファイルがあるときだけ読み込む
-if filereadable(expand('~/.vimrc_local'))
+if filereadable($HOME . '/.vimrc_local')
     source ~/.vimrc_local
 endif
