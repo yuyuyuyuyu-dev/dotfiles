@@ -29,11 +29,12 @@ syntax enable
 
 
 " カラースキームの設定
+" gruvboxがなかったら用意する
 " neovimの設定ファイルが入ってるフォルダを取得する
 let s:neovim_config_dir = empty($XDG_CONFIG_HOME) ? expand('~/.config/nvim') : $XDG_CONFIG_HOME . '/nvim'
-
-" gruvboxがなかったら用意する
-if !has('win64')
+if has('win64')
+    " Windows PCではvimは使ってないからNOOP
+else
     if !filereadable(expand('~/.vim/colors/gruvbox.vim'))
         " ~/.vimが無かったら作る
         if !isdirectory(expand('~/.vim'))
