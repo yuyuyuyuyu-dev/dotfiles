@@ -84,6 +84,13 @@ set cmdheight=2
 set autochdir
 
 
+" undo履歴を保持し続ける
+if has('persistent_undo')
+    set undodir=~/.vimundo
+    set undofile
+endif
+
+
 " python3のパスを指定
 if has('win64')
     if !empty(system('where /Q python && echo has'))
