@@ -4,32 +4,6 @@ let s:config_home = has('win64') ? $LOCALAPPDATA : empty($XDG_CONFIG_HOME) ? $HO
 let s:share_nvim_dir = has('win64') ? $LOCALAPPDATA . '/nvim-data' : $HOME . '/.local/share/nvim'
 
 
-" シェルを指定する
-let s:bash_path = system("bash -c 'echo -n $(which bash)'")
-let s:fish_path = system("bash -c 'echo -n $(which fish)'")
-" bash
-if s:bash_path ==# "/usr/bin/bash"
-    set shell=/usr/bin/bash
-endif
-" fish
-" Linux
-if s:fish_path ==# "/usr/bin/fish"
-    set shell=/usr/bin/fish
-endif
-" Mac
-if s:fish_path ==# "/usr/local/bin/fish"
-    set shell=/usr/local/bin/fish
-endif
-" Linuxbrew
-if s:fish_path ==# "/home/linuxbrew/.linuxbrew/bin/fish"
-    set shell=/home/linuxbrew/.linuxbrew/bin/fish
-endif
-" Windows
-if has('win64')
-    set shell=C:\WINDOWS\system32\cmd.exe
-endif
-
-
 " vim-plugがインストールされていなかったらインストールする
 if !filereadable(s:share_nvim_dir . '/site/autoload/plug.vim')
     let s:curl_command = has('win64') ? 'curl.exe -fLo ' . s:share_nvim_dir . '\site\autoload\plug.vim' : 'curl -fLo ' . s:share_nvim_dir . '/site/autoload/plug.vim'
