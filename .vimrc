@@ -89,13 +89,6 @@ set autoindent
 set smartindent
 
 
-" undo履歴を保持し続ける
-if has('persistent_undo')
-    set undodir=~/.vimundo
-    set undofile
-endif
-
-
 " 全角文字をちゃんと表示する
 set ambiwidth=double
 
