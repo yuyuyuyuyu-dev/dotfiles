@@ -25,19 +25,11 @@ if !filereadable(s:share_nvim_dir . '/site/autoload/plug.vim')
 endif
 
 
-" カラースキームの"gruvbox"が無かったら用意する
-if !filereadable(s:config_home . '/nvim/colors/gruvbox.vim')
-    if filereadable($HOME . '/.vim/colors/gruvbox.vim')
-        " ~/.vim/colorsの中にあったらリンクを貼る
-        if !isdirectory(s:config_home . '/nvim/colors')
-            call mkdir(s:config_home . '/nvim/colors', 'p')
-        endif
-        call system(has('win64') ? 'mklink ' . s:config_home . '\nvim\colors\gruvbox.vim %HOMEPATH%\.vim/colors/gruvbox.vim' : 'ln -fs ~/.vim/colors/gruvbox.vim ' . s:config_home . '/nvim/colors/gruvbox.vim')
-    else
-        " ~/.vim/colorsの中にも無かったらダウンロードする
-        let s:curl_command = has('win64') ? 'curl.exe -fLo ' . s:config_home . '\nvim\colors\gruvbox.vim' : 'curl -o' . s:config_home . '/nvim/colors/gruvbox.vim'
-        call system(s:curl_command . ' --create-dirs https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim')
-    endif
+" カラースキームの"gruvbox"が無かったらダウンロードする
+let s:gruvbox_path = has('win64') ? s:config_home . '\nvim\colors\gruvbox.vim' : s:config_home . '/nvim/colors/gruvbox.vim'
+if !filereadable(s:gruvbox_path)
+    let s:curl_command = has('win64') ? 'curl.exe -fLo ' : 'curl -o '
+    call system(s:curl_command . s:gruvbox_path . ' --create-dirs https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim')
 endif
 
 
