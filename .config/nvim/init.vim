@@ -1,13 +1,12 @@
 " XDG Base Directory Specification
 let s:config_home = has('win64') ? $LOCALAPPDATA : empty($XDG_CONFIG_HOME) ? $HOME . '/.config' : $XDG_CONFIG_HOME
 
-let s:share_nvim_dir = has('win64') ? $LOCALAPPDATA . '/nvim-data' : $HOME . '/.local/share/nvim'
-
 
 " vim-plugがインストールされていなかったらインストールする
-if !filereadable(s:share_nvim_dir . '/site/autoload/plug.vim')
-    let s:curl_command = has('win64') ? 'curl.exe -fLo ' . s:share_nvim_dir . '\site\autoload\plug.vim' : 'curl -fLo ' . s:share_nvim_dir . '/site/autoload/plug.vim'
-    call system(s:curl_command . ' --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim')
+let s:plug_path = has('win64') ? s:config_home . '\site\autoload\plug.vim' : s:config_home . '/site/autoload/plug.vim'
+if !filereadable(s:plug_path)
+    let s:curl_command = has('win64') ? 'curl.exe' : 'curl'
+    call system(s:curl_command . ' -fLo ' . s:plug_path . ' --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim')
 
     " ついでにプラグインもインストールする
     if has('win64')
