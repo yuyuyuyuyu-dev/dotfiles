@@ -3,7 +3,7 @@ let s:config_home = has('win64') ? $LOCALAPPDATA : empty($XDG_CONFIG_HOME) ? $HO
 
 
 " vim-plugがインストールされていなかったらインストールする
-let s:plug_path = has('win64') ? s:config_home . '\site\autoload\plug.vim' : s:config_home . '/site/autoload/plug.vim'
+let s:plug_path = has('win64') ? $LOCALAPPDATA . '\nvim-data\site\autoload\plug.vim' : $HOME . '/.local/share/nvim/site/autoload/plug.vim'
 if !filereadable(s:plug_path)
     let s:curl_command = has('win64') ? 'curl.exe' : 'curl'
     call system(s:curl_command . ' -fLo ' . s:plug_path . ' --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim')
