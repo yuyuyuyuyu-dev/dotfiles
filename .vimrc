@@ -29,39 +29,16 @@ syntax enable
 
 
 " カラースキームの設定
-" gruvboxがなかったら用意する
-" neovimの設定ファイルが入ってるフォルダを取得する
-let s:neovim_config_dir = empty($XDG_CONFIG_HOME) ? $HOME . '/.config/nvim' : $XDG_CONFIG_HOME . '/nvim'
-if has('win64')
-    " Windows PCではvimは使ってないからNOOP
-else
-    if !filereadable($HOME . '/.vim/colors/gruvbox.vim')
-        " ~/.vimが無かったら作る
-        if !isdirectory($HOME . '/.vim')
-            call mkdir($HOME . '/.vim', 'p')
-        endif
-
-        " neovimの方にあったらリンクを貼る
-        if filereadable(s:neovim_config_dir . '/colors/gruvbox.vim')
-            " $XDG_CONFIG_HOMEが設定されているかによってリンク元を変える
-            if empty($XDG_CONFIG_HOME)
-                call system('ln -fns ~/.config/nvim/colors ~/.vim/')
-            else
-                call system('ln -fns $XDG_CONFIG_HOME/nvim/colors ~/.vim/')
-            endif
-        else
-            " 無かったらダウンロードする
-            " ダウンロード先のディレクトリが無かったら作る
-            if !isdirectory($HOME . '/.vim/colors')
-                call mkdir($HOME . '/.vim/colors')
-            endif
-            " gruvboxをダウンロードする
-            call system('curl https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim -o ~/.vim/colors/gruvbox.vim')
-        endif
+" gruvboxがなかったらダウンロードする
+" neovimから読み込まれていたときはダウンロードしない
+if !has('nvim')
+    let s:gruvbox_path = has('win64') ? $HOME . '\vimfiles\colors\gruvbox.vim' : $HOME . '/.vim/colors/gruvbox.vim'
+    if !filereadable(s:gruvbox_path)
+        let s:curl_command = has('win64') ? 'curl.exe -fLo ' : 'curl -o '
+        call system(s:curl_command . s:gruvbox_path . ' --create-dirs https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim')
     endif
 endif
-
-" カラースキームの設定
+" カラースキームをgruvboxに指定する
 colorscheme gruvbox
 
 " ライトテーマを使う
