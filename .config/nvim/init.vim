@@ -28,8 +28,8 @@ endif
 " カラースキームの"gruvbox"が無かったらダウンロードする
 let s:gruvbox_path = has('win64') ? s:config_home . '\nvim\colors\gruvbox.vim' : s:config_home . '/nvim/colors/gruvbox.vim'
 if !filereadable(s:gruvbox_path)
-    let s:curl_command = has('win64') ? 'curl.exe -fLo ' : 'curl -o '
-    call system(s:curl_command . s:gruvbox_path . ' --create-dirs https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim')
+    let s:curl_command = has('win64') ? 'curl.exe' : 'curl'
+    call system(s:curl_command . ' -fLo ' . s:gruvbox_path . ' --create-dirs https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim')
 endif
 
 
