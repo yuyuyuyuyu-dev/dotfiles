@@ -1,15 +1,19 @@
+" vimの設定を読み込む
+if has('win64')
+    source ~\_vimrc
+else
+    source ~/.vimrc
+endif
+
+
 " XDG Base Directory Specification
 let s:config_home = has('win64') ? $LOCALAPPDATA : empty($XDG_CONFIG_HOME) ? $HOME . '/.config' : $XDG_CONFIG_HOME
-
-" OS別のcurlコマンド
-let s:curl_command = has('win64') ? 'curl.exe' : 'curl'
-let s:curl_command = s:curl_command . ' -fLo '
 
 
 " vim-plugがインストールされていなかったらインストールする
 let s:plug_path = has('win64') ? $LOCALAPPDATA . '\nvim-data\site\autoload\plug.vim' : $HOME . '/.local/share/nvim/site/autoload/plug.vim'
 if !filereadable(s:plug_path)
-    call system(s:curl_command . s:plug_path . ' --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim')
+    call g:DownloadIfNotFileReadable(s:plug_path, 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim')
 
     " ついでにプラグインもインストールする
     if has('win64')
@@ -27,22 +31,14 @@ if !filereadable(s:plug_path)
 endif
 
 
-" カラースキームの"gruvbox"が無かったらダウンロードする
-let s:gruvbox_path = has('win64') ? s:config_home . '\nvim\colors\gruvbox.vim' : s:config_home . '/nvim/colors/gruvbox.vim'
-if !filereadable(s:gruvbox_path)
-    call system(s:curl_command . s:gruvbox_path . ' --create-dirs https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim')
-endif
-
-
-" vimの設定を読み込む
-if has('win64')
-    source ~\_vimrc
-else
-    source ~/.vimrc
-endif
-
-
 " ここからneovim向けの設定
+" カラースキームの設定
+" gruvboxがローカルに無かったらダウンロードする
+call g:DownloadIfNotFileReadable(has('win64') ? s:config_home . '\nvim\colors\gruvbox.vim' : s:config_home . '/nvim/colors/gruvbox.vim', 'https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim')
+" カラースキームをgruvboxに指定する
+colorscheme gruvbox
+
+
 " コマンドラインを２行にする
 set cmdheight=2
 
