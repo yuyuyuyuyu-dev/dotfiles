@@ -29,17 +29,30 @@ syntax enable
 
 
 " カラースキームの設定
-" gruvboxがなかったらダウンロードする
-" neovimから読み込まれていたときはダウンロードしない
-if !has('nvim')
-    let s:gruvbox_path = has('win64') ? $HOME . '\vimfiles\colors\gruvbox.vim' : $HOME . '/.vim/colors/gruvbox.vim'
-    if !filereadable(s:gruvbox_path)
-        let s:curl_command = has('win64') ? 'curl.exe' : 'curl'
-        call system(s:curl_command . ' -fLo ' . s:gruvbox_path . ' --create-dirs https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim')
+" ファイルが無かったらダウンロードする関数
+function! g:DownloadIfNotFileReadable(file_path, remote_url) abort
+    if filereadable(a:file_path)
+        " ファイルがローカルに存在していたら何もしない
+        return
     endif
+    " OS別のcurlコマンド
+    let l:curl_command = has('win64') ? 'curl.exe' : 'curl'
+    " ファイルをダウンロードする
+    let l:message = system(l:curl_command . ' -Lo ' . a:file_path . ' --create-dirs ' . a:remote_url)
+    if l:message  !~# '.*% Total.*% Received.*% Xferd.*'
+        " ダウンロードに失敗したらエラーメッセージを表示する
+        echo 'error: ' . l:message
+    endif
+endfunction
+
+" neovimから読み込まれていたときは処理しない
+if !has('nvim')
+    " gruvboxがなかったらダウンロードする
+    call g:DownloadIfNotFileReadable(has('win64') ? $HOME . '\vimfiles\colors\gruvbox.vim' : $HOME . '/.vim/colors/gruvbox.vim', 'https://raw.githubusercontent.com/morhetz/gruvbox/master/colors/gruvbox.vim')
+
+    " カラースキームをgruvboxに指定する
+    colorscheme gruvbox
 endif
-" カラースキームをgruvboxに指定する
-colorscheme gruvbox
 
 " ライトテーマを使う
 set background=light
