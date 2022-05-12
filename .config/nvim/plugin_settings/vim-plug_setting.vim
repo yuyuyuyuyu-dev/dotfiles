@@ -12,6 +12,9 @@ call plug#begin(stdpath('data') . '/plugged')
     " 自動で閉じ括弧とか入力してくれるやつ
     Plug 'cohama/lexima.vim'
 
+    " 自動でHTMLの閉じタグを入力してくれるプラグイン
+    Plug 'alvan/vim-closetag'
+
     " lintしてくれるやつ
     Plug 'w0rp/ale'
 
