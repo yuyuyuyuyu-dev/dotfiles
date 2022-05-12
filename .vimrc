@@ -115,6 +115,7 @@ inoremap <silent> ;<ESC> <ESC>:call InsertEndSemicolon()<CR>
 " 言語ごとのインデントの設定
 filetype indent on
 autocmd FileType java setlocal shiftwidth=2 softtabstop=2
+autocmd FileType typescriptreact setlocal shiftwidth=2 softtabstop=2
 
 
 " ローカルのvimの設定を読み込む(set columnsの上書きとかをする)
