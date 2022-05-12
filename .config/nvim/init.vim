@@ -117,6 +117,15 @@ else
     source ~/.config/nvim/plugin_settings/vim-lsp_setting.vim
 endif
 
+" vim-closetagの設定を読み込む
+if has('win64')
+    source ~/AppData/Local/nvim/plugin_settings/vim-closetag_setting.vim
+elseif !empty($XDG_CONFIG_HOME)
+    source $XDG_CONFIG_HOME/nvim/plugin_settings/vim-closetag_setting.vim
+else
+    source ~/.config/nvim/plugin_settings/vim-closetag_setting.vim
+endif
+
 " myDE向けの設定を読み込む
 if !empty($container_name)
     if !empty($XDG_CONFIG_HOME)
