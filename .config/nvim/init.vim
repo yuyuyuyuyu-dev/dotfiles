@@ -126,6 +126,16 @@ else
     source ~/.config/nvim/plugin_settings/vim-closetag_setting.vim
 endif
 
+" Neosnippetの設定を読み込む
+if has('win64')
+    source ~/AppData/Local/nvim/plugin_settings/neosnippet_setting.vim
+elseif !empty($XDG_CONFIG_HOME)
+    source $XDG_CONFIG_HOME/nvim/plugin_settings/neosnippet_setting.vim
+else
+    source ~/.config/nvim/plugin_settings/neosnippet_setting.vim
+endif
+
+
 " myDE向けの設定を読み込む
 if !empty($container_name)
     if !empty($XDG_CONFIG_HOME)
@@ -136,16 +146,6 @@ if !empty($container_name)
 endif
 
 
-" 補完の設定
-imap <C-k> <Plug>(neosnippet_expand_or_jump)
-smap <C-k> <Plug>(neosnippet_expand_or_jump)
-xmap <C-k> <Plug>(neosnippet_expand_target)
-if has('conceal')
-    set conceallevel=0 concealcursor=niv
-endif
-
-
 " キーバインド
 tnoremap <silent> <ESC> <C-\><C-n>
 nnoremap <silent> <C-t><C-m> :split<CR> <C-w>j :terminal<CR> :resize 6<CR> i
-nnoremap <silent> def :LspDefinition<CR>
