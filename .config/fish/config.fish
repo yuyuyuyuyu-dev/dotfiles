@@ -65,6 +65,10 @@ if [ -n {$GOPATH} ]
     set -x PATH {$PATH} {$GOPATH}/bin
 end
 
+if [ -n {$HOME}/.volta/bin ]
+    set -x PATH {$PATH} {$HOME}/.volta/bin
+end
+
 
 # prompt_pwdでパスを省略しない
 set -g fish_prompt_pwd_dir_length 0
