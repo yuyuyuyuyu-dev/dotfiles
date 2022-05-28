@@ -110,6 +110,7 @@ nnoremap <silent> ; :call InsertEndSemicolon()<CR>
 inoremap <silent> ;; ;
 " インサートモードでセミコロン押してからエスケープキーを押すと行末にセミコロンを挿入してからノーマルモードに戻る
 inoremap <silent> ;<ESC> <ESC>:call InsertEndSemicolon()<CR>
+inoremap <silent> ;<CR> <ESC>:call InsertEndSemicolon()<CR>a<CR><ESC>O
 
 
 " 言語ごとのインデントの設定
@@ -118,6 +119,7 @@ autocmd FileType java setlocal shiftwidth=2 softtabstop=2
 autocmd FileType typescriptreact setlocal shiftwidth=2 softtabstop=2
 autocmd FileType javascript setlocal shiftwidth=2 softtabstop=2
 autocmd FileType javascriptreact setlocal shiftwidth=2 softtabstop=2
+autocmd FileType html setlocal shiftwidth=2 softtabstop=2
 
 
 " ローカルのvimの設定を読み込む(set columnsの上書きとかをする)
