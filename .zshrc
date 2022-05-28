@@ -98,3 +98,5 @@ case "${OSTYPE}" in
     # linuxのときに読み込まれる設定
     ;;
 esac
+export VOLTA_HOME="$HOME/.volta"
+export PATH="$VOLTA_HOME/bin:$PATH"
