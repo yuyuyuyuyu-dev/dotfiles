@@ -130,3 +130,6 @@ end
 if uname -r | grep -i Microsoft > /dev/null 2>&1
     alias firefox "/mnt/c/Program\ Files/Mozilla\ Firefox/firefox.exe"
 end
+
+test -e {$HOME}/.iterm2_shell_integration.fish ; and source {$HOME}/.iterm2_shell_integration.fish
+
