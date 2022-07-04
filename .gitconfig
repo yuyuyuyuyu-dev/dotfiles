@@ -11,7 +11,7 @@
 
 [alias]
 	# git diffしたときに、改行コードを気にしないようにする
-	diff = "diff -w"
+	diff = diff -w
 	root = rev-parse --show-toplevel
 
 
