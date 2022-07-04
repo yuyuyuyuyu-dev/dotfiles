@@ -12,6 +12,7 @@
 [alias]
 	# git diffしたときに、改行コードを気にしないようにする
 	diff = "diff -w"
+	root = rev-parse --show-toplevel
 
 
 [difftool "sourcetree"]
