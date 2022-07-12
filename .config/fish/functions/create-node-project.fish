@@ -7,4 +7,6 @@ function create-node-project
     npx tsc --init
     curl -o 'tsconfig.json' 'https://raw.githubusercontent.com/yu-ko-ba/tsconfig/main/tsconfig.json'
     volta pin node
+    mkdir src
+    cd ..
 end
