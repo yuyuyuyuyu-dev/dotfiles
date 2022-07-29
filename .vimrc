@@ -88,6 +88,8 @@ set ambiwidth=double
 set breakindent
 " 折り返したときの追加のインデントの深さを指定する
 set breakindentopt=shift:0
+" 単語単位で折り返す
+set linebreak
 
 
 " 行末にセミコロンを挿入する
