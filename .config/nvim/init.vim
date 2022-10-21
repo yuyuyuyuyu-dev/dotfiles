@@ -43,10 +43,6 @@ colorscheme gruvbox
 set cmdheight=2
 
 
-" 開いたファイルがあるディレクトリに自動でcdする
-set autochdir
-
-
 " undo履歴を保持し続ける
 if has('persistent_undo')
     set undodir=~/.vimundo
