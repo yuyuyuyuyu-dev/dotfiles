@@ -2364,7 +2364,7 @@
 			<key>Name</key>
 			<string>yu-ko-ba</string>
 			<key>Non Ascii Font</key>
-			<string>MonofurNerdFontComplete-Regular 20</string>
+			<string>Monaco 12</string>
 			<key>Non-ASCII Anti Aliased</key>
 			<true/>
 			<key>Normal Font</key>
@@ -2432,7 +2432,7 @@
 			<key>Use Italic Font</key>
 			<true/>
 			<key>Use Non-ASCII Font</key>
-			<true/>
+			<false/>
 			<key>Vertical Spacing</key>
 			<real>1.2</real>
 			<key>Visual Bell</key>
