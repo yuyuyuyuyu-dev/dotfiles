@@ -2368,7 +2368,7 @@
 			<key>Non-ASCII Anti Aliased</key>
 			<true/>
 			<key>Normal Font</key>
-			<string>Yomogi-Regular 20</string>
+			<string>YomogiNerdFontComplete-Regular 20</string>
 			<key>Option Key Sends</key>
 			<integer>2</integer>
 			<key>Prevent Opening in a Tab</key>
