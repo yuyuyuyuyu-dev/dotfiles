@@ -13,9 +13,9 @@ for i in .*; do
     fi
   done
 
-  # もともとファイルがあるとリンクを貼れないから削除
+  # すでにファイルが存在した場合は元のファイルをリネームする
   if [ -e ${HOME}/${i} ]; then
-    rm -rf ${HOME}/${i}
+    mv ${HOME}/${i} ${HOME}/${i}.bak
   fi
 
   ln -fns ${HOME}/dotfiles/${i} ${HOME}/
