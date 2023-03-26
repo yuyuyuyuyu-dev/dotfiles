@@ -1,6 +1,7 @@
 .DS_Store
 .config/*
-!.config/fish/
+!.config/fish/config.fish
+!.config/fish/functions/
 !.config/brewfile/
 !.config/git/
 .vim/
