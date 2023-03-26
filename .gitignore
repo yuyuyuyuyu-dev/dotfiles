@@ -1,12 +1,9 @@
 .DS_Store
 .config/*
-!.config/nvim/
 !.config/fish/
 !.config/brewfile/
 !.config/git/
 .vim/
-.config/nvim/colors
-.config/nvim/colors/
 .python_history
 .bash_history
 .latest_brew_doctor_result
