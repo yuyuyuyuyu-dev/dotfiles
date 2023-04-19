@@ -35,3 +35,11 @@
 
 [init]
 	defaultBranch = main
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[user]
+	name = yu-ko-ba
+	email = 59269129+yu-ko-ba@users.noreply.github.com
