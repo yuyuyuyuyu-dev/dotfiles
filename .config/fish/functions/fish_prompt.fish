@@ -6,22 +6,19 @@ function fish_prompt --description 'Write out the prompt'
   echo
 
   if [ {$exit_status} -ne 0 ]
-    echo '       _,／￣￣`￣＼､/ﾚ'
-    echo '    ／/    ,   /＼  .i i Ｖ〈'
-    echo '   / /   ∠ﾑ/ ー-V l  「ヽ'
-    echo '     j v､!●    ● i  '  ├''
-    echo '  ／   〈     ワ   /  .i y\''
-    echo '/ _ ,.イ , `ｰｩ   ｔ-!,､_У'
-    echo '´  \'  .ﾚ^V´  Ｖ_,ィtｰ〈    ｢| ｢|'
-    echo '         /  `央ー\'j    ＼_|:| |:|'
-    echo -n '       ,/ー､{,_ﾉ  /ー､!   ＼::::]'
+    echo -n ' '
+    echo -n (date '+%H')
+    echo -n ':'
+    echo -n (date '+%M')
+    echo -n ' '
+    echo -n '💀 '
   else
     echo -n ' '
     echo -n (date '+%H')
     echo -n ':'
     echo -n (date '+%M')
     echo -n ' '
-    echo -n (whoami)
+    echo -n '🙂 '
   end
 
   echo -n '$ '
