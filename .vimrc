@@ -132,3 +132,6 @@ autocmd FileType json setlocal shiftwidth=2 softtabstop=2
 if filereadable($HOME . '/.vimrc_local')
     source ~/.vimrc_local
 endif
+
+" :Tc で今いるウィンドウにターミナルを開く
+command Tc term ++curwin
