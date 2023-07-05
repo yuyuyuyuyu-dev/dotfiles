@@ -135,3 +135,9 @@ endif
 
 " :Tc で今いるウィンドウにターミナルを開く
 command Tc term ++curwin
+
+" gVimの設定
+set guifont=Yomogi_Nerd_Font:h12
+
+" スワップファイルを作らないようにする
+set noswapfile
