@@ -5,11 +5,6 @@
 PROMPT=$'\n%m: %n$ '
 RPROMPT=$'%~'
 
-# コマンド履歴
-HISTFILE=~/Library/Mobile\ Documents/com\~apple\~CloudDocs/.zsh_history  # 履歴の保存先
-HISTSIZE=10000                                                           # メモリに保存される履歴の件数
-SAVEHIST=1000000                                                         # 履歴ファイルに保存される履歴の件数
-
 # パスの設定
 path=(
   $path
@@ -92,7 +87,6 @@ case "${OSTYPE}" in
     alias ls="ls -FG"
     alias la="ls -aFG"
     alias ll="ls -FGl"
-    alias pushDotfiles="open -a /Applications/Safari.app https://www.github.com/yuu-kobayashi/dotfiles/ && cd ${HOME}/dotfiles/ && git add . && git commit && git push origin master"
     ;;
   linux*)
     # linuxのときに読み込まれる設定
