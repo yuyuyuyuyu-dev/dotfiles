@@ -39,7 +39,7 @@ function! g:DownloadIfNotFileReadable(file_path, remote_url) abort
     let l:curl_command = has('win64') ? 'curl.exe' : 'curl'
     " ファイルをダウンロードする
     let l:message = system(l:curl_command . ' -Lo ' . a:file_path . ' --create-dirs ' . a:remote_url)
-    if l:message  !~# '.*% Total.*% Received.*% Xferd.*'
+    if l:message !~# '.*% Total.*% Received.*% Xferd.*'
         " ダウンロードに失敗したらエラーメッセージを表示する
         echo 'error: ' . l:message
     endif
@@ -70,7 +70,7 @@ set shiftwidth=4
 
 " よくわからないけどとりあえず書いておく。
 " backspaceしたときに一度に消されるスペースの数らしい
-set softtabstop=4  
+set softtabstop=4
 
 " 改行したときにインデントしてくれる
 set autoindent
@@ -107,12 +107,20 @@ function! InsertEndSemicolon() abort
 endfunction
 
 " ノーマルモードでセミコロンを押すとInsertEndSemicolon()が呼ばれるようにする
-nnoremap <silent> ; :call InsertEndSemicolon()<CR>
+" nnoremap <silent> ; :call InsertEndSemicolon()<CR>
 " インサートモードでセミコロン２度押しでその場にセミコロンを入力できるようにする
-inoremap <silent> ;; ;
+" inoremap <silent> ;; ;
 " インサートモードでセミコロン押してからエスケープキーを押すと行末にセミコロンを挿入してからノーマルモードに戻る
 inoremap <silent> ;<ESC> <ESC>:call InsertEndSemicolon()<CR>
-inoremap <silent> ;<CR> <ESC>:call InsertEndSemicolon()<CR>a<CR><ESC>O
+" inoremap <silent> ;<CR> <ESC>:call InsertEndSemicolon()<CR>a<CR><ESC>O
+
+" 入力切替として設定しているキーショートカットに反応しないようにする
+noremap <C-S-:> <Nop>
+noremap! <C-S-:> <Nop>
+tnoremap <C-S-:> <Nop>
+
+" ノーマルモードで「:」と「;」を打ち間違えても「:」と入力されるようにする
+nnoremap ; :
 
 
 " 言語ごとのインデントの設定
