@@ -29,7 +29,7 @@ syntax enable
 
 
 " カラースキームの設定
-" ファイルが無かったらダウンロードする関数
+" ファイルが無かったらダウンロードする関数を定義
 function! g:DownloadIfNotFileReadable(file_path, remote_url) abort
     if filereadable(a:file_path)
         " ファイルがローカルに存在していたら何もしない
@@ -92,7 +92,7 @@ set breakindentopt=shift:0
 set linebreak
 
 
-" 行末にセミコロンを挿入する
+" 行末にセミコロンを挿入する関数を定義
 function! InsertEndSemicolon() abort
     " カーソルの現在位置を取得する
     let s:currentPosition = getpos('.')
@@ -105,6 +105,7 @@ function! InsertEndSemicolon() abort
     " カーソル位置を戻す
     call setpos('.', s:currentPosition)
 endfunction
+
 
 " ノーマルモードでセミコロンを押すとInsertEndSemicolon()が呼ばれるようにする
 " nnoremap <silent> ; :call InsertEndSemicolon()<CR>
@@ -141,11 +142,17 @@ if filereadable($HOME . '/.vimrc_local')
     source ~/.vimrc_local
 endif
 
+
 " :Tc で今いるウィンドウにターミナルを開く
 command Tc term ++curwin
 
-" gVimの設定
+" :Python でpythonを開く（pythonを閉じたらウィンドウも閉じる）
+command Python term ++curwin ++close python
+
+
+" gVimのフォントの設定
 set guifont=Yomogi_Nerd_Font:h12
+
 
 " スワップファイルを作らないようにする
 set noswapfile
