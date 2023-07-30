@@ -51,10 +51,6 @@ local plugins = {
     "rbtnn/vim-ambiwidth",
   },
 
-  -- {
-  --   "C:\\Users\\yu_kobayashi\\sources\\insert-end-semicolon",
-  -- },
-
   -- To make a plugin not be loaded
   -- {
   --   "NvChad/nvim-colorizer.lua",
