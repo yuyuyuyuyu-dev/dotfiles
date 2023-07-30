@@ -15,9 +15,6 @@ vim.o.fileencodings = "utf-8,cp932,sjis,ec-jp"
 -- set fileformats=
 vim.o.fileformats = "dos,unix,mac"
 
-vim.o.shell = "C:\\\\Users\\\\yu_kobayashi\\\\scoop\\\\shims\\\\nu.exe"
-vim.o.shellcmdflag = "-c nu --login"
-
 -- rust-analyzerの設定が見つからない問題への対処
 -- https://github.com/williamboman/mason.nvim/issues/1289#issuecomment-1550309536
 -- だめだった
