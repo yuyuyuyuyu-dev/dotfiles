@@ -25,7 +25,7 @@ set number
 
 
 " シンタックスハイライトをオンにする
-syntax enable 
+syntax enable
 
 
 " カラースキームの設定
