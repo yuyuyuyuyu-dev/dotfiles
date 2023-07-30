@@ -18,6 +18,11 @@ vim.o.fileformats = "dos,unix,mac"
 vim.o.shell = "C:\\\\Users\\\\yu_kobayashi\\\\scoop\\\\shims\\\\nu.exe"
 vim.o.shellcmdflag = "-c nu --login"
 
+-- rust-analyzerの設定が見つからない問題への対処
+-- https://github.com/williamboman/mason.nvim/issues/1289#issuecomment-1550309536
+-- だめだった
+-- vim.env.PATH = vim.fn.stdpath "data" .. "/mason/bin" .. (vim.fn.has("win64") and ";" or ":") .. vim.env.PATH
+
 -- 文字幅の問題はターミナルエミュレータのHyperに丸投げする
 -- vim.o.ambiwidth = "double"
 -- vim.fn.setcellwidths {
