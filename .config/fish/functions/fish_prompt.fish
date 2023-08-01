@@ -18,7 +18,7 @@ function fish_prompt --description 'Write out the prompt'
     echo -n ':'
     echo -n (date '+%M')
     echo -n ' '
-    echo -n '🙂 '
+    echo -n '🍓 '
   end
 
   echo -n '$ '
