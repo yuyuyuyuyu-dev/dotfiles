@@ -96,29 +96,6 @@ set mouse=
 set backspace=start
 
 
-" 行末にセミコロンを挿入する関数を定義
-function! InsertEndSemicolon() abort
-    " カーソルの現在位置を取得する
-    let s:currentPosition = getpos('.')
-
-    " 行末にセミコロンがなかったら挿入する
-    if !(getline('.') =~ ';$')
-        execute ':normal A;'
-    endif
-
-    " カーソル位置を戻す
-    call setpos('.', s:currentPosition)
-endfunction
-
-
-" ノーマルモードでセミコロンを押すとInsertEndSemicolon()が呼ばれるようにする
-" nnoremap <silent> ; :call InsertEndSemicolon()<CR>
-" インサートモードでセミコロン２度押しでその場にセミコロンを入力できるようにする
-" inoremap <silent> ;; ;
-" インサートモードでセミコロン押してからエスケープキーを押すと行末にセミコロンを挿入してからノーマルモードに戻る
-inoremap <silent> ;<ESC> <ESC>:call InsertEndSemicolon()<CR>
-" inoremap <silent> ;<CR> <ESC>:call InsertEndSemicolon()<CR>a<CR><ESC>O
-
 " 入力切替として設定しているキーショートカットに反応しないようにする
 noremap <C-S-j> <Nop>
 noremap! <C-S-j> <Nop>
