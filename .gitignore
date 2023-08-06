@@ -4,6 +4,7 @@
 !.config/fish/functions/
 !.config/brewfile/
 !.config/git/
+!.config/kitty/
 .vim/
 .python_history
 .bash_history
