@@ -118,9 +118,15 @@ inoremap <silent> ;<ESC> <ESC>:call InsertEndSemicolon()<CR>
 " inoremap <silent> ;<CR> <ESC>:call InsertEndSemicolon()<CR>a<CR><ESC>O
 
 " 入力切替として設定しているキーショートカットに反応しないようにする
+noremap <C-S-j> <Nop>
+noremap! <C-S-j> <Nop>
+tnoremap <C-S-j> <Nop>
 noremap <C-S-:> <Nop>
 noremap! <C-S-:> <Nop>
 tnoremap <C-S-:> <Nop>
+noremap <C-S-;> <Nop>
+noremap! <C-S-;> <Nop>
+tnoremap <C-S-;> <Nop>
 
 " ノーマルモードで「:」と「;」を打ち間違えても「:」と入力されるようにする
 nnoremap ; :
