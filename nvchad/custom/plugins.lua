@@ -47,8 +47,12 @@ local plugins = {
     end,
   },
 
+  -- {
+  --   "rbtnn/vim-ambiwidth",
+  -- },
+
   {
-    "rbtnn/vim-ambiwidth",
+    "yu-ko-ba/insert-end-semicolon.nvim",
   },
 
   -- To make a plugin not be loaded

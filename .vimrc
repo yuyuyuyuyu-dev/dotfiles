@@ -91,6 +91,8 @@ set breakindentopt=shift:0
 " 単語単位で折り返す
 set linebreak
 
+set mouse=
+
 
 " 行末にセミコロンを挿入する関数を定義
 function! InsertEndSemicolon() abort
