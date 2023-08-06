@@ -93,6 +93,8 @@ set linebreak
 
 set mouse=
 
+set backspace=start
+
 
 " 行末にセミコロンを挿入する関数を定義
 function! InsertEndSemicolon() abort
