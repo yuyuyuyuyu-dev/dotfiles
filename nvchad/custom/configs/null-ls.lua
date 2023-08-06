@@ -15,6 +15,9 @@ local sources = {
   -- Lua
   b.formatting.stylua,
 
+  -- Bash
+  b.formatting.shfmt,
+
   -- Vim script
 
   -- cpp

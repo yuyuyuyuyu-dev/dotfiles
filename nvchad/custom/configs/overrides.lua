@@ -34,6 +34,11 @@ M.mason = {
     "deno",
     "prettier",
 
+    -- Bash
+    "bash-language-server",
+    "shellcheck",
+    "shfmt",
+
     -- Vim script
     "vim-language-server",
     -- Pythonの仮想環境が作れないとかでインストールに失敗する
