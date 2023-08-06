@@ -2,28 +2,34 @@
 
 # ${HOME}/dotfiles内にある.(ドット)から始まるファイル(${EXCEPTION_ARRAY}に追加したものは除く)のシンボリックリンクを${HOME}ディレクトリ内に貼る
 
-
 # リンクを貼りたくないものをここに入れておく
 readonly EXCEPTION_ARRAY=('.' '..' '.DS_Store' '.git' '.gitignore')
 
 for i in .*; do
-  for j in ${EXCEPTION_ARRAY[@]}; do
-    if [ ${i} = ${j} ]; then
-      continue 2
-    fi
-  done
+	for j in "${EXCEPTION_ARRAY[@]}"; do
+		if [ "${i}" = "${j}" ]; then
+			continue 2
+		fi
+	done
 
-  # すでにファイルが存在した場合は元のファイルをリネームする
-  if [ -e ${HOME}/${i} ]; then
-    mv ${HOME}/${i} ${HOME}/${i}.bak
-  fi
+	# すでにファイルが存在した場合は元のファイルをリネームする
+	if [ -e "${HOME}/${i}" ]; then
+	  mv "${HOME}/${i}" "${HOME}/${i}.bak"
+	fi
 
-  ln -fns ${HOME}/dotfiles/${i} ${HOME}/
+	ln -fns "${HOME}/dotfiles/${i}" "${HOME}/${i}"
 done
+
+
+# NvChadの設定ファイル
+if [ -e "${HOME}/.config/nvim/lua/custom" ]; then
+  mv "${HOME}/.config/nvim/lua/custom" "${HOME}/.config/nvim/lua/custom.bak"
+fi
+ln -fns "${HOME}/dotfiles/nvchad/custom" "${HOME}/.config/nvim/lua/custom"
 
 
 # 端末固有のgit設定
 readonly GITCONFIGLOCAL='gitconfig.local'
-if ! [ -e ${HOME}/.${GITCONFIGLOCAL} ]; then
-    cp ${GITCONFIGLOCAL}.template ${HOME}/.${GITCONFIGLOCAL}
+if ! [ -e "${HOME}/.${GITCONFIGLOCAL}" ]; then
+	cp "${GITCONFIGLOCAL}.template" "${HOME}/.${GITCONFIGLOCAL}"
 fi
