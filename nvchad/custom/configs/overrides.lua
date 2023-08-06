@@ -34,6 +34,10 @@ M.mason = {
     "deno",
     "prettier",
 
+    -- c/cpp stuff
+    "clangd",
+    "clang-format",
+
     -- Bash
     "bash-language-server",
     "shellcheck",
@@ -41,8 +45,6 @@ M.mason = {
 
     -- Vim script
     "vim-language-server",
-    -- Pythonの仮想環境が作れないとかでインストールに失敗する
-    -- "vint",
 
     -- Go
     "goimports",
@@ -51,11 +53,6 @@ M.mason = {
     -- Rust
     "rust-analyzer",
     "rustfmt",
-
-    -- C
-    "clangd",
-    -- Pythonの仮想環境が作れないとかでインストールに失敗する
-    -- "clang-format",
   },
 }
 

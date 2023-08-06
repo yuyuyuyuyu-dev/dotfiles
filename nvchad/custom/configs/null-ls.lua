@@ -1,8 +1,4 @@
-local present, null_ls = pcall(require, "null-ls")
-
-if not present then
-  return
-end
+local null_ls = require "null-ls"
 
 local b = null_ls.builtins
 
@@ -15,18 +11,16 @@ local sources = {
   -- Lua
   b.formatting.stylua,
 
-  -- Bash
-  b.formatting.shfmt,
-
-  -- Vim script
-
   -- cpp
   b.formatting.clang_format,
 
-  -- go
+  -- Bash
+  b.formatting.shfmt,
+
+  -- Go
   b.formatting.goimports,
 
-  -- rust
+  -- Rust
   b.formatting.rustfmt,
 }
 
