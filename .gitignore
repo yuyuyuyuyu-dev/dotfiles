@@ -5,6 +5,7 @@
 !.config/brewfile/
 !.config/git/
 !.config/kitty/
+!.config/starship.toml
 .vim/
 .python_history
 .bash_history
