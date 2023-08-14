@@ -38,3 +38,4 @@ case "$OSTYPE" in
     # linuxのときに読み込まれる設定
     ;;
 esac
+. "$HOME/.cargo/env"
