@@ -3,7 +3,7 @@
 # ${HOME}/dotfiles内にある.(ドット)から始まるファイル(${EXCEPTION_ARRAY}に追加したものは除く)のシンボリックリンクを${HOME}ディレクトリ内に貼る
 
 # リンクを貼りたくないものをここに入れておく
-readonly EXCEPTION_ARRAY=('.' '..' '.DS_Store' '.git' '.gitignore')
+readonly EXCEPTION_ARRAY=('.' '..' '.DS_Store' '.git' '.gitignore' '.hyper.js')
 
 for i in .*; do
 	for j in "${EXCEPTION_ARRAY[@]}"; do
