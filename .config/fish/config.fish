@@ -1,5 +1,5 @@
 # 文字コードをUTF-8にする
-set -x LC_ALL ja_JP.UTF-8
+# set -x LC_ALL ja_JP.UTF-8
 
 
 # linuxbrewの設定
@@ -31,10 +31,6 @@ if ! [ -z {$SSH_CONNECTION} ]
 end
 
 
-# Goの設定
-set -x GOPATH {$HOME}/.go
-
-
 # パスの設定
 if ! [ -e {$HOME}/myCommands ]
     mkdir {$HOME}/myCommands
@@ -61,6 +57,8 @@ if [ -d {$HOME}/.nimble/bin ]
     set -x PATH {$PATH} {$HOME}/.nimble/bin
 end
 
+# Go
+set -x GOPATH {$HOME}/.go
 if [ -n {$GOPATH} ]
     set -x PATH {$PATH} {$GOPATH}/bin
 end
@@ -73,6 +71,13 @@ if [ -n {$HOME}/.volta ]
     set -x VOLTA_HOME {$HOME}/.volta
 end
 
+# pyenv
+set -x PYENV_ROOT {$HOME}/.pyenv
+if [ -n {$PYENV_ROOT}/bin ]
+    set -x PATH {$PATH} {$PYENV_ROOT}/bin
+end
+pyenv init - | source
+
 
 # prompt_pwdでパスを省略しない
 set -g fish_prompt_pwd_dir_length 0
@@ -84,18 +89,18 @@ set -x XDG_CACHE_HOME {$HOME}/.cache
 
 
 # デフォルトのエディタの設定
-# neovim、vim、viの順番でインストールされているか確認して、されていたらそれに設定する
-if type nvim > /dev/null 2>&1
-    set -x EDITOR nvim
-    set -x VISUAL nvim
-else if type vim > /dev/null 2>&1
+# vim、neovim、viの順番でインストールされているか確認して、されていたらそれに設定する
+if type vim > /dev/null 2>&1
     set -x EDITOR vim
     set -x VISUAL vim
 else if type vi > /dev/null 2>&1
     set -x EDITOR vi
     set -x VISUAL vi
+else if type nvim > /dev/null 2>&1
+    set -x EDITOR nvim
+    set -x VISUAL nvim
 else
-    echo 'nvimもvimもviもありませんでした'
+    echo 'vimもnvimもviもありませんでした'
 end
 
 
@@ -133,3 +138,4 @@ end
 
 test -e {$HOME}/.iterm2_shell_integration.fish ; and source {$HOME}/.iterm2_shell_integration.fish
 
+starship init fish | source
