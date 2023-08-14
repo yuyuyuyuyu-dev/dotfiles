@@ -25,7 +25,7 @@ function update
   end
   if cargo update -h > /dev/null 2>&1
     echo '########'
-    echo 'rustup'
+    echo 'cargo'
     echo '########'
     cargo update -v
   end
