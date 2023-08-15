@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/user/0/com.droidvim/files/usr/bin/bash
 
 for i in .bash*; do
 	# すでにファイルが存在した場合は元のファイルをリネームする
