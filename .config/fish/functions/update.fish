@@ -1,5 +1,5 @@
 function update 
-  if type brew > /dev/null 2>&1
+  if type -q brew
     echo
     echo
     echo '########'
@@ -7,7 +7,7 @@ function update
     echo '########'
     brew update -v && brew upgrade -v
   end
-  if type apt-get > /dev/null 2>&1
+  if type -q apt-get
     echo
     echo
     echo '########'
@@ -15,7 +15,7 @@ function update
     echo '########'
     sudo apt update && sudo apt upgrade
   end
-  if type volta > /dev/null 2>&1
+  if type -q volta
     echo
     echo
     echo '########'
@@ -23,7 +23,7 @@ function update
     echo '########'
     volta install node
   end
-  if type rustup > /dev/null 2>&1
+  if type -q rustup
     echo
     echo
     echo '########'
@@ -39,7 +39,7 @@ function update
     echo '########'
     cargo install-update -a
   end
-  if type pyenv > /dev/null 2>&1
+  if type -q pyenv
     echo
     echo
     echo '########'
