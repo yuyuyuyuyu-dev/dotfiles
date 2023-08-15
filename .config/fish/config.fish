@@ -16,7 +16,7 @@ end
 
 if ! [ -z {$SSH_CONNECTION} ]
   # SSH接続の場合
-  if type tmux > /dev/null 2>&1
+  if type -q tmux
     if [ -z {$TMUX} ]
       # tmuxのセッション外だったら
       if tmux list-sessions > /dev/null 2>&1
@@ -93,13 +93,13 @@ set -x XDG_CACHE_HOME {$HOME}/.cache
 
 # デフォルトのエディタの設定
 # vim、neovim、viの順番でインストールされているか確認して、されていたらそれに設定する
-if type vim > /dev/null 2>&1
+if type -q vim
   set -x EDITOR vim
   set -x VISUAL vim
-else if type vi > /dev/null 2>&1
+else if type -q vi
   set -x EDITOR vi
   set -x VISUAL vi
-else if type nvim > /dev/null 2>&1
+else if type -q nvim
   set -x EDITOR nvim
   set -x VISUAL nvim
 else
@@ -143,6 +143,6 @@ test -e {$HOME}/.iterm2_shell_integration.fish ; and source {$HOME}/.iterm2_shel
 
 
 # Starshipの設定
-if type starship > /dev/null 2>&1
+if type -q starship
   starship init fish | source
 end
