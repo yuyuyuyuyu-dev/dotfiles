@@ -4,4 +4,6 @@ alias ls='ls -FG'
 alias la='ls -aFG'
 alias ll='ls -FGl'
 
-. "$HOME/.cargo/env"
+if [[ -e "$HOME/.cargo/env" ]]; then
+	. "$HOME/.cargo/env"
+fi

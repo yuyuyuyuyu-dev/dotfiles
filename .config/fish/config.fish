@@ -32,20 +32,18 @@ end
 
 
 # パスの設定
-if ! [ -e {$HOME}/myCommands ]
-  mkdir {$HOME}/myCommands
+if [ -d {$HOME}/.local/bin ]
+  set -x PATH {$PATH} {$HOME}/.local/bin
 end
-set -x PATH {$PATH} {$HOME}/myCommands
 
+# Java
 if [ -d {$HOME}/.sdkman/candidates/java/current/bin ]
   set -x PATH {$PATH} {$HOME}/.sdkman/candidates/java/current/bin
 end
+
+# Kotlin
 if [ -d {$HOME}/.sdkman/candidates/kotlin/current/bin ]
   set -x PATH {$PATH} {$HOME}/.sdkman/candidates/kotlin/current/bin
-end
-
-if [ -d {$HOME}/.local/bin ]
-  set -x PATH {$PATH} {$HOME}/.local/bin
 end
 
 # Rust
@@ -64,7 +62,7 @@ if [ -n {$GOPATH} ]
   set -x PATH {$PATH} {$GOPATH}/bin
 end
 
-# node.js
+# Node.js
 if [ -n {$HOME}/.volta/bin ]
   set -x PATH {$PATH} {$HOME}/.volta/bin
 end
@@ -72,7 +70,7 @@ if [ -n {$HOME}/.volta ]
   set -x VOLTA_HOME {$HOME}/.volta
 end
 
-# pyenv
+# Python
 set -x PYENV_ROOT {$HOME}/.pyenv
 if [ -n {$PYENV_ROOT}/bin ]
   set -x PATH {$PATH} {$PYENV_ROOT}/bin
@@ -80,10 +78,6 @@ end
 if type pyenv > /dev/null 2>&1
   pyenv init - | source
 end
-
-
-# prompt_pwdでパスを省略しない
-set -g fish_prompt_pwd_dir_length 0
 
 
 # neovimに必要な設定
@@ -117,6 +111,13 @@ end
 # エイリアスの設定
 alias less "less -cmN"
 alias del "delete"
+alias arichu 'arisu'
+
+
+# Starshipの設定
+if type -q starship
+  starship init fish | source
+end
 
 
 # OS毎の設定
@@ -137,12 +138,4 @@ end
 # Windows Subsystem for Linuxのとき
 if uname -r | grep -i Microsoft > /dev/null 2>&1
   alias firefox "/mnt/c/Program\ Files/Mozilla\ Firefox/firefox.exe"
-end
-
-test -e {$HOME}/.iterm2_shell_integration.fish ; and source {$HOME}/.iterm2_shell_integration.fish
-
-
-# Starshipの設定
-if type -q starship
-  starship init fish | source
 end
