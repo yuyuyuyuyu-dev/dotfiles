@@ -139,9 +139,3 @@ end
 if uname -r | grep -i Microsoft > /dev/null 2>&1
   alias firefox "/mnt/c/Program\ Files/Mozilla\ Firefox/firefox.exe"
 end
-
-
-# Starshipの設定
-if type -q starship
-  starship init fish | source
-end
