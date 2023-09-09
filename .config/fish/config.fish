@@ -4,9 +4,9 @@ if [ -d /home/linuxbrew/.linuxbrew ]
   set -x HOMEBREW_CELLAR "/home/linuxbrew/.linuxbrew/Cellar"
   set -x HOMEBREW_REPOSITORY "/home/linuxbrew/.linuxbrew/Homebrew"
   set -x HOMEBREW_SHELLENV_PREFIX "/home/linuxbrew/.linuxbrew"
-  set -x PATH {$PATH} "/home/linuxbrew/.linuxbrew/bin" "/home/linuxbrew/.linuxbrew/sbin"
-  set -x MANPATH {$MANPATH} "/home/linuxbrew/.linuxbrew/share/man"
-  set -x INFOPATH {$INFOPATH} "/home/linuxbrew/.linuxbrew/share/info"
+  set -x PATH "/home/linuxbrew/.linuxbrew/bin" "/home/linuxbrew/.linuxbrew/sbin" {$PATH}
+  set -x MANPATH "/home/linuxbrew/.linuxbrew/share/man" {$MANPATH}
+  set -x INFOPATH "/home/linuxbrew/.linuxbrew/share/info" {$INFOPATH}
 end
 
 
@@ -35,60 +35,60 @@ end
 # パスの設定
 # 自作コマンド
 if [ -d {$HOME}/.local/bin ]
-  set -x PATH {$PATH} {$HOME}/.local/bin
+  set -x PATH {$HOME}/.local/bin {$PATH}
 end
 
 
 # Java
 if [ -d {$HOME}/.sdkman/candidates/java/current/bin ]
-  set -x PATH {$PATH} {$HOME}/.sdkman/candidates/java/current/bin
+  set -x PATH {$HOME}/.sdkman/candidates/java/current/bin {$PATH}
 end
 
 
 # Kotlin
 if [ -d {$HOME}/.sdkman/candidates/kotlin/current/bin ]
-  set -x PATH {$PATH} {$HOME}/.sdkman/candidates/kotlin/current/bin
+  set -x PATH {$HOME}/.sdkman/candidates/kotlin/current/bin {$PATH}
 end
 
 
 # Rust
 if [ -d {$HOME}/.cargo/bin ]
-  set -x PATH {$PATH} {$HOME}/.cargo/bin
+  set -x PATH {$HOME}/.cargo/bin {$PATH}
 end
 
 
 # Nim
 if [ -d {$HOME}/.nimble/bin ]
-  set -x PATH {$PATH} {$HOME}/.nimble/bin
+  set -x PATH {$HOME}/.nimble/bin {$PATH}
 end
 
 
 # Go
 # 本体
 if [ -d /usr/local/go/bin ]
-  set -x PATH {$PATH} /usr/local/go/bin
+  set -x PATH /usr/local/go/bin {$PATH}
 end
 
 # go installしたもの
 set -x GOPATH {$HOME}/.go
 if [ -n {$GOPATH} ]
-  set -x PATH {$PATH} {$GOPATH}/bin
+  set -x PATH {$GOPATH}/bin {$PATH}
 end
 
 
 # Node.js
-if [ -n {$HOME}/.volta/bin ]
-  set -x PATH {$PATH} {$HOME}/.volta/bin
-end
 if [ -n {$HOME}/.volta ]
   set -x VOLTA_HOME {$HOME}/.volta
+end
+if [ -n {$HOME}/.volta/bin ]
+  set -x PATH {$HOME}/.volta/bin {$PATH}
 end
 
 
 # Python
 set -x PYENV_ROOT {$HOME}/.pyenv
 if [ -n {$PYENV_ROOT}/bin ]
-  set -x PATH {$PATH} {$PYENV_ROOT}/bin
+  set -x PATH {$PYENV_ROOT}/bin {$PATH}
 end
 if type -q pyenv
   pyenv init - | source
