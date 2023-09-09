@@ -13,7 +13,7 @@ function update
     echo '########'
     echo 'apt'
     echo '########'
-    sudo apt update && sudo apt upgrade
+    sudo apt -y update && sudo apt upgrade
   end
   if type -q volta
     echo
