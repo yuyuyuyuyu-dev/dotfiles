@@ -1,3 +1,3 @@
 function arisu
-  echo '🍓 橘です！'
+  echo '🍓 橘です。'
 end
