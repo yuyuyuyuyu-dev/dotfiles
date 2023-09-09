@@ -1,4 +1,13 @@
-# linuxbrewの設定
+# Homebrew
+# パスを通す
+if [ -x /opt/homebrew/bin/brew ]
+  eval (/opt/homebrew/bin/brew shellenv)
+end
+
+# Analyticsを停止
+set -x HOMEBREW_NO_ANALYTICS 1
+
+# Linuxbrewの場合
 if [ -d /home/linuxbrew/.linuxbrew ]
   set -x HOMEBREW_PREFIX "/home/linuxbrew/.linuxbrew"
   set -x HOMEBREW_CELLAR "/home/linuxbrew/.linuxbrew/Cellar"
@@ -7,26 +16,6 @@ if [ -d /home/linuxbrew/.linuxbrew ]
   set -x PATH "/home/linuxbrew/.linuxbrew/bin" "/home/linuxbrew/.linuxbrew/sbin" {$PATH}
   set -x MANPATH "/home/linuxbrew/.linuxbrew/share/man" {$MANPATH}
   set -x INFOPATH "/home/linuxbrew/.linuxbrew/share/info" {$INFOPATH}
-end
-
-
-
-
-# SSHでアクセスされた場合はtmuxセッションを開く
-if ! [ -z {$SSH_CONNECTION} ]
-  # SSH接続の場合
-  if type -q tmux
-    if [ -z {$TMUX} ]
-      # tmuxのセッション外だったら
-      if tmux list-sessions > /dev/null 2>&1
-        # すでにセッションが存在したらそれにアタッチする
-        exec tmux -u attach
-      else
-        # セッションが存在しなかったら新しく作ってアタッチする
-        exec tmux -u
-      end
-    end
-  end
 end
 
 
@@ -97,6 +86,26 @@ end
 
 
 
+# SSHでアクセスされた場合はtmuxセッションを開く
+if ! [ -z {$SSH_CONNECTION} ]
+  # SSH接続の場合
+  if type -q tmux
+    if [ -z {$TMUX} ]
+      # tmuxのセッション外だったら
+      if tmux list-sessions > /dev/null 2>&1
+        # すでにセッションが存在したらそれにアタッチする
+        exec tmux -u attach
+      else
+        # セッションが存在しなかったら新しく作ってアタッチする
+        exec tmux -u
+      end
+    end
+  end
+end
+
+
+
+
 # neovimに必要な設定
 set -x XDG_CONFIG_HOME {$HOME}/.config
 set -x XDG_CACHE_HOME {$HOME}/.cache
@@ -117,15 +126,6 @@ else if type -q nvim
   set -x VISUAL nvim
 else
   echo 'vimもnvimもviもありませんでした'
-end
-
-
-
-
-# HomebrewのAnalyticsを停止
-set -x HOMEBREW_NO_ANALYTICS 1
-if [ -x /opt/homebrew/bin/brew ]
-  eval (/opt/homebrew/bin/brew shellenv)
 end
 
 
