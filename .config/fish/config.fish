@@ -1,7 +1,3 @@
-# 文字コードをUTF-8にする
-# set -x LC_ALL ja_JP.UTF-8
-
-
 # linuxbrewの設定
 if [ -d /home/linuxbrew/.linuxbrew ]
   set -x HOMEBREW_PREFIX "/home/linuxbrew/.linuxbrew"
@@ -14,6 +10,9 @@ if [ -d /home/linuxbrew/.linuxbrew ]
 end
 
 
+
+
+# SSHでアクセスされた場合はtmuxセッションを開く
 if ! [ -z {$SSH_CONNECTION} ]
   # SSH接続の場合
   if type -q tmux
@@ -31,36 +30,51 @@ if ! [ -z {$SSH_CONNECTION} ]
 end
 
 
+
+
 # パスの設定
+# 自作コマンド
 if [ -d {$HOME}/.local/bin ]
   set -x PATH {$PATH} {$HOME}/.local/bin
 end
+
 
 # Java
 if [ -d {$HOME}/.sdkman/candidates/java/current/bin ]
   set -x PATH {$PATH} {$HOME}/.sdkman/candidates/java/current/bin
 end
 
+
 # Kotlin
 if [ -d {$HOME}/.sdkman/candidates/kotlin/current/bin ]
   set -x PATH {$PATH} {$HOME}/.sdkman/candidates/kotlin/current/bin
 end
+
 
 # Rust
 if [ -d {$HOME}/.cargo/bin ]
   set -x PATH {$PATH} {$HOME}/.cargo/bin
 end
 
+
 # Nim
 if [ -d {$HOME}/.nimble/bin ]
   set -x PATH {$PATH} {$HOME}/.nimble/bin
 end
 
+
 # Go
+# 本体
+if [ -d /usr/local/go/bin ]
+  set -x PATH {$PATH} /usr/local/go/bin
+end
+
+# go installしたもの
 set -x GOPATH {$HOME}/.go
 if [ -n {$GOPATH} ]
   set -x PATH {$PATH} {$GOPATH}/bin
 end
+
 
 # Node.js
 if [ -n {$HOME}/.volta/bin ]
@@ -70,19 +84,24 @@ if [ -n {$HOME}/.volta ]
   set -x VOLTA_HOME {$HOME}/.volta
 end
 
+
 # Python
 set -x PYENV_ROOT {$HOME}/.pyenv
 if [ -n {$PYENV_ROOT}/bin ]
   set -x PATH {$PATH} {$PYENV_ROOT}/bin
 end
-if type pyenv > /dev/null 2>&1
+if type -q pyenv
   pyenv init - | source
 end
+
+
 
 
 # neovimに必要な設定
 set -x XDG_CONFIG_HOME {$HOME}/.config
 set -x XDG_CACHE_HOME {$HOME}/.cache
+
+
 
 
 # デフォルトのエディタの設定
@@ -101,6 +120,8 @@ else
 end
 
 
+
+
 # HomebrewのAnalyticsを停止
 set -x HOMEBREW_NO_ANALYTICS 1
 if [ -x /opt/homebrew/bin/brew ]
@@ -108,10 +129,12 @@ if [ -x /opt/homebrew/bin/brew ]
 end
 
 
+
+
 # エイリアスの設定
 alias less "less -cmN"
-alias del "delete"
-alias arichu 'arisu'
+
+
 
 
 # Starshipの設定
@@ -120,8 +143,10 @@ if type -q starship
 end
 
 
+
+
 # OS毎の設定
-switch (uname) # なぜかlinterに引っかかる
+switch (uname)
   case Darwin # Macのとき
     alias safari "open -a /Applications/Safari.app"
     alias chrome "open -a /Applications/Google\ Chrome.app"
