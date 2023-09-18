@@ -52,7 +52,6 @@ M.mason = {
 
     -- Rust
     "rust-analyzer",
-    "rustfmt",
   },
 }
 
