@@ -13,7 +13,7 @@ function update
     echo '########'
     echo 'apt'
     echo '########'
-    sudo apt -y update && sudo apt upgrade
+    sudo apt update && sudo apt -y upgrade
   end
   if type -q volta
     echo
@@ -22,6 +22,7 @@ function update
     echo 'volta'
     echo '########'
     volta install node
+    volta install npm
   end
   if type -q rustup
     echo
