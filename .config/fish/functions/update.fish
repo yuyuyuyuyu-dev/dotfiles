@@ -40,7 +40,7 @@ function update
     echo '########'
     cargo install-update -a
   end
-  if type -q pyenv
+  if pyenv update --help > /dev/null 2>&1
     echo
     echo
     echo '########'
