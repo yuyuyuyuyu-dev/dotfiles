@@ -28,7 +28,12 @@
 
 
 [filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
+	clean    = git-lfs clean -- %f
+	smudge   = git-lfs smudge -- %f
+	process  = git-lfs filter-process
 	required = true
+
+
+[commit]
+  # 既定ですべてのコミットに署名する
+	gpgsign = true

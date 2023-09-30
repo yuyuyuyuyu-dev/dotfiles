@@ -1,3 +1,6 @@
 [user]
-	name = 
-	email = 
+	name  =
+	email =
+
+[user]
+	signingkey =
