@@ -6,7 +6,6 @@
 --   command = "tabdo wincmd =",
 -- })
 
-
 -- 参考資料
 -- https://neovim.io/doc/user/lua-guide.html#lua-guide
 
@@ -35,3 +34,11 @@ vim.o.whichwrap = ""
 -- インサートモードでのbackspaceで改行とautoindentを削除できないようにする
 -- set backspace=
 vim.o.backspace = "start"
+
+-- filetypeがshのときはインデントをハードタブにする
+vim.api.nvim_create_augroup("sh indent", { clear = true })
+vim.api.nvim_create_autocmd({ "FileType" }, {
+  pattern = "sh",
+  group = "sh indent",
+  command = "setlocal noexpandtab"
+})
