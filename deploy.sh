@@ -42,3 +42,6 @@ git config --global pull.ff true
 git config --global commit.gpgsign true
 # ssh公開鍵で署名する
 git config --global gpg.format ssh
+
+git config --global alias.pull 'pull -p'
+git config --global alias.fetch 'fetch -p'

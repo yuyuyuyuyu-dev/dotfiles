@@ -46,7 +46,7 @@ function ignore
 end
 
 
-# Gitの設定
+# Gitの設定をする関数
 function set-git-config
   # デフォルトブランチの名前を"main"に指定する
   git config --global init.defaultBranch main
@@ -54,13 +54,12 @@ function set-git-config
   # プッシュするときの認証に使う公開鍵を指定する
   git config --global user.signingkey ~/.ssh/id_ed25519.pub
 
+  # 文字コード関係
   # プッシュするときに改行コードをLFで揃える
   # プルするときは変換しない
   git config --global core.autocrlf input
-
   # git diffしたときの文字コードをutf-8にする
   git config --global core.pager 'LESSCHARSET=utf-8 less -cmN'
-
   # git diffしたときに、改行コードを気にしないようにする
   git config --global alias.diff 'diff -w'
 
@@ -79,6 +78,9 @@ function set-git-config
   git config --global commit.gpgsign true
   # ssh公開鍵で署名する
   git config --global gpg.format ssh
+
+  git config --global alias.pull 'pull -p'
+  git config --global alias.fetch 'fetch -p'
 end
 
 

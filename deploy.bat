@@ -39,4 +39,7 @@ git config --global commit.gpgsign true
 rem ssh公開鍵で署名する
 git config --global gpg.format ssh
 
+git config --global alias.pull 'pull -p'
+git config --global alias.fetch 'fetch -p'
+
 pause
