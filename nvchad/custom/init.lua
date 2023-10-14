@@ -17,12 +17,6 @@ vim.o.fileencodings = "utf-8,cp932,sjis,ec-jp"
 -- set fileformats=
 vim.o.fileformats = vim.fn.has("win64") ~= 0 and "dos,unix,mac" or "unix,dos,mac"
 
--- シェルを指定する（Windows環境用）
-if vim.fn.has("win64") ~= 0 then
-	vim.o.shell = string.gsub(vim.fn.system("powershell -c (gcm nu).Definition"), "\n", "")
-	vim.o.shellcmdflag = "-c nu --login"
-end
-
 -- マウスに反応しないようにする
 -- set mouse=
 vim.o.mouse = ""
