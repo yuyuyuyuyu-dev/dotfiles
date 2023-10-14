@@ -27,7 +27,27 @@ function main
   ln -fns {$HOME}/dotfiles/nvchad/custom {$HOME}/.config/nvim/lua/custom
 
 
-  # Gitの設定
+  # Gitの設定をする
+  set-git-config
+end
+
+
+# リンクを貼るかどうかを判定する関数
+function ignore
+  # リンクを貼りたくないものはここに入れておく
+  set ignores '.' '..' '.DS_Store' '.git' '.gitignore' '.hyper.js'
+
+  for i in {$ignores}
+    if test {$i} = {$argv}
+      return 0
+    end
+  end
+  return 1
+end
+
+
+# Gitの設定
+function set-git-config
   # デフォルトブランチの名前を"main"に指定する
   git config --global init.defaultBranch main
 
@@ -59,20 +79,6 @@ function main
   git config --global commit.gpgsign true
   # ssh公開鍵で署名する
   git config --global gpg.format ssh
-end
-
-
-# リンクを貼るかどうかを判定する関数
-function ignore
-  # リンクを貼りたくないものはここに入れておく
-  set ignores '.' '..' '.DS_Store' '.git' '.gitignore' '.hyper.js'
-
-  for i in {$ignores}
-    if test {$i} = {$argv}
-      return 0
-    end
-  end
-  return 1
 end
 
 
