@@ -51,6 +51,17 @@ function set-git-config
   # デフォルトブランチの名前を"main"に指定する
   git config --global init.defaultBranch main
 
+  # ユーザー名が設定されてなかったら対話形式で設定する
+  if ! git config --global user.name > /dev/null 2>&1
+    read -p'echo "ユーザー名に設定する文字列を入力してください> "' name
+    git config --global user.name "$name"
+  end
+  # メールアドレスが設定されてなかったら対話形式で設定する
+  if ! git config --global user.email > /dev/null 2>&1
+    read -p'echo "ユーザーのメールアドレスに設定する文字列を入力してください> "' email
+    git config --global user.email "$email"
+  end
+
   # プッシュするときの認証に使う公開鍵を指定する
   git config --global user.signingkey ~/.ssh/id_ed25519.pub
 
@@ -79,8 +90,9 @@ function set-git-config
   # ssh公開鍵で署名する
   git config --global gpg.format ssh
 
-  git config --global alias.pull 'pull -p'
+  # フェッチとプルしたときにリモートブランチの削除状況に追従する
   git config --global alias.fetch 'fetch -p'
+  git config --global alias.pull 'pull -p'
 end
 
 
