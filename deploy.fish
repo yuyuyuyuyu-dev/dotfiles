@@ -12,7 +12,7 @@ function main
 
     # リンク先にファイルが存在していたらリネームする
     if test -e {$HOME}/{$file}
-      mv -h {$HOME}/{$file} {$HOME}/{$file}.bak
+      mv {$HOME}/{$file} {$HOME}/{$file}.bak
     end
 
     # リンクを貼る
@@ -22,7 +22,7 @@ function main
 
   # NvChadの設定ファイル
   if test -e {$HOME}/.config/nvim/lua/custom
-    mv -h {$HOME}/.config/nvim/lua/custom {$HOME}/.config/nvim/lua/custom.bak
+    mv {$HOME}/.config/nvim/lua/custom {$HOME}/.config/nvim/lua/custom.bak
   end
   ln -fns {$HOME}/dotfiles/nvchad/custom {$HOME}/.config/nvim/lua/custom
 
@@ -62,23 +62,28 @@ function set-git-config
     git config --global user.email "$email"
   end
 
+  # `git root` でリポジトリのルートディレクトリを出力する
+  git config --global alias.root 'rev-parse --show-toplevel'
+
+  # マージするときにFast-forwordを行わない
+  git config --global merge.ff false
+
   # プッシュするときの認証に使う公開鍵を指定する
   git config --global user.signingkey ~/.ssh/id_ed25519.pub
 
-  # 文字コード関係
+  # 文字コード
+  # git diffしたときの文字コードをutf-8にする
+  git config --global core.pager 'LESSCHARSET=utf-8 less -cmN'
+
+  # 改行コード
   # プッシュするときに改行コードをLFで揃える
   # プルするときは変換しない
   git config --global core.autocrlf input
-  # git diffしたときの文字コードをutf-8にする
-  git config --global core.pager 'LESSCHARSET=utf-8 less -cmN'
   # git diffしたときに、改行コードを気にしないようにする
   git config --global alias.diff 'diff -w'
 
   # 常に読み込まれるgitignoreファイルを指定する
   git config --global core.excludesFile ~/.config/git/ignore
-
-  # `git root` でリポジトリのルートディレクトリを出力する
-  git config --global alias.root 'rev-parse --show-toplevel'
 
   # プルしたときの設定
   git config --global pull.rebase true
