@@ -35,7 +35,7 @@ end
 # リンクを貼るかどうかを判定する関数
 function ignore
   # リンクを貼りたくないものはここに入れておく
-  set ignores '.' '..' '.DS_Store' '.git' '.gitignore' '.hyper.js'
+  set ignores '.' '..' '.DS_Store' '.git' '.gitignore' '.hyper.js' '.nyagos'
 
   for i in {$ignores}
     if test {$i} = {$argv}
