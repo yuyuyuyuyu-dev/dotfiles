@@ -7,14 +7,14 @@ mklink %appdata%\Hyper\.hyper.js %homepath%\dotfiles\.hyper.js
 mklink %homepath%\.nyagos %homepath%\dotfiles\.nyagos
 
 
-rem Gitã®è¨­å®š
-rem %homepath%\.gitconfigãŒå­˜åœ¨ã—ãªã‹ã£ãŸã‚‰ä½œæˆã™ã‚‹
-rem ã“ã®ãƒ•ã‚¡ã‚¤ãƒ«ãŒå­˜åœ¨ã—ãªã‹ã£ãŸå ´åˆã€`git config --global`ã§è¨­å®šã—ãŸã¨ãã«%homepath%\.config\git\configã«æ›¸ãè¾¼ã¾ã‚Œã¦ã—ã¾ã†
+rem Git‚Ìİ’è
+rem %homepath%\.gitconfig‚ª‘¶İ‚µ‚È‚©‚Á‚½‚çì¬‚·‚é
+rem ‚±‚Ìƒtƒ@ƒCƒ‹‚ª‘¶İ‚µ‚È‚©‚Á‚½ê‡A`git config --global`‚Åİ’è‚µ‚½‚Æ‚«‚É%homepath%\.config\git\config‚É‘‚«‚Ü‚ê‚Ä‚µ‚Ü‚¤
 if not exist %homepath%\.gitconfig type nul >> %homepath%\.gitconfig
 
-rem æ”¹è¡Œã‚³ãƒ¼ãƒ‰
-rem ãƒ—ãƒƒã‚·ãƒ¥ã™ã‚‹ã¨ãã¯LFã«å¤‰æ›ã™ã‚‹
-rem ãƒ—ãƒ«ã™ã‚‹ã¨ãã¯CRLFã«å¤‰æ›ã™ã‚‹
+rem ‰üsƒR[ƒh
+rem ƒvƒbƒVƒ…‚·‚é‚Æ‚«‚ÍLF‚É•ÏŠ·‚·‚é
+rem ƒvƒ‹‚·‚é‚Æ‚«‚ÍCRLF‚É•ÏŠ·‚·‚é
 git config --global core.autocrlf true
 
 pause
