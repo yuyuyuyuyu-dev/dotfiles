@@ -1,7 +1,6 @@
 #!/usr/bin/env fish
 
 # ${HOME}/dotfiles内にある.(ドット)から始まるファイル(${EXCEPTION_ARRAY}に追加したものは除く)のシンボリックリンクを${HOME}ディレクトリ内に貼る
-
 function main
   # 「.」から始まるファイルのリンクを貼る
   for file in .*
@@ -28,7 +27,7 @@ function main
 
 
   # Gitの設定をする
-  set-git-config
+  configure-git
 end
 
 
@@ -47,9 +46,12 @@ end
 
 
 # Gitの設定をする関数
-function set-git-config
-  # デフォルトブランチの名前を"main"に指定する
-  git config --global init.defaultBranch main
+function configure-git
+  # ~/.gitconfigが存在しなかったら作成する
+  # このファイルが存在しなかった場合、`git config --global`で設定したときに~/.config/git/configに書き込まれてしまう
+  if ! test -e {$HOME}/.gitconfig
+    touch {$HOME}/.gitconfig
+  end
 
   # ユーザー名が設定されてなかったら対話形式で設定する
   if ! git config --global user.name > /dev/null 2>&1
@@ -62,42 +64,14 @@ function set-git-config
     git config --global user.email "$email"
   end
 
-  # `git root` でリポジトリのルートディレクトリを出力する
-  git config --global alias.root 'rev-parse --show-toplevel'
-
-  # マージするときにFast-forwordを行わない
-  git config --global merge.ff false
-
-  # プッシュするときの認証に使う公開鍵を指定する
-  git config --global user.signingkey ~/.ssh/id_ed25519.pub
-
   # 文字コード
   # git diffしたときの文字コードをutf-8にする
   git config --global core.pager 'LESSCHARSET=utf-8 less -cmN'
 
   # 改行コード
-  # プッシュするときに改行コードをLFで揃える
+  # プッシュするときは改行コードをLFに変換する
   # プルするときは変換しない
   git config --global core.autocrlf input
-  # git diffしたときに、改行コードを気にしないようにする
-  git config --global alias.diff 'diff -w'
-
-  # 常に読み込まれるgitignoreファイルを指定する
-  git config --global core.excludesFile ~/.config/git/ignore
-
-  # プルしたときの設定
-  git config --global pull.rebase true
-  git config --global pull.ff true
-
-  # コミットに署名をする
-  # 署名を有効化
-  git config --global commit.gpgsign true
-  # ssh公開鍵で署名する
-  git config --global gpg.format ssh
-
-  # フェッチとプルしたときにリモートブランチの削除状況に追従する
-  git config --global alias.fetch 'fetch -p'
-  git config --global alias.pull 'pull -p'
 end
 
 

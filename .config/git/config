@@ -1,0 +1,37 @@
+[init]
+	# デフォルトブランチの名前を"main"に指定する
+	defaultBranch = main
+
+
+[alias]
+	# git diffしたときに、改行コードを気にしないようにする
+	diff = diff -w
+
+	# `git root` でリポジトリのルートディレクトリを出力する
+	root = rev-parse --show-toplevel
+
+	# フェッチしたときにリモートブランチの削除状況に追従する
+	fetch = fetch -p
+	# プルしたときにリモートブランチの削除状況に追従する
+	pull = pull -p
+
+
+[merge]
+	# マージするときにFast-forwordを行わない
+	ff = false
+
+
+# プルしたときの設定
+[pull]
+	rebase = true
+	ff = true
+
+
+[commit]
+	# コミット時の署名を有効化する
+	gpgsign = true
+
+
+[gpg]
+	# コミットの署名にSSH公開鍵を使用する
+	format = ssh

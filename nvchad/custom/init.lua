@@ -29,11 +29,11 @@ vim.o.whichwrap = ""
 -- set backspace=
 vim.o.backspace = "start"
 
--- filetypeがshのときはインデントをハードタブにする
-vim.api.nvim_create_augroup("sh indent", { clear = true })
+-- filetypeがsh、gitconfigのときはインデントをハードタブにする
+vim.api.nvim_create_augroup("hardtab_indent", { clear = true })
 vim.api.nvim_create_autocmd({ "FileType" }, {
-  pattern = "sh",
-  group = "sh indent",
+  pattern = "sh,gitconfig",
+  group = "hardtab_indent",
   command = "setlocal noexpandtab"
 })
 
