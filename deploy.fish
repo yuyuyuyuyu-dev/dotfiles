@@ -5,9 +5,9 @@ function main
   link-dot-files
 
   # NvChadの設定ファイル
-  if ! test -h {$HOME}/.config/nvim/lua/custom; and test -e {$HOME}/.config/nvim/lua/custom
-    mv -T {$HOME}/.config/nvim/lua/custom {$HOME}/.config/nvim/lua/custom.bak
-  end
+  # ファイルが存在して、かつ、それがシンボリックリンクでなかったらリネームして退避する
+  rename-if-not-a-link-and-exists {$HOME}/.config/nvim/lua/custom
+  # リンクを貼る
   ln -fns {$HOME}/dotfiles/nvchad/custom {$HOME}/.config/nvim/lua/custom
 
   # Gitの設定をする
@@ -23,13 +23,19 @@ function link-dot-files
       continue
     end
 
-    # まだリンクが貼られていなくてかつファイルが存在したらリネームして退避する
-    if ! test -h {$HOME}/{$file}; and test -e {$HOME}/{$file}
-      mv -T {$HOME}/{$file} {$HOME}/{$file}.bak
-    end
+    # ファイルが存在して、かつ、それがシンボリックリンクでなかったらリネームして退避する
+    rename-if-not-a-link-and-exists {$HOME}/{$file}
 
     # リンクを貼る
     ln -fns {$HOME}/dotfiles/{$file} {$HOME}/{$file}
+  end
+end
+
+
+# 引数で指定されたパスにファイルが存在して、かつ、それがシンボリックリンクでなかったらリネームして退避する関数
+function rename-if-not-a-link-and-exists
+  if test -e {$argv[1]}; and ! test -h {$argv[1]}
+    mv -T {$argv[1]} {$argv[1]}.bak
   end
 end
 
