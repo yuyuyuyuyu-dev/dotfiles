@@ -5,8 +5,8 @@ function main
   link-dot-files
 
   # NvChadの設定ファイル
-  if test -e {$HOME}/.config/nvim/lua/custom
-    mv {$HOME}/.config/nvim/lua/custom {$HOME}/.config/nvim/lua/custom.bak
+  if ! test -h {$HOME}/.config/nvim/lua/custom; and test -e {$HOME}/.config/nvim/lua/custom
+    mv -T {$HOME}/.config/nvim/lua/custom {$HOME}/.config/nvim/lua/custom.bak
   end
   ln -fns {$HOME}/dotfiles/nvchad/custom {$HOME}/.config/nvim/lua/custom
 
@@ -23,9 +23,9 @@ function link-dot-files
       continue
     end
 
-    # リンク先にファイルが存在していたらリネームする
-    if test -e {$HOME}/{$file}
-      mv {$HOME}/{$file} {$HOME}/{$file}.bak
+    # まだリンクが貼られていなくてかつファイルが存在したらリネームして退避する
+    if ! test -h {$HOME}/{$file}; and test -e {$HOME}/{$file}
+      mv -T {$HOME}/{$file} {$HOME}/{$file}.bak
     end
 
     # リンクを貼る
