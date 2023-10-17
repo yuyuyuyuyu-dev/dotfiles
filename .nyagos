@@ -1,0 +1,5 @@
+nyagos.alias.update = function()
+    nyagos.exec{ "winget", "upgrade", "--all" }
+    nyagos.exec{ "scoop", "update" }
+    nyagos.exec{ "scoop", "update", "--all" }
+end
