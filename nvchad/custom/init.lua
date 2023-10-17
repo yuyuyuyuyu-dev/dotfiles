@@ -11,7 +11,7 @@
 
 -- 文字コードの設定
 -- set fileencodings=
-vim.o.fileencodings = "utf-8,cp932,sjis,ec-jp"
+vim.o.fileencodings = "utf-8,sjis,cp932,ec-jp"
 
 -- 改行コードの設定
 -- set fileformats=
@@ -42,5 +42,5 @@ vim.api.nvim_create_augroup("dosbatch fileencoding", { clear = true })
 vim.api.nvim_create_autocmd({ "FileType" }, {
   pattern = "dosbatch",
   group = "dosbatch fileencoding",
-  command = "setlocal fileencoding=cp932"
+  command = "setlocal fileencoding=sjis"
 })
