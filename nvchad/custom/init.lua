@@ -36,3 +36,11 @@ vim.api.nvim_create_autocmd({ "FileType" }, {
   group = "sh indent",
   command = "setlocal noexpandtab"
 })
+
+-- filetypeがdosbatchのときは文字コードをShift_JISにする
+vim.api.nvim_create_augroup("dosbatch fileencoding", { clear = true })
+vim.api.nvim_create_autocmd({ "FileType" }, {
+  pattern = "dosbatch",
+  group = "dosbatch fileencoding",
+  command = "setlocal fileencoding=cp932"
+})
