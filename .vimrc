@@ -6,7 +6,7 @@ set modifiable
 " 書き込むときのデフォルトの文字コードの指定
 set fileencoding=utf-8
 " 読み込むときの文字コードの指定(左の方が優先度が高い)
-set fileencodings=utf-8,cp932,sjis,euc-jp
+set fileencodings=utf-8,sjis,cp932,euc-jp
 
 
 " 改行コードの設定
@@ -124,7 +124,7 @@ autocmd FileType typescriptreact setlocal shiftwidth=2 softtabstop=2
 autocmd FileType json setlocal shiftwidth=2 softtabstop=2
 
 " 文字コードの設定
-autocmd FileType dosbatch setlocal fileencoding=cp932
+autocmd FileType dosbatch setlocal fileencoding=sjis
 
 
 " ローカルのvimの設定を読み込む(set columnsの上書きとかをする)
