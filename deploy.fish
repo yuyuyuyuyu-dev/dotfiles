@@ -1,8 +1,22 @@
 #!/usr/bin/env fish
 
-# ${HOME}/dotfiles内にある.(ドット)から始まるファイル(${EXCEPTION_ARRAY}に追加したものは除く)のシンボリックリンクを${HOME}ディレクトリ内に貼る
 function main
   # 「.」から始まるファイルのリンクを貼る
+  link-dot-files
+
+  # NvChadの設定ファイル
+  if test -e {$HOME}/.config/nvim/lua/custom
+    mv {$HOME}/.config/nvim/lua/custom {$HOME}/.config/nvim/lua/custom.bak
+  end
+  ln -fns {$HOME}/dotfiles/nvchad/custom {$HOME}/.config/nvim/lua/custom
+
+  # Gitの設定をする
+  configure-git
+end
+
+
+# 「.」から始まるファイルのリンクを貼る関数
+function link-dot-files
   for file in .*
     # リンクを貼りたくないファイルは無視する
     if ignore {$file}
@@ -17,17 +31,6 @@ function main
     # リンクを貼る
     ln -fns {$HOME}/dotfiles/{$file} {$HOME}/{$file}
   end
-
-
-  # NvChadの設定ファイル
-  if test -e {$HOME}/.config/nvim/lua/custom
-    mv {$HOME}/.config/nvim/lua/custom {$HOME}/.config/nvim/lua/custom.bak
-  end
-  ln -fns {$HOME}/dotfiles/nvchad/custom {$HOME}/.config/nvim/lua/custom
-
-
-  # Gitの設定をする
-  configure-git
 end
 
 
