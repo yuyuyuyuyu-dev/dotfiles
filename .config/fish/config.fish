@@ -84,6 +84,12 @@ if type -q pyenv
 end
 
 
+# dool (https://github.com/scottchiefbaker/dool)
+if [ -n {$HOME}/bin ]
+  set -x PATH {$HOME}/bin {$PATH}
+end
+
+
 
 
 # SSHでアクセスされた場合はtmuxセッションを開く
