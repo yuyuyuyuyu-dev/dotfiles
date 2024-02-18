@@ -48,4 +48,12 @@ function update
     echo '########'
     pyenv update
   end
+  if type -p pip3
+    echo
+    echo
+    echo '########'
+    echo 'pip'
+    echo '########'
+    pip install -U pip
+  end
 end
