@@ -51,7 +51,7 @@ M.mason = {
     "gopls",
 
     -- Rust
-    "rust-analyzer",
+    -- Rust言語をインストールするときに一緒にインストールされるからそれを使う
   },
 }
 
