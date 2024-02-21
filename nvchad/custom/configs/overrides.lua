@@ -12,6 +12,7 @@ M.treesitter = {
     "c",
     "markdown",
     "markdown_inline",
+    "python",
   },
   indent = {
     enable = true,
@@ -52,6 +53,10 @@ M.mason = {
 
     -- Rust
     -- Rust言語をインストールするときに一緒にインストールされるからそれを使う
+
+    -- Python
+    "python-lsp-server",
+    "autopep8",
   },
 }
 
