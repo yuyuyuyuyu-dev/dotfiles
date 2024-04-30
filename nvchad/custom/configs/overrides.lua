@@ -29,10 +29,10 @@ M.mason = {
     "stylua",
 
     -- web dev stuff
-    "css-lsp",
-    "html-lsp",
-    "typescript-language-server",
-    "deno",
+    -- "css-lsp",
+    -- "html-lsp",
+    -- "typescript-language-server",
+    -- "deno",
     "prettier",
 
     -- c/cpp stuff
@@ -57,6 +57,10 @@ M.mason = {
     -- Python
     "python-lsp-server",
     "autopep8",
+
+    -- Angular
+    -- "typescript-language-server",
+    "angular-language-server",
   },
 }
 
