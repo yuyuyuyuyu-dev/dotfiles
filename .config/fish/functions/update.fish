@@ -24,6 +24,15 @@ function update
     volta install node
     volta install npm
   end
+  if type -q npm
+    echo
+    echo
+    echo '########'
+    echo 'npm modules'
+    echo '########'
+    npm outdated -g --depth=0
+    npm update -g
+  end
   if type -q rustup
     echo
     echo
