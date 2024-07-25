@@ -6,7 +6,7 @@ set modifiable
 " 書き込むときのデフォルトの文字コードの指定
 set fileencoding=utf-8
 " 読み込むときの文字コードの指定(左の方が優先度が高い)
-set fileencodings=utf-8,sjis,cp932,euc-jp
+set fileencodings=utf-8,sjis,cp932,utf-16le,euc-jp
 
 
 " 改行コードの設定
