@@ -6,9 +6,9 @@ function main
 
   # NvChadの設定ファイル
   # ファイルが存在して、かつ、それがシンボリックリンクでなかったらリネームして退避する
-  rename-if-not-a-link-and-exists {$HOME}/.config/nvim/lua/custom
+  rename-if-not-a-link-and-exists {$HOME}/.config/nvim/lua
   # リンクを貼る
-  ln -fns {$HOME}/dotfiles/nvchad/custom {$HOME}/.config/nvim/lua/custom
+  ln -fns {$HOME}/dotfiles/nvchad/lua {$HOME}/.config/nvim/lua
 
   # Gitの設定をする
   configure-git
@@ -35,7 +35,7 @@ end
 # 引数で指定されたパスにファイルが存在して、かつ、それがシンボリックリンクでなかったらリネームして退避する関数
 function rename-if-not-a-link-and-exists
   if test -e {$argv[1]}; and ! test -h {$argv[1]}
-    mv -T {$argv[1]} {$argv[1]}.bak
+    mv {$argv[1]} {$argv[1]}.bak
   end
 end
 

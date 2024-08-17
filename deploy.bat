@@ -6,7 +6,7 @@ setlocal enabledelayedexpansion
 rem シンボリックリンクを貼る
 mklink %homepath%\_vimrc %homepath%\dotfiles\.vimrc
 mklink /D %homepath%\.config %homepath%\dotfiles\.config
-mklink /D %localappdata%\nvim\lua\custom %homepath%\dotfiles\nvchad\custom
+mklink /D %localappdata%\nvim\lua %homepath%\dotfiles\nvchad\lua
 mklink %appdata%\Hyper\.hyper.js %homepath%\dotfiles\.hyper.js
 mklink %homepath%\.nyagos %homepath%\dotfiles\.nyagos
 
