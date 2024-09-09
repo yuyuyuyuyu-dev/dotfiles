@@ -13,7 +13,7 @@ local servers = {
   "rust_analyzer",
   "html",
   "cssls",
-  "tsserver",
+  "ts_ls",
   -- "angularls",
 }
 local nvlsp = require "nvchad.configs.lspconfig"
