@@ -15,6 +15,8 @@
 	# プルしたときにリモートブランチの削除状況に追従する
 	pull = pull -p
 
+	copy-changed-files = !"f(){ git diff --name-only HEAD | xargs -I{} dirname {} | xargs -tI{} mkdir -p ${1}/{} && git diff --name-only HEAD | xargs -tI{} cp {} ${1}/{}; }; f"
+
 
 [merge]
 	# マージするときにFast-forwordを行わない
