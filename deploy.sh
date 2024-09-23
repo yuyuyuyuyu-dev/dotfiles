@@ -1,6 +1,9 @@
 #!/data/user/0/com.droidvim/files/usr/bin/bash
 
-for i in .bash*; do
+for i in .bash* .vimrc; do
+	if [ -h "${HOME}/${i}" ]; then
+		continue
+	fi
 	# すでにファイルが存在した場合は元のファイルをリネームする
 	if [ -e "${HOME}/${i}" ]; then
 		mv "${HOME}/${i}" "${HOME}/${i}.bak"
