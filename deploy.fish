@@ -10,6 +10,9 @@ function main
   # リンクを貼る
   ln -fns {$HOME}/dotfiles/nvchad/lua {$HOME}/.config/nvim/lua
 
+  # Hyperの設定ファイル
+  configure-hyper
+
   # Gitの設定をする
   configure-git
 end
@@ -51,6 +54,13 @@ function ignore
     end
   end
   return 1
+end
+
+
+# Hyperの設定をする関数
+function configure-hyper
+  cp {$HOME}/dotfiles/hyper.js {$HOME}/.hyper.js
+  echo "module.exports.config.fontSize = 20" >> {$HOME}/.hyper.js
 end
 
 
