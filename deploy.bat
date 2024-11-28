@@ -7,8 +7,13 @@ rem シンボリックリンクを貼る
 mklink %homepath%\_vimrc %homepath%\dotfiles\.vimrc
 mklink /D %homepath%\.config %homepath%\dotfiles\.config
 mklink /D %localappdata%\nvim\lua %homepath%\dotfiles\nvchad\lua
-mklink %appdata%\Hyper\.hyper.js %homepath%\dotfiles\.hyper.js
 mklink %homepath%\.nyagos %homepath%\dotfiles\.nyagos
+
+
+rem Hyperの設定をする
+copy %homepath%\dotfiles\hyper.js %appdata%\Hyper\.hyper.js
+echo module.exports.config.shell = 'C:\\WINDOWS\\system32\\wsl.exe' >> %appdata%\Hyper\.hyper.js
+echo module.exports.config.shellArgs = ['~'] >> %appdata%\Hyper\.hyper.js
 
 
 rem Gitの設定をする
@@ -38,4 +43,5 @@ rem SSHの公開鍵を指定する
 git config --global user.signingkey %homepath%\.ssh\id_ed25519.pub
 
 
+rem キー入力があるまでウィンドウを閉じないようにする
 pause
