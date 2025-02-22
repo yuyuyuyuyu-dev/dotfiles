@@ -21,6 +21,14 @@ end
 
 
 
+# JAVA_HOME を設定
+if [ -x /opt/homebrew/Cellar/openjdk/23.0.2/libexec/openjdk.jdk/Contents/Home ]
+  set -x JAVA_HOME '/opt/homebrew/Cellar/openjdk/23.0.2/libexec/openjdk.jdk/Contents/Home'
+end
+
+
+
+
 # パスの設定
 # 自作コマンド
 if [ -d {$HOME}/.local/bin ]
