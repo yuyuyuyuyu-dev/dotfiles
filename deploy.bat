@@ -39,8 +39,11 @@ rem プッシュするときはLFに変換する
 rem プルするときはCRLFに変換する
 git config --global core.autocrlf true
 
+rem 可能な場合はFast-Forwardを行う
+git config --global merge.ff true
+
 rem SSHの公開鍵を指定する
-git config --global user.signingkey %homepath%\.ssh\id_ed25519.pub
+git config --global user.signingkey %homedrive%%homepath%\.ssh\id_ed25519.pub
 
 
 rem キー入力があるまでウィンドウを閉じないようにする

@@ -19,13 +19,12 @@
 
 
 [merge]
-	# マージするときにFast-forwordを行わない
-	ff = false
+	# 可能であればFast-Forwardを行う
+	ff = true
 
 
-# プルしたときの設定
 [pull]
-	rebase = true
+	# 可能であればFast-Forwardを行う
 	ff = true
 
 
