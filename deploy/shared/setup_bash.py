@@ -13,7 +13,7 @@ def setup_bash():
     """
     ホームディレクトリにbash関連ファイルのシンボリックリンクを安全に作成する
     """
-    print("--- Setting up Bash symlinks ---")
+    print("--- Setting up Bash configurations ---")
     for bash_file in bash_files:
         source_path = os.path.join(DOTFILES_ROOT, bash_file)
         dest_path = os.path.join(HOME_DIR, bash_file)

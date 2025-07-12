@@ -21,4 +21,3 @@ def setup_git():
 
 if __name__ == '__main__':
     setup_git()
-
