@@ -35,6 +35,7 @@ export PATH="$VOLTA_HOME/bin:$PATH"
 export LANG=ja_JP.UTF-8
 # export LC_CTYPE=ja_JP.UTF-8
 
+export JAVA_HOME="/Users/yuyuyuyuyu/.sdkman/candidates/java/current"
 
 case "$OSTYPE" in
   darwin*)
