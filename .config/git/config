@@ -26,13 +26,3 @@
 [pull]
 	# 可能であればFast-Forwardを行う
 	ff = true
-
-
-[commit]
-	# コミット時の署名を有効化する
-	gpgsign = true
-
-
-[gpg]
-	# コミットの署名にSSH公開鍵を使用する
-	format = ssh

@@ -30,7 +30,7 @@ def main():
 
     setup_vim()
 
-    # deploy_configs()
+    deploy_configs()
 
     print("\nmacOS deployment finished.")
 
