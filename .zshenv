@@ -29,6 +29,12 @@ export HOMEBREW_NO_ANALYTICS=1
 export XDG_CONFIG_HOME="${HOME}/.config"
 export XDG_CACHE_HOME="${HOME}/.cache"
 
+export VOLTA_HOME="$HOME/.volta"
+export PATH="$VOLTA_HOME/bin:$PATH"
+
+export LANG=ja_JP.UTF-8
+# export LC_CTYPE=ja_JP.UTF-8
+
 
 case "$OSTYPE" in
   darwin*)
@@ -38,4 +44,7 @@ case "$OSTYPE" in
     # linuxのときに読み込まれる設定
     ;;
 esac
-. "$HOME/.cargo/env"
+
+if [ -f "$HOME/.cargo/env" ]; then
+  . "$HOME/.cargo/env"
+fi

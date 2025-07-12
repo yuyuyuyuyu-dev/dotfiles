@@ -5,15 +5,6 @@
 PROMPT=$'\n%m: %n$ '
 RPROMPT=$'%~'
 
-# パスの設定
-path=(
-  $path
-  ~/MyCommands(N-/)
-)
-
-export LANG=ja_JP.UTF-8
-# export LC_CTYPE=ja_JP.UTF-8
-
 # エイリアスの設定
 alias less="less -N"
 alias lsless="ls -CF | less -N"
@@ -92,5 +83,3 @@ case "${OSTYPE}" in
     # linuxのときに読み込まれる設定
     ;;
 esac
-export VOLTA_HOME="$HOME/.volta"
-export PATH="$VOLTA_HOME/bin:$PATH"
