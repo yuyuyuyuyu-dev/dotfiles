@@ -14,6 +14,7 @@ from setup_git import setup_git
 from setup_tmux import setup_tmux
 from deploy_configs import deploy_configs
 from setup_vim import setup_vim
+from setup_ideavim import setup_ideavim
 from paths import HOME_DIR
 
 def main():
@@ -29,6 +30,7 @@ def main():
     setup_tmux()
 
     setup_vim()
+    setup_ideavim()
 
     deploy_configs()
 
