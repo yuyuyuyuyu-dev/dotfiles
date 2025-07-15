@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+
+# 'tools' モジュールを正しくインポートするために、
+# スクリプトが配置されているディレクトリの親ディレクトリを`sys.path`に追加する
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+from tools.update.__main__ import main
+
+if __name__ == "__main__":
+    main()
