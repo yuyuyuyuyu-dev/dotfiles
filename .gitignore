@@ -13,3 +13,4 @@
 *.bak
 .docker/*
 !.docker/config.json
+__pycache__/
