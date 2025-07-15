@@ -19,8 +19,8 @@ from paths import HOME_DIR
 from setup_update_command import setup_update_command
 
 def main():
-    """macOS用のデプロイを実行する"""
-    print("Starting deployment for macOS...")
+    """Linux用のデプロイを実行する"""
+    print("Starting deployment for Linux...")
 
     setup_bash()
     setup_zsh()
@@ -36,7 +36,7 @@ def main():
 
     deploy_configs()
 
-    print("\nmacOS deployment finished.")
+    print("\nLinux deployment finished.")
 
 def _setup_git_for_platform():
     """
