@@ -54,8 +54,6 @@ def _setup_git_for_platform():
     print("  Set git config alias.root.")
 
     # プルしたときの設定
-    subprocess.run(["git", "config", "--global", "pull.rebase", "true"], check=True)
-    print("  Set git config pull.rebase.")
     subprocess.run(["git", "config", "--global", "pull.ff", "true"], check=True)
     print("  Set git config pull.ff.")
 
