@@ -11,11 +11,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'shared'))
 from setup_bash import setup_bash
 from setup_zsh import setup_zsh
 from setup_git import setup_git
-from setup_tmux import setup_tmux
 from deploy_configs import deploy_configs
 from setup_vim import setup_vim
-from setup_ideavim import setup_ideavim
-from paths import HOME_DIR
 from setup_update_command import setup_update_command
 
 def main():

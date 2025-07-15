@@ -15,7 +15,6 @@ from setup_tmux import setup_tmux
 from deploy_configs import deploy_configs
 from setup_vim import setup_vim
 from setup_ideavim import setup_ideavim
-from paths import HOME_DIR
 from setup_update_command import setup_update_command
 
 def main():
