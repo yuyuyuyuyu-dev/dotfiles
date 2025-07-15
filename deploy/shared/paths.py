@@ -24,7 +24,11 @@ DOTFILES_ROOT = os.path.dirname(_deploy_dir)
 # ユーザーのホームディレクトリのパス
 HOME_DIR = os.path.expanduser('~')
 
+# ~/.local/bin ディレクトリのパス
+LOCAL_BIN_DIR = os.path.join(HOME_DIR, ".local", "bin")
+
 # テスト用に、計算結果が正しいかを出力
 if __name__ == '__main__':
     print(f"DOTFILES_ROOT: {DOTFILES_ROOT}")
     print(f"HOME_DIR: {HOME_DIR}")
+    print(f"LOCAL_BIN_DIR: {LOCAL_BIN_DIR}")
