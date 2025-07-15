@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import os
 import subprocess
 
 # sharedディレクトリをPythonのモジュール検索パスに追加

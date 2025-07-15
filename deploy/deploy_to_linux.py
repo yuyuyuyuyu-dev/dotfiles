@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import os
 import subprocess
 
 # sharedディレクトリをPythonのモジュール検索パスに追加
@@ -26,10 +27,7 @@ def main():
 
     setup_git()
 
-    setup_tmux()
-
     setup_vim()
-    setup_ideavim()
     setup_update_command()
 
     deploy_configs()
