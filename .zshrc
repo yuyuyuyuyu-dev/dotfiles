@@ -6,9 +6,7 @@ PROMPT=$'\n%m: %n$ '
 RPROMPT=$'%~'
 
 # エイリアスの設定
-alias less="less -N"
-alias lsless="ls -CF | less -N"
-alias del="delete"
+alias less="less -cmN"
 
 # setopt
 #  入力したコマンドが存在せず、かつディレクトリ名と一致するなら、ディレクトリに cd する
@@ -81,6 +79,9 @@ case "${OSTYPE}" in
     ;;
   linux*)
     # linuxのときに読み込まれる設定
+    alias ls="ls -F --color=auto"
+    alias la="ls -aF --color=auto"
+    alias ll="ls -Fl --color=auto"
     ;;
 esac
 
