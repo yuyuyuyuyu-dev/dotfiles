@@ -14,7 +14,7 @@ from setup_vim import setup_vim
 from create_symlink_safely import create_symlink_safely
 from paths import DOTFILES_ROOT, HOME_DIR
 
-def main():
+def deploy_to_android():
     """Android用のデプロイを実行する"""
     print("Starting deployment for Android...")
 
@@ -70,5 +70,3 @@ def _setup_git_for_platform():
 
     print("--- Platform specific Git setup complete (Android) ---\n")
 
-if __name__ == "__main__":
-    main()
