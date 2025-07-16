@@ -15,7 +15,7 @@ from deploy_configs import deploy_configs
 from setup_vim import setup_vim
 from setup_update_command import setup_update_command
 
-def main():
+def deploy_to_linux():
     """Linux用のデプロイを実行する"""
     print("Starting deployment for Linux...")
 
@@ -31,5 +31,3 @@ def main():
 
     print("\nLinux deployment finished.")
 
-if __name__ == "__main__":
-    main()
