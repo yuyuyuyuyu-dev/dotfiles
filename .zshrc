@@ -2,8 +2,8 @@
 # シェルスクリプト実行時には不要な設定はここに書く
 
 # プロンプトの設定
-PROMPT=$'\n%m: %n$ '
-RPROMPT=$'%~'
+PROMPT='%~
+🍓 %F{#5881C1}>%f '
 
 # エイリアスの設定
 alias less="less -cmN"
@@ -88,3 +88,5 @@ esac
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+export PATH=$HOME/.local/bin:$PATH
