@@ -22,9 +22,6 @@ else
   echo 'nvimもvimもviもありませんでした'
 fi
 
-# HomebrewのAnalyticsを無効化
-export HOMEBREW_NO_ANALYTICS=1
-
 # neovimに必要な設定
 export XDG_CONFIG_HOME="${HOME}/.config"
 export XDG_CACHE_HOME="${HOME}/.cache"
@@ -34,6 +31,12 @@ export PATH="$VOLTA_HOME/bin:$PATH"
 
 export JAVA_HOME="/Users/yuyuyuyuyu/.sdkman/candidates/java/current"
 
+if [ -f "$HOME/.cargo/env" ]; then
+  . "$HOME/.cargo/env"
+fi
+
+export PATH=$HOME/.local/bin:$PATH
+
 case "$OSTYPE" in
   darwin*)
     # darwin(≒Mac)のときに読み込まれる設定
@@ -42,9 +45,3 @@ case "$OSTYPE" in
     # linuxのときに読み込まれる設定
     ;;
 esac
-
-if [ -f "$HOME/.cargo/env" ]; then
-  . "$HOME/.cargo/env"
-fi
-
-export PATH=$HOME/.local/bin:$PATH
