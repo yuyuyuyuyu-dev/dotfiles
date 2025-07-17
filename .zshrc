@@ -66,9 +66,6 @@ WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 case "${OSTYPE}" in
   darwin*)
     # darwin(≒Mac)のときに読み込まれる設定
-    export HOMEBREW_GITHUB_API_TOKEN=2ece4e396f6394176eedec0c23682ad1411b5760
-    export HOMEBREW_CASK_OPTS="--appdir=/Applications"
-
     # エイリアスの設定
     alias safari="open -a /Applications/Safari.app"
     alias chrome="open -a /Applications/Google\ Chrome.app"
@@ -88,5 +85,3 @@ esac
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
-
-export PATH=$HOME/.local/bin:$PATH
