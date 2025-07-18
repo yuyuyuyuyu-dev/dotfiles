@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 
+
 def create_symlink_safely(source_path, dest_path):
     """
     source_pathからdest_pathへのシンボリックリンクを安全に作成する。
@@ -40,30 +41,35 @@ def create_symlink_safely(source_path, dest_path):
                 print(f"Could not list directory contents: {e}", file=sys.stderr)
             print("--------------------------")
 
-            user_input = input(f"Do you want to remove it and create a symlink? [y/N]: ")
-            if user_input.lower() == 'y':
+            user_input = input("Do you want to remove it and create a symlink? [y/N]: ")
+            if user_input.lower() == "y":
                 try:
-                    shutil.rmtree(dest_path) # ディレクトリを再帰的に削除
+                    shutil.rmtree(dest_path)  # ディレクトリを再帰的に削除
                     print(f"[ACTION] Recursively deleted directory: {dest_path}")
                 except OSError as e:
-                    print(f"[ERROR] Could not delete directory {dest_path}: {e}. Skipping symlink creation.", file=sys.stderr)
+                    print(
+                        f"[ERROR] Could not delete directory {dest_path}: {e}. Skipping symlink creation.",
+                        file=sys.stderr,
+                    )
                     return
             else:
-                print("[SKIP] User declined to remove existing directory. Skipping symlink creation.")
+                print(
+                    "[SKIP] User declined to remove existing directory. Skipping symlink creation."
+                )
                 return
         # 既存のものがファイルの場合
         elif os.path.isfile(dest_path):
             print(f"[WARN] File already exists at destination: {dest_path}")
             print("--- Current content ---")
             try:
-                with open(dest_path, 'r', encoding='utf-8') as f:
+                with open(dest_path, "r", encoding="utf-8") as f:
                     print(f.read())
             except Exception as e:
                 print(f"Could not read file content: {e}", file=sys.stderr)
             print("-----------------------")
 
-            user_input = input(f"Do you want to remove it and create a symlink? [y/N]: ")
-            if user_input.lower() == 'y':
+            user_input = input("Do you want to remove it and create a symlink? [y/N]: ")
+            if user_input.lower() == "y":
                 print(f"[ACTION] Removing file: {dest_path}")
                 os.remove(dest_path)
             else:
@@ -74,7 +80,8 @@ def create_symlink_safely(source_path, dest_path):
     print(f"[ACTION] Creating symlink: {dest_path} -> {source_path}")
     os.symlink(source_path, dest_path)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # テスト用のコード
     # 実際の使用では、このモジュールをimportして関数を呼び出す
     print("This module is intended to be imported and used as a function.")

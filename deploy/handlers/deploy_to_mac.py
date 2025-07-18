@@ -1,21 +1,14 @@
 #!/usr/bin/env python3
 
-import sys
-import os
-import subprocess
+from deploy.shared.setup_bash import setup_bash
+from deploy.shared.setup_zsh import setup_zsh
+from deploy.shared.setup_git import setup_git
+from deploy.shared.setup_tmux import setup_tmux
+from deploy.shared.deploy_configs import deploy_configs
+from deploy.shared.setup_vim import setup_vim
+from deploy.shared.setup_ideavim import setup_ideavim
+from deploy.shared.setup_update_command import setup_update_command
 
-# sharedディレクトリをPythonのモジュール検索パスに追加
-sys.path.append(os.path.join(os.path.dirname(__file__), 'shared'))
-
-# shared内のモジュールをインポート
-from setup_bash import setup_bash
-from setup_zsh import setup_zsh
-from setup_git import setup_git
-from setup_tmux import setup_tmux
-from deploy_configs import deploy_configs
-from setup_vim import setup_vim
-from setup_ideavim import setup_ideavim
-from setup_update_command import setup_update_command
 
 def deploy_to_mac():
     """macOS用のデプロイを実行する"""
@@ -35,4 +28,3 @@ def deploy_to_mac():
     deploy_configs()
 
     print("\nmacOS deployment finished.")
-

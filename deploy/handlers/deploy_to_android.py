@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 
-import sys
 import os
 import subprocess
+from deploy.shared.setup_bash import setup_bash
+from deploy.shared.setup_git import setup_git
+from deploy.shared.setup_vim import setup_vim
+from deploy.shared.paths import HOME_DIR
 
-# sharedディレクトリをPythonのモジュール検索パスに追加
-sys.path.append(os.path.join(os.path.dirname(__file__), 'shared'))
-
-# shared内のモジュールをインポート
-from setup_bash import setup_bash
-from setup_git import setup_git
-from setup_vim import setup_vim
-from create_symlink_safely import create_symlink_safely
-from paths import DOTFILES_ROOT, HOME_DIR
 
 def deploy_to_android():
     """Android用のデプロイを実行する"""
@@ -27,6 +21,7 @@ def deploy_to_android():
 
     print("\nAndroid deployment finished.")
 
+
 def _setup_git_for_platform():
     """
     Android固有のGit設定を行う。
@@ -34,11 +29,22 @@ def _setup_git_for_platform():
     print("--- Setting up platform specific Git configurations (Android) ---")
 
     # デフォルトブランチの名前を"main"に指定する
-    subprocess.run(["git", "config", "--global", "init.defaultBranch", "main"], check=True)
+    subprocess.run(
+        ["git", "config", "--global", "init.defaultBranch", "main"], check=True
+    )
     print("  Set git config init.defaultBranch.")
 
     # プッシュするときの認証に使う公開鍵を指定する
-    subprocess.run(["git", "config", "--global", "user.signingkey", os.path.join(HOME_DIR, '.ssh/id_ed25519.pub')], check=True)
+    subprocess.run(
+        [
+            "git",
+            "config",
+            "--global",
+            "user.signingkey",
+            os.path.join(HOME_DIR, ".ssh/id_ed25519.pub"),
+        ],
+        check=True,
+    )
     print("  Set git config user.signingkey.")
 
     # git diffしたときに、改行コードを気にしないようにする
@@ -46,11 +52,23 @@ def _setup_git_for_platform():
     print("  Set git config alias.diff.")
 
     # 常に読み込まれるgitignoreファイルを指定する
-    subprocess.run(["git", "config", "--global", "core.excludesFile", os.path.join(HOME_DIR, '.config/git/ignore')], check=True)
+    subprocess.run(
+        [
+            "git",
+            "config",
+            "--global",
+            "core.excludesFile",
+            os.path.join(HOME_DIR, ".config/git/ignore"),
+        ],
+        check=True,
+    )
     print("  Set git config core.excludesFile.")
 
     # `git root` でリポジトリのルートディレクトリを出力する
-    subprocess.run(["git", "config", "--global", "alias.root", "rev-parse --show-toplevel"], check=True)
+    subprocess.run(
+        ["git", "config", "--global", "alias.root", "rev-parse --show-toplevel"],
+        check=True,
+    )
     print("  Set git config alias.root.")
 
     # プルしたときの設定
@@ -69,4 +87,3 @@ def _setup_git_for_platform():
     print("  Set git config alias.fetch.")
 
     print("--- Platform specific Git setup complete (Android) ---\n")
-

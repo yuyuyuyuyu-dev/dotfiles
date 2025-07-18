@@ -9,12 +9,17 @@ from handlers.deploy_to_android import deploy_to_android
 from handlers.deploy_to_linux import deploy_to_linux
 from handlers.deploy_to_mac import deploy_to_mac
 
+
 def main():
     """
     デプロイコマンドのエントリーポイント
     """
-    parser = argparse.ArgumentParser(description="Deploy dotfiles to a specified platform.")
-    subparsers = parser.add_subparsers(dest="platform", required=True, help="Platform to deploy to")
+    parser = argparse.ArgumentParser(
+        description="Deploy dotfiles to a specified platform."
+    )
+    subparsers = parser.add_subparsers(
+        dest="platform", required=True, help="Platform to deploy to"
+    )
 
     # Android sub-command
     parser_android = subparsers.add_parser("android", help="Deploy to Android")
@@ -30,6 +35,7 @@ def main():
 
     args = parser.parse_args()
     args.func()
+
 
 if __name__ == "__main__":
     main()
