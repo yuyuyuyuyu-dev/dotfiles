@@ -6,6 +6,7 @@
 
 # エイリアスの設定
 alias less="less -cmN"
+alias gemini='gemini -m gemini-2.5-flash'
 
 # setopt
 #  入力したコマンドが存在せず、かつディレクトリ名と一致するなら、ディレクトリに cd する
