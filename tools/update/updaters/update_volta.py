@@ -11,6 +11,7 @@ def update_volta():
     print("########")
     print("volta")
     print("########")
+    subprocess.run("curl https://get.volta.sh | bash", shell=True, check=True)
     subprocess.run(["volta", "install", "node"], check=True)
     subprocess.run(["volta", "install", "npm"], check=True)
 
