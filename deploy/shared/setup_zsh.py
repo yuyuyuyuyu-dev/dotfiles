@@ -1,13 +1,14 @@
 import os
-from create_symlink_safely import create_symlink_safely
-from paths import DOTFILES_ROOT, HOME_DIR
+from deploy.shared.create_symlink_safely import create_symlink_safely
+from deploy.shared.paths import DOTFILES_ROOT, HOME_DIR
 
 zsh_files = [
-    '.zshrc',
-    '.zprofile',
-    '.zshenv',
-    '.zlogout',
+    ".zshrc",
+    ".zprofile",
+    ".zshenv",
+    ".zlogout",
 ]
+
 
 def setup_zsh():
     """
@@ -20,6 +21,7 @@ def setup_zsh():
         create_symlink_safely(source_path, dest_path)
     print("--- Zsh setup complete ---\n")
 
+
 # このスクリプトが直接実行された場合のための処理
-if __name__ == '__main__':
+if __name__ == "__main__":
     setup_zsh()

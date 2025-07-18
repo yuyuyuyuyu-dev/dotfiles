@@ -1,6 +1,6 @@
 import os
-from paths import DOTFILES_ROOT, LOCAL_BIN_DIR 
-from create_symlink_safely import create_symlink_safely
+from deploy.shared.paths import DOTFILES_ROOT, LOCAL_BIN_DIR
+from deploy.shared.create_symlink_safely import create_symlink_safely
 
 
 def setup_update_command():
