@@ -14,6 +14,7 @@ from .updaters.update_brew import update_brew
 from .updaters.update_npm import update_npm
 from .updaters.update_python import update_python
 from .updaters.update_rust import update_rust
+from .updaters.update_sdkman import update_sdkman
 from .updaters.update_volta import update_volta
 
 
@@ -23,6 +24,7 @@ def main():
     update_npm()
     update_python()
     update_rust()
+    update_sdkman()
     update_volta()
 
 
