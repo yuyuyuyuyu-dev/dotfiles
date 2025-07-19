@@ -1,6 +1,7 @@
 # どんな時でも必ず最初に読み込まれるファイル
 # zshを使う時は必ず必要な設定はここに書く
 
+# -- 環境変数 --
 # デフォルトのエディタの設定
 # なぜかzcompileされるとnvimが見つからない
 if type nvim > /dev/null 2>&1 ; then
@@ -29,7 +30,10 @@ export XDG_CACHE_HOME="${HOME}/.cache"
 export VOLTA_HOME="$HOME/.volta"
 export PATH="$VOLTA_HOME/bin:$PATH"
 
-export JAVA_HOME="/Users/yuyuyuyuyu/.sdkman/candidates/java/current"
+export JAVA_HOME="${HOME}/.sdkman/candidates/java/current"
+
+export ANDROID_HOME=~/Library/Android/sdk
+export PATH="$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$PATH"
 
 if [ -f "$HOME/.cargo/env" ]; then
   . "$HOME/.cargo/env"
