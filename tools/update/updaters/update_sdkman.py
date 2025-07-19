@@ -1,5 +1,5 @@
-import subprocess
 import os
+from ..utils import run_command
 
 
 def update_sdkman():
@@ -7,13 +7,13 @@ def update_sdkman():
     if not os.path.isfile(sdkman_init_script):
         return
 
-    print()
-    print()
-    print("########")
-    print("sdkman")
-    print("########")
     command = f'source "{sdkman_init_script}" && sdk selfupdate && sdk update'
-    subprocess.run(command, shell=True, check=True, executable="/bin/bash")
+    run_command(
+        command,
+        "sdkman: self-update and update packages",
+        shell=True,
+        executable="/bin/bash",
+    )
 
 
 if __name__ == "__main__":

@@ -1,19 +1,18 @@
-import subprocess
 import shutil
+from ..utils import run_command
 
 
 def update_volta():
     if not shutil.which("volta"):
         return
 
-    print()
-    print()
-    print("########")
-    print("volta")
-    print("########")
-    subprocess.run("curl https://get.volta.sh | bash", shell=True, check=True)
-    subprocess.run(["volta", "install", "node"], check=True)
-    subprocess.run(["volta", "install", "npm"], check=True)
+    run_command(
+        "curl https://get.volta.sh | bash",
+        "volta: self-update",
+        shell=True,
+    )
+    run_command(["volta", "install", "node"], "volta: install node")
+    run_command(["volta", "install", "npm"], "volta: install npm")
 
 
 if __name__ == "__main__":

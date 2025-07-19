@@ -1,15 +1,11 @@
 import subprocess
 import shutil
+from ..utils import run_command
 
 
 def update_rust():
     if shutil.which("rustup"):
-        print()
-        print()
-        print("########")
-        print("rustup")
-        print("########")
-        subprocess.run(["rustup", "update"], check=True)
+        run_command(["rustup", "update"], "rustup: update")
 
     if shutil.which("cargo"):
         try:
@@ -18,12 +14,7 @@ def update_rust():
                 check=True,
                 capture_output=True,
             )
-            print()
-            print()
-            print("########")
-            print("cargo")
-            print("########")
-            subprocess.run(["cargo", "install-update", "-a"], check=True)
+            run_command(["cargo", "install-update", "-a"], "cargo: update packages")
         except (subprocess.CalledProcessError, FileNotFoundError):
             pass
 

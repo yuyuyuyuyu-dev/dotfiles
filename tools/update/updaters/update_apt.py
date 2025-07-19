@@ -1,18 +1,13 @@
-import subprocess
 import shutil
+from ..utils import run_command
 
 
 def update_apt():
     if not shutil.which("apt-get"):
         return
 
-    print()
-    print()
-    print("########")
-    print("apt")
-    print("########")
-    subprocess.run(["sudo", "apt", "update"], check=True)
-    subprocess.run(["sudo", "apt", "-y", "upgrade"], check=True)
+    run_command(["sudo", "apt", "update"], "apt: update package lists")
+    run_command(["sudo", "apt", "-y", "upgrade"], "apt: upgrade packages")
 
 
 if __name__ == "__main__":

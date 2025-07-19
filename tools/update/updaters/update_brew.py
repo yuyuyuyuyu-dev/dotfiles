@@ -1,18 +1,13 @@
-import subprocess
 import shutil
+from ..utils import run_command
 
 
 def update_brew():
     if not shutil.which("brew"):
         return
 
-    print()
-    print()
-    print("########")
-    print("brew")
-    print("########")
-    subprocess.run(["brew", "update", "-v"], check=True)
-    subprocess.run(["brew", "upgrade", "-v"], check=True)
+    run_command(["brew", "update", "-v"], "brew: update formula")
+    run_command(["brew", "upgrade", "-v"], "brew: upgrade packages")
 
 
 if __name__ == "__main__":
