@@ -7,13 +7,17 @@ def update_volta():
         return
 
     print()
+    print("####################")
+    print("#                  #")
+    print("#      `volta`     #")
+    print("#                  #")
+    print("####################")
     print()
-    print("########")
-    print("volta")
-    print("########")
     subprocess.run("curl https://get.volta.sh | bash", shell=True, check=True)
     subprocess.run(["volta", "install", "node"], check=True)
     subprocess.run(["volta", "install", "npm"], check=True)
+    print()
+    print()
 
 
 if __name__ == "__main__":

@@ -8,12 +8,16 @@ def update_sdkman():
         return
 
     print()
+    print("####################")
+    print("#                  #")
+    print("#     `sdkman`     #")
+    print("#                  #")
+    print("####################")
     print()
-    print("########")
-    print("sdkman")
-    print("########")
     command = f'source "{sdkman_init_script}" && sdk selfupdate && sdk update'
     subprocess.run(command, shell=True, check=True, executable="/bin/bash")
+    print()
+    print()
 
 
 if __name__ == "__main__":

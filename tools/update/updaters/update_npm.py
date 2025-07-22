@@ -7,12 +7,16 @@ def update_npm():
         return
 
     print()
+    print("####################")
+    print("#                  #")
+    print("#  `npm modules`   #")
+    print("#                  #")
+    print("####################")
     print()
-    print("########")
-    print("npm modules")
-    print("########")
     subprocess.run(["npm", "outdated", "-g", "--depth=0"])
     subprocess.run(["npm", "update", "-g"], check=True)
+    print()
+    print()
 
 
 if __name__ == "__main__":

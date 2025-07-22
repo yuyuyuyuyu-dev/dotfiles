@@ -7,12 +7,16 @@ def update_brew():
         return
 
     print()
+    print("####################")
+    print("#                  #")
+    print("#      `brew`      #")
+    print("#                  #")
+    print("####################")
     print()
-    print("########")
-    print("brew")
-    print("########")
     subprocess.run(["brew", "update", "-v"], check=True)
     subprocess.run(["brew", "upgrade", "-v"], check=True)
+    print()
+    print()
 
 
 if __name__ == "__main__":
