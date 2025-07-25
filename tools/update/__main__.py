@@ -19,13 +19,13 @@ from .updaters.update_volta import update_volta
 
 
 def main():
-    update_apt()
     update_brew()
-    update_npm()
-    update_python()
-    update_rust()
+    update_apt()
     update_sdkman()
     update_volta()
+    update_npm()
+    update_rust()
+    update_python()
 
 
 if __name__ == "__main__":
