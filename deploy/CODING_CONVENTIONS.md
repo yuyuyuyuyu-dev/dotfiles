@@ -45,7 +45,7 @@
         python3 -m ruff format .
         ```
     -   `ruff check . --fix` はリンティングエラーを修正しますが、コードのフォーマットは行いません。フォーマットを適用するには、別途 `ruff format .` を実行する必要があります。
--   **Print文のフォーマット**: ユーザーへの出力を行う `print` 文は、他のセットアップ関数と一貫性のあるフォーマットを使用してください。具体的には、処理の開始時に `--- Setting up <Configuration Name> ---`、終了時に `--- <Configuration Name> setup complete ---` の形式を使用し、改行で区切ることで視覚的な区切りを明確にしてください。
+-   **Print文のフォーマット**: ユーザーへの出力を行う `print` 文は、他のセットアップ関数と一貫性のあるフォーマットを使用してください。具体的には、処理の開始時に `--- Setting up <Configuration Name> ---`、終了時に `--- <Configuration Name> setup complete ---\n` の形式を使用し、改行で区切ることで視覚的な区切りを明確にしてください。
 
 ## 5. ドキュメントの役割分担
 
