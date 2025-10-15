@@ -26,3 +26,7 @@
 [pull]
 	# 可能であればFast-Forwardを行う
 	ff = true
+
+
+[include]
+    path = ~/Documents/GitHub/dotfiles-private/.config/git/config
