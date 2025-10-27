@@ -8,6 +8,10 @@ if [ -f "/opt/homebrew/bin/brew" ]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
+if [ -f "~/Library/Android/sdk" ]; then
+    export ANDROID_HOME=~/Library/Android/sdk
+fi
+
 case "$OSTYPE" in
     darwin*)
         # darwin(≒Mac)のときに読み込まれる設定
