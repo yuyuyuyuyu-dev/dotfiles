@@ -6,13 +6,18 @@ from ..utils import print_command
 
 
 def update_python():
+    errors = []
     if shutil.which("pyenv"):
         try:
             subprocess.run(
                 ["pyenv", "update", "--help"], check=True, capture_output=True
             )
-            print_command("pyenv update")
-            subprocess.run(["pyenv", "update"], check=True)
+            cmd = "pyenv update"
+            print_command(cmd)
+            try:
+                subprocess.run(["pyenv", "update"], check=True)
+            except subprocess.CalledProcessError:
+                errors.append(cmd)
             print()
             print()
         except (subprocess.CalledProcessError, FileNotFoundError):
@@ -23,10 +28,16 @@ def update_python():
             print_command("pip3 self-update (skipped - externally managed)")
             print("Python environment is externally managed. Use your package manager to update pip.")
         else:
-            print_command("pip3 install -U pip --user")
-            subprocess.run(["pip3", "install", "-U", "pip", "--user"], check=True)
+            cmd = "pip3 install -U pip --user"
+            print_command(cmd)
+            try:
+                subprocess.run(["pip3", "install", "-U", "pip", "--user"], check=True)
+            except subprocess.CalledProcessError:
+                errors.append(cmd)
         print()
         print()
+
+    return errors
 
 
 def _is_externally_managed():

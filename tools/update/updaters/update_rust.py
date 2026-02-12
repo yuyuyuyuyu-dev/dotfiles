@@ -4,9 +4,14 @@ from ..utils import print_command
 
 
 def update_rust():
+    errors = []
     if shutil.which("rustup"):
-        print_command("rustup update")
-        subprocess.run(["rustup", "update"], check=True)
+        cmd = "rustup update"
+        print_command(cmd)
+        try:
+            subprocess.run(["rustup", "update"], check=True)
+        except subprocess.CalledProcessError:
+            errors.append(cmd)
         print()
         print()
 
@@ -17,12 +22,18 @@ def update_rust():
                 check=True,
                 capture_output=True,
             )
-            print_command("cargo install-update -a")
-            subprocess.run(["cargo", "install-update", "-a"], check=True)
+            cmd = "cargo install-update -a"
+            print_command(cmd)
+            try:
+                subprocess.run(["cargo", "install-update", "-a"], check=True)
+            except subprocess.CalledProcessError:
+                errors.append(cmd)
             print()
             print()
         except (subprocess.CalledProcessError, FileNotFoundError):
             pass
+
+    return errors
 
 
 if __name__ == "__main__":

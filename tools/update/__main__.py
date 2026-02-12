@@ -16,16 +16,19 @@ from .updaters.update_python import update_python
 from .updaters.update_rust import update_rust
 from .updaters.update_sdkman import update_sdkman
 from .updaters.update_volta import update_volta
+from .utils import print_result
 
 
 def main():
-    update_brew()
-    update_apt()
-    update_sdkman()
-    update_volta()
-    update_npm()
-    update_rust()
-    update_python()
+    errors = []
+    errors.extend(update_brew())
+    errors.extend(update_apt())
+    errors.extend(update_sdkman())
+    errors.extend(update_volta())
+    errors.extend(update_npm())
+    errors.extend(update_rust())
+    errors.extend(update_python())
+    print_result(errors)
 
 
 if __name__ == "__main__":
