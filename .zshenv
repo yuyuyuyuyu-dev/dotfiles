@@ -41,6 +41,8 @@ fi
 
 export PATH=$HOME/.local/bin:$PATH
 
+export PATH=/opt/homebrew/opt/qt@5/bin:$PATH
+
 case "$OSTYPE" in
   darwin*)
     # darwin(≒Mac)のときに読み込まれる設定
