@@ -12,3 +12,15 @@ def print_command(command):
     print(empty_line)
     print(line)
     print()
+
+
+def print_result(errors):
+    """
+    更新結果を表示します。
+    """
+    if not errors:
+        print("Success")
+    else:
+        print("Error:")
+        for error in errors:
+            print(f"- `{error}`")
