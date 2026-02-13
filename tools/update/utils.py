@@ -19,7 +19,7 @@ def print_result(errors):
     更新結果を表示します。
     """
     if not errors:
-        print("Everything is up-to-date!")
+        print("✨ Everything is up-to-date!")
     else:
         print("Error:")
         for error in errors:
