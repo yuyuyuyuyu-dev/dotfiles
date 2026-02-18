@@ -51,3 +51,9 @@ case "$OSTYPE" in
     # linuxのときに読み込まれる設定
     ;;
 esac
+
+local current_dir="${${(%):-%x}:A:h}"
+local dotfiles_private_zshenv_path="${current_dir}/../dotfiles-private/.zshenv"
+if [ -f "$dotfiles_private_zshenv_path" ]; then
+  source "$dotfiles_private_zshenv_path"
+fi
