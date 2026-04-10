@@ -89,3 +89,9 @@ export SDKMAN_DIR="$HOME/.sdkman"
 
 # Load Angular CLI autocompletion.
 source <(ng completion script)
+
+# Added by Antigravity
+export PATH="/Users/yuyuyuyuyu/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/yuyuyuyuyu/.antigravity/antigravity/bin:$PATH"
