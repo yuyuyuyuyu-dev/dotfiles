@@ -36,3 +36,16 @@ arichu() {
 tachibana-san() {
 	echo '🍓 ありすでいいです。'
 }
+
+
+# dotfiles-private/.bashrcを読み込む
+_dotfiles_bashrc_path="${BASH_SOURCE[0]}"
+if [ -L "$_dotfiles_bashrc_path" ]; then
+  _dotfiles_bashrc_path="$(readlink -f "$_dotfiles_bashrc_path")"
+fi
+_current_dir="$(cd "$(dirname "$_dotfiles_bashrc_path")" && pwd)"
+_dotfiles_private_bashrc_path="${_current_dir}/../dotfiles-private/.bashrc"
+if [ -f "$_dotfiles_private_bashrc_path" ]; then
+  source "$_dotfiles_private_bashrc_path"
+fi
+unset _current_dir _dotfiles_bashrc_path _dotfiles_private_bashrc_path
