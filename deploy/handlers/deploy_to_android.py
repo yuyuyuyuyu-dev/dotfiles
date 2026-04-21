@@ -5,6 +5,7 @@ import subprocess
 from deploy.shared.setup_bash import setup_bash
 from deploy.shared.setup_git import setup_git
 from deploy.shared.setup_vim import setup_vim
+from deploy.shared.setup_gemini import setup_gemini
 from deploy.shared.paths import HOME_DIR
 
 
@@ -18,6 +19,7 @@ def deploy_to_android():
     _setup_git_for_platform()
 
     setup_vim()
+    setup_gemini()
 
     print("\nAndroid deployment finished.")
 
