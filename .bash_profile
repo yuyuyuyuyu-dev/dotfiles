@@ -1,3 +1,5 @@
+export PATH="$HOME/.local/bin:$PATH"
+
 linuxbrew_path="/home/linuxbrew/.linuxbrew/bin/brew"
 if [ -e ${linuxbrew_path} ]; then
 	eval "$(${linuxbrew_path} shellenv)"
