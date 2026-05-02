@@ -12,6 +12,7 @@
 from .updaters.update_apt import update_apt
 from .updaters.update_brew import update_brew
 from .updaters.update_npm import update_npm
+from .updaters.update_pkg import update_pkg
 from .updaters.update_python import update_python
 from .updaters.update_rust import update_rust
 from .updaters.update_sdkman import update_sdkman
@@ -22,6 +23,7 @@ from .utils import print_result
 def main():
     errors = []
     errors.extend(update_brew())
+    errors.extend(update_pkg())
     errors.extend(update_apt())
     errors.extend(update_sdkman())
     errors.extend(update_volta())

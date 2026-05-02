@@ -1,11 +1,15 @@
 import subprocess
 import shutil
+import os
 from ..utils import print_command
 
 
 def update_apt():
     errors = []
     if not shutil.which("apt-get"):
+        return errors
+
+    if "TERMUX_VERSION" in os.environ:
         return errors
 
     cmd1 = "sudo apt update"

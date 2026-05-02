@@ -6,6 +6,7 @@ from deploy.shared.setup_bash import setup_bash
 from deploy.shared.setup_git import setup_git
 from deploy.shared.setup_vim import setup_vim
 from deploy.shared.setup_gemini import setup_gemini
+from deploy.shared.setup_update_command import setup_update_command
 from deploy.shared.paths import HOME_DIR
 
 
@@ -20,6 +21,7 @@ def deploy_to_android():
 
     setup_vim()
     setup_gemini()
+    setup_update_command()
 
     print("\nAndroid deployment finished.")
 
