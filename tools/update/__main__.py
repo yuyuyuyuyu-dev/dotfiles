@@ -17,6 +17,8 @@ from .updaters.update_python import update_python
 from .updaters.update_rust import update_rust
 from .updaters.update_sdkman import update_sdkman
 from .updaters.update_volta import update_volta
+from .updaters.update_claude import update_claude
+from .updaters.update_android import update_android
 from .utils import print_result
 
 
@@ -30,6 +32,8 @@ def main():
     errors.extend(update_npm())
     errors.extend(update_rust())
     errors.extend(update_python())
+    errors.extend(update_claude())
+    errors.extend(update_android())
     print_result(errors)
 
 
