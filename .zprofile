@@ -20,3 +20,7 @@ case "$OSTYPE" in
         # linuxのときに読み込まれる設定
         ;;
 esac
+
+
+# Added by Antigravity CLI installer
+export PATH="/Users/yuyuyuyuyu/.local/bin:$PATH"

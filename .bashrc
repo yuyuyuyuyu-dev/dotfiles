@@ -49,3 +49,7 @@ if [ -f "$_dotfiles_private_bashrc_path" ]; then
   source "$_dotfiles_private_bashrc_path"
 fi
 unset _current_dir _dotfiles_bashrc_path _dotfiles_private_bashrc_path
+
+
+# Added by Antigravity CLI installer
+export PATH="/Users/yuyuyuyuyu/.local/bin:$PATH"

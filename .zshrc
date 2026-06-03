@@ -95,3 +95,10 @@ export PATH="/Users/yuyuyuyuyu/.antigravity/antigravity/bin:$PATH"
 
 # Added by Antigravity
 export PATH="/Users/yuyuyuyuyu/.antigravity/antigravity/bin:$PATH"
+
+# Added by Antigravity IDE
+export PATH="/Users/yuyuyuyuyu/.antigravity-ide/antigravity-ide/bin:$PATH"
+
+
+# Added by Antigravity CLI installer
+export PATH="/Users/yuyuyuyuyu/.local/bin:$PATH"

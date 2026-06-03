@@ -164,3 +164,7 @@ end
 if uname -r | grep -i Microsoft > /dev/null 2>&1
   alias firefox "/mnt/c/Program\ Files/Mozilla\ Firefox/firefox.exe"
 end
+
+
+# Added by Antigravity CLI installer
+set -gx PATH "/Users/yuyuyuyuyu/.local/bin" $PATH
