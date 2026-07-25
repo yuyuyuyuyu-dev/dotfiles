@@ -1,0 +1,32 @@
+name: gitleaks
+
+on:
+  # main への push と全 PR を対象にする。push を main に絞るのは、
+  # 同一リポジトリのブランチから PR を出したときに二重実行になるのを避けるため。
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  # 検出ルールは後から追加されるため、コミット時点で見逃した秘密情報が
+  # 後日ルール追加によって検出できるよう、週次で履歴全体を再スキャンする。
+  schedule:
+    - cron: "0 4 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # gitleaks は履歴上のコミットを遡って走査するため、浅いクローンでは取りこぼす。
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v3
+        env:
+          # GITLEAKS_LICENSE は Organization 所有のリポジトリでのみ必須。
+          # 本リポジトリは個人アカウント所有のため設定しない。
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
