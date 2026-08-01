@@ -1,0 +1,21 @@
+# The python3 bundled with macOS is 3.9, and a suggestion that only parses on a
+# newer version would break deployment there.
+target-version = "py39"
+
+[lint]
+# ruff's default rule set shifts between releases, so upgrading ruff alone could
+# turn CI red. State what is enforced here instead of inheriting it.
+select = ["F", "E", "W", "I", "UP", "B", "SIM", "BLE", "EXE", "PLW", "RUF"]
+
+ignore = [
+    # Line length is the formatter's job. All that reaches the linter is the
+    # string literals the formatter cannot split, which would be permanent noise.
+    "E501",
+    # These flag the full-width parentheses of Japanese text as mistyped ASCII.
+    # The comments and docstrings in this repository are written in Japanese,
+    # where those characters are correct.
+    # RUF001 = string literals, RUF002 = docstrings, RUF003 = comments.
+    "RUF001",
+    "RUF002",
+    "RUF003",
+]

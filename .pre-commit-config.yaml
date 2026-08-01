@@ -12,3 +12,14 @@ repos:
     rev: v8.30.1
     hooks:
       - id: gitleaks
+
+  # Keep this rev in step with the ruff version pinned in
+  # .github/workflows/python.yml, or a commit that passes here can still fail CI.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.1
+    hooks:
+      # Fix locally, where the result can be reviewed before committing. CI runs
+      # the same check without --fix, so an unfixed commit is still caught.
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
