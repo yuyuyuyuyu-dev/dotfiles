@@ -2,4 +2,6 @@
 [commands]
 # custom command はシェルに文字列を渡して終了コードを見るだけで、組み込み step のような
 # 存在確認は行われない。未インストールの環境でも 0 で終える必要があるため、ガードを自前で書く。
-"Android CLI" = "command -v android > /dev/null || exit 0; android update"
+# ガードをシェルの機能ではなく python3 で書くのは、シェルによる解釈の差を避けるため。
+# これによりシェルに要求するのは引用符の解釈だけになる。
+"Android CLI" = '''python3 -c "import shutil, subprocess, sys; sys.exit(subprocess.run(['android', 'update']).returncode if shutil.which('android') else 0)"'''
