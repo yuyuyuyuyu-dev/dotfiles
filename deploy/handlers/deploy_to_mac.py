@@ -7,7 +7,6 @@ from deploy.shared.setup_tmux import setup_tmux
 from deploy.shared.deploy_configs import deploy_configs
 from deploy.shared.setup_vim import setup_vim
 from deploy.shared.setup_ideavim import setup_ideavim
-from deploy.shared.setup_update_command import setup_update_command
 from deploy.shared.setup_claude import setup_claude
 from deploy.shared.setup_gemini import setup_gemini
 
@@ -25,7 +24,6 @@ def deploy_to_mac():
 
     setup_vim()
     setup_ideavim()
-    setup_update_command()
     setup_claude()
     setup_gemini()
 

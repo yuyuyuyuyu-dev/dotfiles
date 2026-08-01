@@ -9,7 +9,6 @@ __all__ = [
     "setup_git",
     "setup_ideavim",
     "setup_tmux",
-    "setup_update_command",
     "setup_vim",
     "setup_zsh",
     "setup_gemini",
