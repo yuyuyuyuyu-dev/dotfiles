@@ -1,6 +1,5 @@
+[misc]
 [commands]
-# android CLI は topgrade がネイティブ対応していない唯一の更新対象なので、
-# ユーザー定義コマンドとして追加する。
-# この dotfiles は Linux や Termux にも配るため、android が存在しない環境では
-# 何もせず正常終了させ、未インストールなら黙って飛ばす他ステップの挙動に揃える。
+# custom command はシェルに文字列を渡して終了コードを見るだけで、組み込み step のような
+# 存在確認は行われない。未インストールの環境でも 0 で終える必要があるため、ガードを自前で書く。
 "Android CLI" = "command -v android > /dev/null || exit 0; android update"
