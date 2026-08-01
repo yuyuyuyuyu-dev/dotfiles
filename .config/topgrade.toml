@@ -2,7 +2,7 @@
 [commands]
 # topgrade hands a custom command to the shell and only checks its exit status. It
 # does not look for the binary first, the way its built-in steps do, so the guard
-# has to live here for this step to exit 0 where android is not installed.
+# has to live here for this step to exit 0 where the Android CLI is not installed.
 # Writing the guard in python rather than shell syntax keeps it identical across
 # shells, leaving the shell nothing to interpret but the quoting.
 "Android CLI" = """python3 -c 'import shutil, subprocess, sys; sys.exit(subprocess.run(["android", "update"]).returncode if shutil.which("android") else 0)'"""
