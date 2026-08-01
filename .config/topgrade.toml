@@ -1,0 +1,6 @@
+[commands]
+# android CLI は topgrade がネイティブ対応していない唯一の更新対象なので、
+# ユーザー定義コマンドとして追加する。
+# この dotfiles は Linux や Termux にも配るため、android が存在しない環境では
+# 何もせず正常終了させ、未インストールなら黙って飛ばす他ステップの挙動に揃える。
+"Android CLI" = "command -v android > /dev/null || exit 0; android update"

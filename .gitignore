@@ -7,6 +7,7 @@
 !.config/git
 !.config/kitty
 !.config/starship.toml
+!.config/topgrade.toml
 .vim/
 .python_history
 .bash_history
