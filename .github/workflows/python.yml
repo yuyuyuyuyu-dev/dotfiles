@@ -20,13 +20,13 @@ jobs:
       # Without an explicit version the action installs the latest release, so a
       # ruff release on its own could fail this job. Pin it, and keep the value in
       # step with the rev in .pre-commit-config.yaml so local runs agree with CI.
-      - uses: astral-sh/ruff-action@v4
+      - uses: astral-sh/ruff-action@v4.1.0
         with:
           version: "0.16.1"
 
       # The action defaults to "check", so the format check needs its own step.
       # --diff prints the reformatting inline, making a failure readable from the log.
-      - uses: astral-sh/ruff-action@v4
+      - uses: astral-sh/ruff-action@v4.1.0
         with:
           version: "0.16.1"
           args: "format --check --diff"
