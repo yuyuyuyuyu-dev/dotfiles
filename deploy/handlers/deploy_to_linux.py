@@ -5,7 +5,6 @@ from deploy.shared.setup_zsh import setup_zsh
 from deploy.shared.setup_git import setup_git
 from deploy.shared.deploy_configs import deploy_configs
 from deploy.shared.setup_vim import setup_vim
-from deploy.shared.setup_update_command import setup_update_command
 
 
 def deploy_to_linux():
@@ -18,7 +17,6 @@ def deploy_to_linux():
     setup_git()
 
     setup_vim()
-    setup_update_command()
 
     deploy_configs()
 
