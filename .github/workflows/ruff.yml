@@ -11,6 +11,9 @@ on:
 permissions:
   contents: read
 
+# The two checks are separate jobs so that both always report. Run as steps in one
+# job, a lint failure would stop the job before the format check ran, and the
+# formatting problems would only surface on the next push.
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -28,9 +31,18 @@ jobs:
       # resolving something else when the lockfile is behind pyproject.toml.
       - run: uv sync --frozen --only-dev
 
-      # Both checks share one job on purpose: each takes about 30ms, while a second
-      # job would repeat several seconds of runner startup and setup.
       - run: uv run --frozen ruff check .
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+
+      - run: uv sync --frozen --only-dev
 
       # --diff prints the reformatting inline, making a failure readable from the log.
       - run: uv run --frozen ruff format --check --diff .
