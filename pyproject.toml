@@ -1,8 +1,25 @@
-# The python3 bundled with macOS is 3.9, and a suggestion that only parses on a
-# newer version would break deployment there.
+# This repository is not a distributable package; the file exists so that uv can
+# pin the version of ruff, and so that ruff's own settings sit alongside it.
+[project]
+name = "dotfiles"
+version = "0"
+# The python3 bundled with macOS is 3.9, and the deploy scripts have to run there.
+requires-python = ">=3.9"
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+# The single source for the ruff version. uv.lock holds the resolved result, and
+# CI runs ruff through uv, so the version cannot drift between here and CI.
+dev = ["ruff==0.16.1"]
+
+[tool.ruff]
+# Matches requires-python above: reject suggestions that only parse on a newer
+# version than the oldest interpreter these scripts run on.
 target-version = "py39"
 
-[lint]
+[tool.ruff.lint]
 # ruff's default rule set shifts between releases, so upgrading ruff alone could
 # turn CI red. State what is enforced here instead of inheriting it.
 select = ["F", "E", "W", "I", "UP", "B", "SIM", "BLE", "EXE", "PLW", "RUF"]
