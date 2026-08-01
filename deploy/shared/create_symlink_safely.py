@@ -1,6 +1,6 @@
 import os
-import sys
 import shutil
+import sys
 
 
 def create_symlink_safely(source_path, dest_path):
@@ -37,7 +37,7 @@ def create_symlink_safely(source_path, dest_path):
                 contents = os.listdir(dest_path)
                 for item in contents:
                     print(f"- {item}")
-            except Exception as e:
+            except OSError as e:
                 print(f"Could not list directory contents: {e}", file=sys.stderr)
             print("--------------------------")
 
@@ -62,9 +62,11 @@ def create_symlink_safely(source_path, dest_path):
             print(f"[WARN] File already exists at destination: {dest_path}")
             print("--- Current content ---")
             try:
-                with open(dest_path, "r", encoding="utf-8") as f:
+                with open(dest_path, encoding="utf-8") as f:
                     print(f.read())
-            except Exception as e:
+            # The destination can hold a file that is not readable as text, so a
+            # decode failure has to be caught alongside a read failure.
+            except (OSError, UnicodeDecodeError) as e:
                 print(f"Could not read file content: {e}", file=sys.stderr)
             print("-----------------------")
 

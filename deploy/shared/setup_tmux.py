@@ -1,6 +1,7 @@
 import os
-from deploy.shared.paths import DOTFILES_ROOT, HOME_DIR
+
 from deploy.shared.create_symlink_safely import create_symlink_safely
+from deploy.shared.paths import DOTFILES_ROOT, HOME_DIR
 
 
 def setup_tmux():
