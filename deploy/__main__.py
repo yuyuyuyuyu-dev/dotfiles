@@ -1,13 +1,8 @@
 import argparse
-import os
-import sys
 
-# 'deploy' ディレクトリをPythonのモジュール検索パスに追加
-sys.path.append(os.path.dirname(__file__))
-
-from handlers.deploy_to_android import deploy_to_android
-from handlers.deploy_to_linux import deploy_to_linux
-from handlers.deploy_to_mac import deploy_to_mac
+from deploy.handlers.deploy_to_android import deploy_to_android
+from deploy.handlers.deploy_to_linux import deploy_to_linux
+from deploy.handlers.deploy_to_mac import deploy_to_mac
 
 
 def main():
