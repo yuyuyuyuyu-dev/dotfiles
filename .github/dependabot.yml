@@ -1,0 +1,13 @@
+version: 2
+
+updates:
+  # uv is its own ecosystem here, separate from pip. It reads pyproject.toml and
+  # uv.lock, which between them are the only place a tool version is pinned.
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: daily
+    # Checking daily keeps the delay between a release and the pull request short.
+    # The limit of one keeps that frequency from filling the list: a superseded
+    # pull request is replaced rather than accumulating beside the others.
+    open-pull-requests-limit: 1
