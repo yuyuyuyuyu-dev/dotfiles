@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Gemini関連のセットアップを行うモジュール。
 
 .gemini/GEMINI.md のシンボリックリンクを ~/.gemini/GEMINI.md に作成します。
 """
 
 import os
+
 from deploy.shared import paths
 from deploy.shared.create_symlink_safely import create_symlink_safely
 

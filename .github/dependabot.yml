@@ -1,0 +1,23 @@
+version: 2
+
+# Both ecosystems use the same schedule and limit. Checking daily keeps the gap
+# between a release and the pull request short, and the limit of one keeps that
+# frequency from filling the list: a superseded pull request is replaced rather
+# than accumulating beside the others.
+updates:
+  # uv is its own ecosystem here, separate from pip. It reads pyproject.toml and
+  # uv.lock, which between them are the only place a tool version is pinned.
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 1
+
+  # Covers the `uses:` references in .github/workflows. setup-uv has to name an
+  # exact version, because Astral publishes no floating tag for its newest major,
+  # so nothing else would ever move it off v9.0.0.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 1

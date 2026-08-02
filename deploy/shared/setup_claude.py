@@ -1,5 +1,7 @@
 import os
+
 from shared.create_symlink_safely import create_symlink_safely
+
 from .paths import DOTFILES_ROOT, HOME_DIR
 
 

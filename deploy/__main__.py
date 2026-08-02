@@ -1,6 +1,6 @@
 import argparse
-import sys
 import os
+import sys
 
 # 'deploy' ディレクトリをPythonのモジュール検索パスに追加
 sys.path.append(os.path.dirname(__file__))

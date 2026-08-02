@@ -1,0 +1,16 @@
+# This repository is not a distributable package. The file exists so that uv can
+# pin the version of ruff, which is the only thing it declares.
+[project]
+name = "dotfiles"
+version = "0"
+# The python3 bundled with macOS is 3.9, and the deploy scripts have to run there.
+# ruff reads this to decide which syntax it may suggest, so it needs no target-version.
+requires-python = ">=3.9"
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+# The single source for the ruff version. uv.lock holds the resolved result, and
+# CI runs ruff through uv, so the version cannot drift between here and CI.
+dev = ["ruff==0.16.1"]

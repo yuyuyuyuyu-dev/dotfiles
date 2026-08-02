@@ -1,4 +1,5 @@
 import os
+
 from deploy.shared.create_symlink_safely import create_symlink_safely
 from deploy.shared.paths import DOTFILES_ROOT, HOME_DIR
 
