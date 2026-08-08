@@ -51,8 +51,8 @@ jobs:
         run: |
           cd "${RUNNER_TEMP}/home"
           for link in ${{ matrix.links }}; do
-            [ -L "$link" ] || { echo "::error::$link is not a symlink"; exit 1; }
-            [ -e "$link" ] || { echo "::error::$link is a broken symlink"; exit 1; }
+            test -L "$link" || { echo "::error::$link is not a symlink"; exit 1; }
+            test -e "$link" || { echo "::error::$link is a broken symlink"; exit 1; }
             case "$(readlink "$link")" in
               "${GITHUB_WORKSPACE}"/*) ;;
               *) echo "::error::$link points outside the checkout"; exit 1 ;;
@@ -64,7 +64,7 @@ jobs:
       # would be editing its own source.
       - name: assert git settings stayed out of the linked config directory
         run: |
-          [ -f "${RUNNER_TEMP}/home/.gitconfig" ] || {
+          test -f "${RUNNER_TEMP}/home/.gitconfig" || {
             echo "::error::~/.gitconfig was not created"; exit 1; }
           git -C "${GITHUB_WORKSPACE}" diff --quiet -- .config || {
             echo "::error::the deployment modified its own source"; exit 1; }
