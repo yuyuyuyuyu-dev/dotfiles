@@ -1,0 +1,40 @@
+name: Deploy tests
+
+on:
+  # Limiting push to main avoids running twice for a pull request opened from a
+  # branch in this same repository.
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Each job deploys on the operating system it targets, because a platform's
+# configuration is only meaningful there. Android has no runner and so goes
+# unexercised.
+jobs:
+  mac:
+    name: should deploy to macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # An empty HOME is what the deployment has to cope with on a new machine.
+      # paths.py resolves it through expanduser, which follows $HOME.
+      # Closing stdin turns a confirmation prompt -- which would mean something
+      # was already in place -- into a failure rather than a hang.
+      - run: |
+          mkdir -p "${RUNNER_TEMP}/home"
+          HOME="${RUNNER_TEMP}/home" python3 -m deploy mac < /dev/null
+
+  linux:
+    name: should deploy to Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: |
+          mkdir -p "${RUNNER_TEMP}/home"
+          HOME="${RUNNER_TEMP}/home" python3 -m deploy linux < /dev/null
