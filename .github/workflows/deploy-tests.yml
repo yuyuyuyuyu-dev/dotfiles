@@ -11,30 +11,60 @@ on:
 permissions:
   contents: read
 
-# Each job deploys on the operating system it targets, because a platform's
-# configuration is only meaningful there. Android has no runner and so goes
-# unexercised.
 jobs:
-  mac:
-    name: should deploy to macOS
-    runs-on: macos-latest
+  deploy:
+    name: should deploy to ${{ matrix.name }}
+    # Android is absent because GitHub hosts no runner for it.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: mac
+            name: macOS
+            runner: macos-latest
+            links: >-
+              .bash_profile .bashrc
+              .zshrc .zprofile .zshenv .zlogout
+              .vimrc .ideavimrc .tmux.conf
+              .claude/CLAUDE.md .gemini/GEMINI.md
+              .config
+          - platform: linux
+            name: Linux
+            runner: ubuntu-latest
+            links: >-
+              .bash_profile .bashrc
+              .zshrc .zprofile .zshenv .zlogout
+              .vimrc
+              .config
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7
 
-      # An empty HOME is what the deployment has to cope with on a new machine.
-      # paths.py resolves it through expanduser, which follows $HOME.
+      # An empty HOME is the situation a new machine presents.
       # Closing stdin turns a confirmation prompt -- which would mean something
       # was already in place -- into a failure rather than a hang.
       - run: |
           mkdir -p "${RUNNER_TEMP}/home"
-          HOME="${RUNNER_TEMP}/home" python3 -m deploy mac < /dev/null
+          HOME="${RUNNER_TEMP}/home" python3 -m deploy ${{ matrix.platform }} < /dev/null
 
-  linux:
-    name: should deploy to Linux
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
+      - name: assert every configuration file is linked to this checkout
+        run: |
+          cd "${RUNNER_TEMP}/home"
+          for link in ${{ matrix.links }}; do
+            [ -L "$link" ] || { echo "::error::$link is not a symlink"; exit 1; }
+            [ -e "$link" ] || { echo "::error::$link is a broken symlink"; exit 1; }
+            case "$(readlink "$link")" in
+              "${GITHUB_WORKSPACE}"/*) ;;
+              *) echo "::error::$link points outside the checkout"; exit 1 ;;
+            esac
+          done
 
-      - run: |
-          mkdir -p "${RUNNER_TEMP}/home"
-          HOME="${RUNNER_TEMP}/home" python3 -m deploy linux < /dev/null
+      # git falls back to writing ~/.config/git/config when ~/.gitconfig is
+      # absent, and ~/.config is a link into the checkout, so the deployment
+      # would be editing its own source.
+      - name: assert git settings stayed out of the linked config directory
+        run: |
+          [ -f "${RUNNER_TEMP}/home/.gitconfig" ] || {
+            echo "::error::~/.gitconfig was not created"; exit 1; }
+          git -C "${GITHUB_WORKSPACE}" diff --quiet -- .config || {
+            echo "::error::the deployment modified its own source"; exit 1; }
