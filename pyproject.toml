@@ -1,5 +1,5 @@
 # This repository is not a distributable package. The file exists so that uv can
-# pin the version of ruff, which is the only thing it declares.
+# pin the development tools, which is all it declares.
 [project]
 name = "dotfiles"
 version = "0"
@@ -11,6 +11,9 @@ requires-python = ">=3.9"
 package = false
 
 [dependency-groups]
-# The single source for the ruff version. uv.lock holds the resolved result, and
-# CI runs ruff through uv, so the version cannot drift between here and CI.
-dev = ["ruff==0.16.1"]
+# This bounds what uv.lock may resolve to; the lockfile is what actually fixes a
+# version. CI runs ruff through uv, so it cannot drift from what runs locally,
+# and Dependabot moves the lockfile.
+dev = [
+    "ruff>=0.16.2",
+]

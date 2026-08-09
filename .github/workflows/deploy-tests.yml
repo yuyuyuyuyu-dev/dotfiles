@@ -1,0 +1,74 @@
+name: Deploy tests
+
+on:
+  # Limiting push to main avoids running twice for a pull request opened from a
+  # branch in this same repository.
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: should deploy to ${{ matrix.name }}
+    # Android is absent because GitHub hosts no runner for it.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: mac
+            name: macOS
+            runner: macos-latest
+            links: >-
+              .bash_profile .bashrc
+              .zshrc .zprofile .zshenv .zlogout
+              .vimrc .ideavimrc .tmux.conf
+              .claude/CLAUDE.md .gemini/GEMINI.md
+              .config
+          - platform: linux
+            name: Linux
+            runner: ubuntu-latest
+            links: >-
+              .bash_profile .bashrc
+              .zshrc .zprofile .zshenv .zlogout
+              .vimrc
+              .config
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # An empty HOME is the situation a new machine presents.
+      # Closing stdin turns a confirmation prompt -- which would mean something
+      # was already in place -- into a failure rather than a hang.
+      - run: |
+          mkdir -p "${RUNNER_TEMP}/home"
+          HOME="${RUNNER_TEMP}/home" python3 -m deploy ${{ matrix.platform }} < /dev/null
+
+      # Resolving both sides answers every way this can go wrong at once: a path
+      # that is not a link, a link that dangles, and a link to the wrong file all
+      # resolve to something other than the file in the checkout. Both sides are
+      # resolved because a symlinked parent directory would otherwise make a
+      # correct link look wrong.
+      - name: assert every configuration file resolves to the one in this checkout
+        run: |
+          for link in ${{ matrix.links }}; do
+            deployed=$(readlink -f "${RUNNER_TEMP}/home/$link")
+            source=$(readlink -f "${GITHUB_WORKSPACE}/$link")
+            test "$deployed" = "$source" || {
+              echo "::error::$link resolves to '$deployed', expected '$source'"
+              exit 1
+            }
+          done
+
+      # git falls back to writing ~/.config/git/config when ~/.gitconfig is
+      # absent, and ~/.config is a link into the checkout, so the deployment
+      # would be editing its own source.
+      - name: assert git settings stayed out of the linked config directory
+        run: |
+          test -f "${RUNNER_TEMP}/home/.gitconfig" || {
+            echo "::error::~/.gitconfig was not created"; exit 1; }
+          git -C "${GITHUB_WORKSPACE}" diff --quiet -- .config || {
+            echo "::error::the deployment modified its own source"; exit 1; }
