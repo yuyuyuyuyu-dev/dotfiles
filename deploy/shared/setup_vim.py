@@ -5,10 +5,6 @@ from deploy.shared.paths import DOTFILES_ROOT, HOME_DIR
 
 
 def setup_vim():
-    """
-    Vimの設定ファイルをセットアップする。
-    .vimrc のシンボリックリンクをホームディレクトリに作成する。
-    """
     print("--- Setting up Vim configuration ---")
 
     source_path = os.path.join(DOTFILES_ROOT, ".vimrc")

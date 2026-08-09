@@ -6,7 +6,6 @@ from deploy.shared.setup_zsh import setup_zsh
 
 
 def deploy_to_linux():
-    """Linux用のデプロイを実行する"""
     print("Starting deployment for Linux...")
 
     setup_bash()

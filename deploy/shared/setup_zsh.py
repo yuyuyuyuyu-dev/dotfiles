@@ -12,9 +12,6 @@ zsh_files = [
 
 
 def setup_zsh():
-    """
-    ホームディレクトリにzsh関連ファイルのシンボリックリンクを安全に作成する
-    """
     print("--- Setting up Zsh configurations ---")
     for zsh_file in zsh_files:
         source_path = os.path.join(DOTFILES_ROOT, zsh_file)
@@ -23,6 +20,5 @@ def setup_zsh():
     print("--- Zsh setup complete ---\n")
 
 
-# このスクリプトが直接実行された場合のための処理
 if __name__ == "__main__":
     setup_zsh()

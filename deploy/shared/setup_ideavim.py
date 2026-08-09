@@ -5,10 +5,6 @@ from deploy.shared.paths import DOTFILES_ROOT, HOME_DIR
 
 
 def setup_ideavim():
-    """
-    IdeaVimの設定ファイルをセットアップする。
-    .ideavimrc のシンボリックリンクをホームディレクトリに作成する。
-    """
     print("--- Setting up IdeaVim configuration ---")
 
     source_path = os.path.join(DOTFILES_ROOT, ".ideavimrc")

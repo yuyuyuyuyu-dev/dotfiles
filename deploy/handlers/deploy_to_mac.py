@@ -10,7 +10,6 @@ from deploy.shared.setup_zsh import setup_zsh
 
 
 def deploy_to_mac():
-    """macOS用のデプロイを実行する"""
     print("Starting deployment for macOS...")
 
     setup_bash()
