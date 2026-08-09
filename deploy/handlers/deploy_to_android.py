@@ -9,7 +9,6 @@ from deploy.shared.setup_vim import setup_vim
 
 
 def deploy_to_android():
-    """Android用のデプロイを実行する"""
     print("Starting deployment for Android...")
 
     setup_bash()
@@ -24,18 +23,13 @@ def deploy_to_android():
 
 
 def _setup_git_for_platform():
-    """
-    Android固有のGit設定を行う。
-    """
     print("--- Setting up platform specific Git configurations (Android) ---")
 
-    # デフォルトブランチの名前を"main"に指定する
     subprocess.run(
         ["git", "config", "--global", "init.defaultBranch", "main"], check=True
     )
     print("  Set git config init.defaultBranch.")
 
-    # プッシュするときの認証に使う公開鍵を指定する
     subprocess.run(
         [
             "git",
@@ -48,11 +42,9 @@ def _setup_git_for_platform():
     )
     print("  Set git config user.signingkey.")
 
-    # git diffしたときに、改行コードを気にしないようにする
     subprocess.run(["git", "config", "--global", "alias.diff", "diff -w"], check=True)
     print("  Set git config alias.diff.")
 
-    # 常に読み込まれるgitignoreファイルを指定する
     subprocess.run(
         [
             "git",
@@ -65,18 +57,15 @@ def _setup_git_for_platform():
     )
     print("  Set git config core.excludesFile.")
 
-    # `git root` でリポジトリのルートディレクトリを出力する
     subprocess.run(
         ["git", "config", "--global", "alias.root", "rev-parse --show-toplevel"],
         check=True,
     )
     print("  Set git config alias.root.")
 
-    # プルしたときの設定
     subprocess.run(["git", "config", "--global", "pull.ff", "true"], check=True)
     print("  Set git config pull.ff.")
 
-    # コミットに署名をする
     subprocess.run(["git", "config", "--global", "commit.gpgsign", "true"], check=True)
     print("  Set git config commit.gpgsign.")
     subprocess.run(["git", "config", "--global", "gpg.format", "ssh"], check=True)

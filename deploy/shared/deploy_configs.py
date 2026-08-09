@@ -5,9 +5,6 @@ from deploy.shared.paths import DOTFILES_ROOT, HOME_DIR
 
 
 def deploy_configs():
-    """
-    dotfiles/.config/ ディレクトリ全体を ~/.config/ へシンボリックリンクする。
-    """
     print("--- Deploying .config/ directory symlink ---")
 
     source_path = os.path.join(DOTFILES_ROOT, ".config")

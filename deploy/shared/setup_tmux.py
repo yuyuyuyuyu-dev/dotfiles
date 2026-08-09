@@ -5,10 +5,6 @@ from deploy.shared.paths import DOTFILES_ROOT, HOME_DIR
 
 
 def setup_tmux():
-    """
-    tmuxの設定ファイルをセットアップする。
-    .tmux.conf のシンボリックリンクをホームディレクトリに作成する。
-    """
     print("--- Setting up tmux configuration ---")
 
     source_path = os.path.join(DOTFILES_ROOT, ".tmux.conf")
