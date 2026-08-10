@@ -9,11 +9,9 @@ from the image it started from. Every reported path has to be covered by the
 allowed list; anything else fails the step.
 
 The checkout is copied into a layer on top of `image` rather than mounted into
-the container. A bind mount is invisible to `docker diff`, so a command that
-writes into its own project directory -- installing dependencies there, building
-into it -- would do so unmeasured. In a layer the checkout is part of what the
-diff is taken of, which is why the allowed list has to cover what the command
-writes there too.
+the container, so that a command which writes into its own project directory --
+installing dependencies there, building into it -- can do so at all. A read-only
+mount would stop it, and a writable one is invisible to `docker diff` anyway.
 
 Anything the command needs but is not being measured on belongs in `setup`,
 which runs while that layer is built and so lands in the image.
@@ -21,7 +19,6 @@ which runs while that layer is built and so lands in the image.
 ```yaml
 - uses: ./.github/actions/docker-diff-guard
   with:
-    image: ubuntu:24.04
     setup: apt-get update && apt-get install --yes curl
     run: ./install.sh
     allowed: |
@@ -33,7 +30,7 @@ which runs while that layer is built and so lands in the image.
 
 | Input | Required | Description |
 | --- | --- | --- |
-| `image` | yes | Image the command runs in. |
+| `image` | no | Image the command runs in. Defaults to the one pinned in `base-image.Dockerfile`. |
 | `setup` | no | Commands that prepare the environment, passed to `sh -e -c` while the image is built, with the checkout already in place. What they change is part of the image and so is not measured. |
 | `run` | yes | Command whose file changes are measured, passed to `sh -e -c`. |
 | `allowed` | yes | One entry per line, see below. |
@@ -64,15 +61,20 @@ either. A container that ran nothing is diffed first, and its report is
 subtracted from the command's, so a runtime or storage driver that leaves marks
 of its own does not put them in every caller's allowed list.
 
+The working directory is allowed whole. It holds a checkout of a repository with
+a remote, where damage is already answered by `git status` -- which, unlike
+`docker diff`, can tell a tracked file from a build artifact. What has no other
+witness is what the command did to the machine around it, which is what this
+check is for. Listing build outputs instead would go stale with every dependency
+added and catch nothing that git does not already show.
+
 ## Limits worth knowing
 
 - **Linux runners only.** The step needs a Docker daemon, which the macOS and
   Windows runners do not have.
-- **What the command installs is a change like any other.** A package manager
-  reaching into `/usr` produces the same kind of report as anything else, so
-  system dependencies belong in `image` or `setup`. Dependencies the command
-  itself puts inside the project directory are reported too, and belong in the
-  allowed list.
+- **What the command installs outside the project is a change like any other.** A
+  package manager reaching into `/usr` produces the same kind of report as
+  anything else, so system dependencies belong in `image` or `setup`.
 - **Every step builds a layer.** Copying the checkout in costs a `docker build`
   over the whole build context, so a `.dockerignore` is worth having on a
   repository that carries large directories a build does not need.

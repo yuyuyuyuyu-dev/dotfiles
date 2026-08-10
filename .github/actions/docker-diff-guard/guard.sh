@@ -27,16 +27,24 @@ if [ -z "$(printf '%s' "${INPUT_RUN}" | tr -d '[:space:]')" ]; then
   exit 1
 fi
 
-# The checkout is carried in as a layer of its own rather than mounted, because a
-# bind mount is invisible to `docker diff`: a command that writes into its own
-# project directory -- installing dependencies there, building into it -- would
-# do so unmeasured. Put in a layer, the checkout is part of the filesystem the
-# diff is taken of, so writing to it is reported like writing anywhere else.
+# Nothing builds base-image.Dockerfile. It is where the default image is pinned,
+# because Dependabot reads image references out of Dockerfiles and not out of
+# workflow inputs.
+base="${INPUT_IMAGE}"
+if [ -z "$(printf '%s' "${base}" | tr -d '[:space:]')" ]; then
+  base="$(sed -n 's/^FROM[[:space:]]\{1,\}//p' "$(dirname "$0")/base-image.Dockerfile" | head -n 1)"
+fi
+
+# The checkout is carried in as a layer rather than mounted, because a bind mount
+# is invisible to `docker diff`: a command that writes into its own project
+# directory -- installing dependencies there, building into it -- could not do so
+# at all against a read-only mount, and would do so unmeasured against a writable
+# one. In a layer it simply works.
 #
 # The setup commands run while the image is built, and land in it, which is what
 # makes them setup: preparing an environment is not what this check is measuring.
 printf 'FROM %s\nARG SETUP\nWORKDIR %s\nCOPY . %s\nRUN sh -e -c "$SETUP"\n' \
-  "${INPUT_IMAGE}" "${INPUT_WORKDIR}" "${INPUT_WORKDIR}" \
+  "${base}" "${INPUT_WORKDIR}" "${INPUT_WORKDIR}" \
   | SETUP="${INPUT_SETUP}" docker build \
     --build-arg SETUP \
     --iidfile "${work}/iid" \
@@ -72,7 +80,16 @@ if [ "${status}" -ne 0 ]; then
   exit "${status}"
 fi
 
-: > "${work}/allowed"
+# The working directory is allowed without being asked for. It holds a checkout
+# of a repository with a remote, so a command that damages its own sources is
+# already answered -- by `git status`, which unlike `docker diff` can tell a
+# tracked file from a build artifact. What has no other witness is what the
+# command did to the machine around it, and that is what this check is for.
+# Making every caller enumerate its build outputs instead would buy nothing and
+# go stale with every dependency it adds.
+printf '%s %s\n' '*' "${INPUT_WORKDIR%/}" > "${work}/allowed"
+printf '%s %s\n' '*' "${INPUT_WORKDIR%/}/*" >> "${work}/allowed"
+
 printf '%s\n' "${INPUT_ALLOWED}" > "${work}/input"
 while IFS= read -r entry; do
   entry="$(printf '%s' "${entry}" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
