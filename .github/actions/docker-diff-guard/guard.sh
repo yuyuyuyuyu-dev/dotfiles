@@ -3,12 +3,15 @@ set -eu
 
 work="$(mktemp -d)"
 container=""
+untouched=""
 image=""
 
 cleanup() {
-  if [ -n "${container}" ]; then
-    docker rm --force "${container}" > /dev/null || true
-  fi
+  for leftover in "${container}" "${untouched}"; do
+    if [ -n "${leftover}" ]; then
+      docker rm --force "${leftover}" > /dev/null || true
+    fi
+  done
   if [ -n "${image}" ]; then
     docker rmi --force "${image}" > /dev/null || true
   fi
@@ -16,23 +19,46 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# The runner does not enforce `required` on an action's inputs, so an empty run
+# input would otherwise take the diff of a container that did nothing and report
+# that as success.
+if [ -z "$(printf '%s' "${INPUT_RUN}" | tr -d '[:space:]')" ]; then
+  echo "::error::the run input is empty, so there is nothing to verify"
+  exit 1
+fi
+
 # The checkout is carried in as a layer of its own rather than mounted, because a
 # bind mount is invisible to `docker diff`: a command that writes into its own
 # project directory -- installing dependencies there, building into it -- would
 # do so unmeasured. Put in a layer, the checkout is part of the filesystem the
 # diff is taken of, so writing to it is reported like writing anywhere else.
-printf 'FROM %s\nCOPY . %s\n' "${INPUT_IMAGE}" "${INPUT_WORKDIR}" \
-  | docker build --iidfile "${work}/iid" --file - "${GITHUB_WORKSPACE}"
+#
+# The setup commands run while the image is built, and land in it, which is what
+# makes them setup: preparing an environment is not what this check is measuring.
+printf 'FROM %s\nARG SETUP\nWORKDIR %s\nCOPY . %s\nRUN sh -e -c "$SETUP"\n' \
+  "${INPUT_IMAGE}" "${INPUT_WORKDIR}" "${INPUT_WORKDIR}" \
+  | SETUP="${INPUT_SETUP}" docker build \
+    --build-arg SETUP \
+    --iidfile "${work}/iid" \
+    --file - \
+    "${GITHUB_WORKSPACE}"
 image="$(cat "${work}/iid")"
 
+# Some runtime and storage driver combinations leave marks of their own in the
+# writable layer. Taking the diff of a container that ran nothing keeps whatever
+# those are out of the allowed list.
+docker run --cidfile "${work}/untouched-cid" "${image}" sh -e -c ':' < /dev/null
+untouched="$(cat "${work}/untouched-cid")"
+
 # Closing stdin turns a command that waits for input into a failure rather than a
-# job that hangs until the runner times out.
+# job that hangs until the runner times out. `sh -e` stops at the first failure
+# in a command written as several, which would otherwise be reported by whatever
+# ran last.
 status=0
 docker run \
   --cidfile "${work}/cid" \
-  --workdir "${INPUT_WORKDIR}" \
   "${image}" \
-  sh -c "${INPUT_RUN}" \
+  sh -e -c "${INPUT_RUN}" \
   < /dev/null || status=$?
 
 # `docker diff` reads the container's writable layer, which is discarded together
@@ -75,7 +101,9 @@ while IFS= read -r entry; do
   printf '%s %s\n' "${kind}" "${path}" >> "${work}/allowed"
 done < "${work}/input"
 
-docker diff "${container}" | sort > "${work}/changes"
+docker diff "${untouched}" | LC_ALL=C sort > "${work}/untouched"
+docker diff "${container}" | LC_ALL=C sort > "${work}/observed"
+LC_ALL=C comm -13 "${work}/untouched" "${work}/observed" > "${work}/changes"
 
 covered_by_the_allowed_list() {
   change_kind="$1"
@@ -133,17 +161,33 @@ while IFS= read -r change; do
   printf '%s\n' "${change}" >> "${work}/violations"
 done < "${work}/changes"
 
-if [ -s "${work}/violations" ]; then
-  while IFS= read -r violation; do
-    case "${violation%% *}" in
-      A) verb="created" ;;
-      C) verb="changed" ;;
-      D) verb="deleted" ;;
-      *) verb="touched" ;;
-    esac
-    echo "::error::the command ${verb} ${violation#* }, which the allowed list does not cover"
-  done < "${work}/violations"
-  exit 1
+violations="$(grep -c '' "${work}/violations" || true)"
+if [ "${violations}" -eq 0 ]; then
+  echo "nothing outside the allowed list was created, changed or deleted"
+  exit 0
 fi
 
-echo "nothing outside the allowed list was created, changed or deleted"
+# A step is only allowed so many annotations before the rest are dropped, so the
+# count goes in the annotation and the paths go where nothing truncates them.
+listed=200
+head -n "${listed}" "${work}/violations" > "${work}/report"
+if [ "${violations}" -gt "${listed}" ]; then
+  echo "... and $((violations - listed)) more" >> "${work}/report"
+fi
+
+echo "::error::${violations} change(s) outside the allowed list"
+cat "${work}/report"
+
+if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+  {
+    echo '### Changes outside the allowed list'
+    echo
+    echo '`A` created, `C` changed, `D` deleted.'
+    echo
+    echo '```'
+    cat "${work}/report"
+    echo '```'
+  } >> "${GITHUB_STEP_SUMMARY}"
+fi
+
+exit 1

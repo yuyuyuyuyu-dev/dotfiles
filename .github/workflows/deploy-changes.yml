@@ -20,23 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Everything the deployment needs has to be in the image already. A
-      # container that installs its dependencies after it starts changes its own
-      # filesystem to do so, and those changes are indistinguishable from the
-      # ones being measured.
-      - name: build the machine the deployment runs on
-        run: |
-          docker build --tag deploy-target - <<'DOCKERFILE'
-          FROM ubuntu:24.04
-          RUN apt-get update \
-           && apt-get install --yes --no-install-recommends python3 git \
-           && rm -rf /var/lib/apt/lists/*
-          DOCKERFILE
-
       - name: assert the deployment created nothing else
         uses: ./.github/actions/docker-diff-guard
         with:
-          image: deploy-target
+          # Ubuntu because every GitHub hosted Linux runner is Ubuntu, so a
+          # deployment that breaks here breaks in the other jobs too.
+          image: ubuntu:24.04
+          setup: apt-get update && apt-get install --yes --no-install-recommends python3 git
           # An empty HOME is the situation a new machine presents. Ubuntu's image
           # ships shell startup files in /root, and the deployment would stop on
           # a confirmation prompt over them rather than reach the end.

@@ -10,8 +10,18 @@ inputs:
       because whatever the command installs after the container starts is itself
       a change and will be reported as one.
     required: true
+  setup:
+    description: >-
+      Commands that prepare the environment, passed to `sh -e -c` while the
+      image is built and with the checkout already in place. What they change
+      lands in the image, so it is not part of what the command is measured
+      against.
+    required: false
+    default: ""
   run:
-    description: Command to run inside the container. It is passed to `sh -c`.
+    description: >-
+      Command whose file changes are measured, passed to `sh -e -c` inside the
+      container.
     required: true
   allowed:
     description: >-
@@ -35,6 +45,7 @@ runs:
     - shell: sh
       env:
         INPUT_IMAGE: ${{ inputs.image }}
+        INPUT_SETUP: ${{ inputs.setup }}
         INPUT_RUN: ${{ inputs.run }}
         INPUT_ALLOWED: ${{ inputs.allowed }}
         INPUT_WORKDIR: ${{ inputs.workdir }}

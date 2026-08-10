@@ -15,10 +15,14 @@ into it -- would do so unmeasured. In a layer the checkout is part of what the
 diff is taken of, which is why the allowed list has to cover what the command
 writes there too.
 
+Anything the command needs but is not being measured on belongs in `setup`,
+which runs while that layer is built and so lands in the image.
+
 ```yaml
 - uses: ./.github/actions/docker-diff-guard
   with:
-    image: my-image
+    image: ubuntu:24.04
+    setup: apt-get update && apt-get install --yes curl
     run: ./install.sh
     allowed: |
       A /usr/local/bin/mytool
@@ -30,9 +34,10 @@ writes there too.
 | Input | Required | Description |
 | --- | --- | --- |
 | `image` | yes | Image the command runs in. |
-| `run` | yes | Command to run inside the container, passed to `sh -c`. |
+| `setup` | no | Commands that prepare the environment, passed to `sh -e -c` while the image is built, with the checkout already in place. What they change is part of the image and so is not measured. |
+| `run` | yes | Command whose file changes are measured, passed to `sh -e -c`. |
 | `allowed` | yes | One entry per line, see below. |
-| `workdir` | no | Where the checkout is mounted, and the working directory of the command. Defaults to `/github/workspace`. |
+| `workdir` | no | Where the checkout is placed, and the working directory of the command. Defaults to `/github/workspace`. |
 
 An allowed entry is an absolute path, optionally preceded by `A`, `C` or `D` to
 allow only that kind of change: added, changed or deleted. Without one, any kind
@@ -54,15 +59,20 @@ deleted path, the directory itself, and allowing what was inside it does not
 allow it: `D /foo/bar` covers a deleted file, and says nothing about `/foo`
 going with it.
 
+Whatever the container runtime writes on its own is not the command's doing
+either. A container that ran nothing is diffed first, and its report is
+subtracted from the command's, so a runtime or storage driver that leaves marks
+of its own does not put them in every caller's allowed list.
+
 ## Limits worth knowing
 
 - **Linux runners only.** The step needs a Docker daemon, which the macOS and
   Windows runners do not have.
 - **What the command installs is a change like any other.** A package manager
   reaching into `/usr` produces the same kind of report as anything else, so
-  system dependencies belong in the image, where they are part of what the diff
-  is taken against. Dependencies the command puts inside the project directory
-  are reported too, and belong in the allowed list.
+  system dependencies belong in `image` or `setup`. Dependencies the command
+  itself puts inside the project directory are reported too, and belong in the
+  allowed list.
 - **Every step builds a layer.** Copying the checkout in costs a `docker build`
   over the whole build context, so a `.dockerignore` is worth having on a
   repository that carries large directories a build does not need.
