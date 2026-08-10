@@ -96,6 +96,10 @@ runs:
         # The setup commands run while the image is built, and land in it, which
         # is what makes them setup: preparing an environment is not what this
         # check is measuring.
+        #
+        # The layer costs a build over the whole context on every step, so a
+        # repository carrying large directories a build does not need is worth
+        # giving a .dockerignore.
         printf 'FROM %s\nARG SETUP\nWORKDIR %s\nCOPY . %s\nRUN sh -e -c "$SETUP"\n' \
           "${base}" "${INPUT_WORKDIR}" "${INPUT_WORKDIR}" \
           | SETUP="${INPUT_SETUP}" docker build \
@@ -198,8 +202,14 @@ runs:
         # was created or deleted, and as created when it had to exist before
         # something inside it could. Such an entry follows from the change below
         # it rather than being a change of its own, so the allowed list only has
-        # to name the latter. Nothing hides behind this: the change below is
-        # reported on a line of its own and is checked there.
+        # to name the latter, which is reported on a line of its own and checked
+        # there.
+        #
+        # One thing does hide here. `docker diff` reports a chmod on a directory
+        # the same way it reports a directory holding a changed file, so a
+        # permission change on a directory that also holds an allowed change
+        # cannot be told apart from it. A directory with nothing below it stays
+        # visible.
         follows_from_a_change_below() {
           directory="$1"
 
