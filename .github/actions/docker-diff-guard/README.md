@@ -42,6 +42,11 @@ an entry. Nothing is hidden this way: that change is reported on a line of its
 own and is checked there. A directory with no reported change beneath it is a
 change in its own right and does need an entry.
 
+A deletion is never implied. Removing a whole directory is reported as one
+deleted path, the directory itself, and allowing what was inside it does not
+allow it: `D /foo/bar` covers a deleted file, and says nothing about `/foo`
+going with it.
+
 ## Limits worth knowing
 
 - **Linux runners only.** The step needs a Docker daemon, which the macOS and
