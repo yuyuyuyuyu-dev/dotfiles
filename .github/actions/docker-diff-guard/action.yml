@@ -6,10 +6,10 @@ description: >-
 inputs:
   image:
     description: >-
-      Image the command runs in. It has to carry everything the command needs,
-      because whatever the command installs after the container starts is itself
-      a change and will be reported as one.
-    required: true
+      Image the command runs in. Defaults to the one pinned in the action's
+      base-image.Dockerfile.
+    required: false
+    default: ""
   setup:
     description: >-
       Commands that prepare the environment, passed to `sh -e -c` while the
