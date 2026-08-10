@@ -8,6 +8,13 @@ The command runs in a container that is kept alive after it exits, and
 from the image it started from. Every reported path has to be covered by the
 allowed list; anything else fails the step.
 
+The checkout is copied into a layer on top of `image` rather than mounted into
+the container. A bind mount is invisible to `docker diff`, so a command that
+writes into its own project directory -- installing dependencies there, building
+into it -- would do so unmeasured. In a layer the checkout is part of what the
+diff is taken of, which is why the allowed list has to cover what the command
+writes there too.
+
 ```yaml
 - uses: ./.github/actions/docker-diff-guard
   with:
@@ -51,12 +58,14 @@ going with it.
 
 - **Linux runners only.** The step needs a Docker daemon, which the macOS and
   Windows runners do not have.
-- **The image has to be complete.** Whatever the command installs after the
-  container starts is itself a change, and will be reported as one. Install the
-  command's dependencies in the image instead.
-- **The checkout is mounted read-only.** A bind mount is invisible to
-  `docker diff`, so anything written there would go unmeasured. Keeping it
-  read-only turns that blind spot into an error the command reports itself.
+- **What the command installs is a change like any other.** A package manager
+  reaching into `/usr` produces the same kind of report as anything else, so
+  system dependencies belong in the image, where they are part of what the diff
+  is taken against. Dependencies the command puts inside the project directory
+  are reported too, and belong in the allowed list.
+- **Every step builds a layer.** Copying the checkout in costs a `docker build`
+  over the whole build context, so a `.dockerignore` is worth having on a
+  repository that carries large directories a build does not need.
 - **Changes to a directory's own metadata can be masked.** `docker diff` reports
   a `chmod` on a directory the same way it reports the directory holding a
   changed file, so a permission change on a directory that also holds an allowed

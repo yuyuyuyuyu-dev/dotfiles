@@ -3,27 +3,35 @@ set -eu
 
 work="$(mktemp -d)"
 container=""
+image=""
 
 cleanup() {
   if [ -n "${container}" ]; then
     docker rm --force "${container}" > /dev/null || true
   fi
+  if [ -n "${image}" ]; then
+    docker rmi --force "${image}" > /dev/null || true
+  fi
   rm -rf "${work}"
 }
 trap cleanup EXIT
 
+# The checkout is carried in as a layer of its own rather than mounted, because a
+# bind mount is invisible to `docker diff`: a command that writes into its own
+# project directory -- installing dependencies there, building into it -- would
+# do so unmeasured. Put in a layer, the checkout is part of the filesystem the
+# diff is taken of, so writing to it is reported like writing anywhere else.
+printf 'FROM %s\nCOPY . %s\n' "${INPUT_IMAGE}" "${INPUT_WORKDIR}" \
+  | docker build --iidfile "${work}/iid" --file - "${GITHUB_WORKSPACE}"
+image="$(cat "${work}/iid")"
+
 # Closing stdin turns a command that waits for input into a failure rather than a
 # job that hangs until the runner times out.
-#
-# The workspace is mounted read-only because a bind mount is invisible to
-# `docker diff`: anything written there would go unmeasured, and a mount the
-# command can write to is a blind spot rather than a convenience.
 status=0
 docker run \
   --cidfile "${work}/cid" \
-  --volume "${GITHUB_WORKSPACE}:${INPUT_WORKDIR}:ro" \
   --workdir "${INPUT_WORKDIR}" \
-  "${INPUT_IMAGE}" \
+  "${image}" \
   sh -c "${INPUT_RUN}" \
   < /dev/null || status=$?
 
@@ -38,11 +46,7 @@ if [ "${status}" -ne 0 ]; then
   exit "${status}"
 fi
 
-# Docker creates the mount point when the image has no directory there, which is
-# this action's own doing rather than the command's. The asterisk stands for an
-# entry that allows every kind of change.
-printf '%s %s\n' '*' "${INPUT_WORKDIR}" > "${work}/allowed"
-
+: > "${work}/allowed"
 printf '%s\n' "${INPUT_ALLOWED}" > "${work}/input"
 while IFS= read -r entry; do
   entry="$(printf '%s' "${entry}" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
@@ -50,6 +54,7 @@ while IFS= read -r entry; do
     "" | \#*) continue ;;
   esac
 
+  # The asterisk stands for an entry that names no kind and so allows any.
   kind='*'
   path="${entry}"
   case "${entry}" in

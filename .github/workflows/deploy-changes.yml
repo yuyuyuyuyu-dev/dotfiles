@@ -45,7 +45,13 @@ jobs:
           # is created empty so that `git config --global` has somewhere to write
           # other than the linked .config directory. /home/fresh itself needs no
           # entry: it follows from the files placed in it.
+          #
+          # Importing the deploy modules leaves CPython's bytecode cache beside
+          # them. Its entry names no kind, because a fresh checkout has the cache
+          # created and a checkout that has run the deployment before has it
+          # changed, and this has to pass either way.
           allowed: |
+            /github/workspace/*/__pycache__*
             A /home/fresh/.bash_profile
             A /home/fresh/.bashrc
             A /home/fresh/.zshrc

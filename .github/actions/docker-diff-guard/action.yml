@@ -23,8 +23,8 @@ inputs:
     required: true
   workdir:
     description: >-
-      Where the checkout is mounted inside the container, read-only, and the
-      working directory the command starts in.
+      Where the checkout is placed inside the container, and the working
+      directory the command starts in.
     default: /github/workspace
 
 runs:
