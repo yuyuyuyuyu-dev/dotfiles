@@ -1,0 +1,41 @@
+name: Docker diff guard
+description: >-
+  Run a command in a container and fail when it creates, changes or deletes
+  anything the allowed list does not cover.
+
+inputs:
+  image:
+    description: >-
+      Image the command runs in. It has to carry everything the command needs,
+      because whatever the command installs after the container starts is itself
+      a change and will be reported as one.
+    required: true
+  run:
+    description: Command to run inside the container. It is passed to `sh -c`.
+    required: true
+  allowed:
+    description: >-
+      One entry per line. An entry is an absolute path, optionally preceded by
+      `A`, `C` or `D` to allow only that kind of change -- added, changed or
+      deleted. The path is a glob whose `*` also matches `/`, so
+      `/root/.cache/*` covers everything below that directory. Blank lines and
+      lines starting with `#` are ignored.
+    required: true
+  workdir:
+    description: >-
+      Where the checkout is mounted inside the container, read-only, and the
+      working directory the command starts in.
+    default: /github/workspace
+
+runs:
+  using: composite
+  steps:
+    # The inputs are passed as environment variables rather than interpolated
+    # into the script, so that a value containing shell syntax stays a value.
+    - shell: sh
+      env:
+        INPUT_IMAGE: ${{ inputs.image }}
+        INPUT_RUN: ${{ inputs.run }}
+        INPUT_ALLOWED: ${{ inputs.allowed }}
+        INPUT_WORKDIR: ${{ inputs.workdir }}
+      run: ${{ github.action_path }}/guard.sh
