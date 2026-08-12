@@ -1,0 +1,44 @@
+name: Deploy changes
+
+on:
+  # Limiting push to main avoids running twice for a pull request opened from a
+  # branch in this same repository.
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: should change nothing but the files it deploys
+    # Only the Linux runners have a Docker daemon, so macOS cannot be covered the
+    # same way.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: assert the deployment created nothing else
+        uses: ./.github/actions/docker-diff-guard
+        with:
+          setup: apt-get update && apt-get install --yes --no-install-recommends python3 git
+          # An empty HOME is the situation a new machine presents. Ubuntu's image
+          # ships shell startup files in /root, and the deployment would stop on
+          # a confirmation prompt over them rather than reach the end.
+          run: mkdir /home/fresh && HOME=/home/fresh python3 -m deploy linux
+          # Every entry is a symlink into the checkout, except .gitconfig, which
+          # is created empty so that `git config --global` has somewhere to write
+          # other than the linked .config directory. /home/fresh itself needs no
+          # entry: it follows from the files placed in it.
+          allowed: |
+            A /home/fresh/.bash_profile
+            A /home/fresh/.bashrc
+            A /home/fresh/.zshrc
+            A /home/fresh/.zprofile
+            A /home/fresh/.zshenv
+            A /home/fresh/.zlogout
+            A /home/fresh/.vimrc
+            A /home/fresh/.config
+            A /home/fresh/.gitconfig
