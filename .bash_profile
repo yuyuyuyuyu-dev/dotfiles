@@ -18,8 +18,8 @@ export SDKMAN_DIR="$HOME/.sdkman"
 
 
 # Added by Antigravity CLI installer
-export PATH="/Users/yuyuyuyuyu/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 ### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
-export PATH="/Users/yuyuyuyuyu/.rd/bin:$PATH"
+export PATH="$HOME/.rd/bin:$PATH"
 ### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
