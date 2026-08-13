@@ -168,3 +168,7 @@ end
 
 # Added by Antigravity CLI installer
 set -gx PATH "/Users/yuyuyuyuyu/.local/bin" $PATH
+
+### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
+set --export --prepend PATH "/Users/yuyuyuyuyu/.rd/bin"
+### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
