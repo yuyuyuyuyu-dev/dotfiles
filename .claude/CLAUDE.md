@@ -1,13 +1,16 @@
 ## Coding Standards
 
-Comments and in-source documentation MUST explain only why.
-The only exception: mark test sections with "Arrange", "Act", and "Assert" comments.
+Comments and in-source documentation MUST NOT be written.
+The only exceptions:
+
+- a comment that explains why (which MUST be as concise as possible)
+- "Arrange", "Act", and "Assert" comments that mark test sections
 
 In tests, only the parts that interact with external systems MAY be replaced with fakes.
 
 ## Git
 
-Commit messages and pull requests MUST be written in plain English.
+Commit messages and pull requests MUST be written in plain English and be as concise as possible.
 Branch names MUST follow Conventional Branch, and commit messages MUST follow Conventional Commits.
 
 ## When in Doubt
