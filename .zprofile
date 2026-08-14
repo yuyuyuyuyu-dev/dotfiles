@@ -8,8 +8,8 @@ if [ -f "/opt/homebrew/bin/brew" ]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-if [ -f "$HOME/Library/Android/sdk" ]; then
-    export ANDROID_HOME=~/Library/Android/sdk
+if [ -e "$HOME/Library/Android/sdk" ]; then
+    export ANDROID_HOME="$HOME/Library/Android/sdk"
 fi
 
 case "$OSTYPE" in
