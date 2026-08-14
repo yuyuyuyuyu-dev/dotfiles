@@ -8,8 +8,8 @@ if [ -f "/opt/homebrew/bin/brew" ]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-if [ -f "~/Library/Android/sdk" ]; then
-    export ANDROID_HOME=~/Library/Android/sdk
+if [ -e "$HOME/Library/Android/sdk" ]; then
+    export ANDROID_HOME="$HOME/Library/Android/sdk"
 fi
 
 case "$OSTYPE" in
@@ -23,4 +23,4 @@ esac
 
 
 # Added by Antigravity CLI installer
-export PATH="/Users/yuyuyuyuyu/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"

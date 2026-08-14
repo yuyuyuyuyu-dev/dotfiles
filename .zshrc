@@ -91,22 +91,23 @@ export SDKMAN_DIR="$HOME/.sdkman"
 source <(ng completion script)
 
 # Added by Antigravity
-export PATH="/Users/yuyuyuyuyu/.antigravity/antigravity/bin:$PATH"
-
-# Added by Antigravity
-export PATH="/Users/yuyuyuyuyu/.antigravity/antigravity/bin:$PATH"
+export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 
 # Added by Antigravity IDE
-export PATH="/Users/yuyuyuyuyu/.antigravity-ide/antigravity-ide/bin:$PATH"
+export PATH="$HOME/.antigravity-ide/antigravity-ide/bin:$PATH"
 
 
 # Added by Antigravity CLI installer
-export PATH="/Users/yuyuyuyuyu/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 # pnpm
-export PNPM_HOME="/Users/yuyuyuyuyu/Library/pnpm"
+export PNPM_HOME="$HOME/Library/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME/bin:"*) ;;
   *) export PATH="$PNPM_HOME/bin:$PATH" ;;
 esac
 # pnpm end
+
+### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
+export PATH="$HOME/.rd/bin:$PATH"
+### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
