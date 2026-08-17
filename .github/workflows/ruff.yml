@@ -22,7 +22,7 @@ jobs:
 
       # Astral publishes no floating tag for this action's newest major, so the
       # exact version is required -- @v9 does not resolve.
-      - uses: astral-sh/setup-uv@v9.0.0
+      - uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: true
 
@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v9.0.0
+      - uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: true
 
