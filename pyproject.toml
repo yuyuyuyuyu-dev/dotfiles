@@ -15,5 +15,5 @@ package = false
 # version. CI runs ruff through uv, so it cannot drift from what runs locally,
 # and Dependabot moves the lockfile.
 dev = [
-    "ruff>=0.16.2",
+    "ruff>=0.16.3",
 ]
