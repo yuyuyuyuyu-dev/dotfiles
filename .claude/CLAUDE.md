@@ -5,7 +5,7 @@
 Comments and in-source documentation MUST NOT be written.
 The only exceptions:
 
-- a comment that explains why (which MUST be as concise as possible)
+- a comment that explains why (which MUST be as concise as possible, so it is less likely to go stale)
 - "Arrange", "Act", and "Assert" comments that mark test sections
 
 ### Tests
