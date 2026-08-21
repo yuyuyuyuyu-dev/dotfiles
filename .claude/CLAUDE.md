@@ -14,7 +14,8 @@ In tests, only the parts that interact with external systems MAY be replaced wit
 
 ### Git
 
-Commit messages and pull requests MUST be written in plain English and be as concise as possible.
+Commit messages and pull requests MUST be written in plain English and be as concise as possible, so that as many people around the world as possible can read them.
+Pull request descriptions MUST NOT be hard wrapped.
 Branch names MUST follow Conventional Branch, and commit messages MUST follow Conventional Commits.
 
 ## When in Doubt
