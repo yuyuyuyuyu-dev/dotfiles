@@ -4,6 +4,10 @@ version: 2
 # between a release and the pull request short, and the limit of one keeps that
 # frequency from filling the list: a superseded pull request is replaced rather
 # than accumulating beside the others.
+#
+# Minor and patch updates are grouped so that auto-merge lands them in one pull
+# request, leaving a major update on its own to be read. The group cannot span the
+# ecosystems below: Dependabot filters by update type only within one.
 updates:
   # uv is its own ecosystem here, separate from pip. It reads pyproject.toml and
   # uv.lock, which between them are the only place a tool version is pinned.
@@ -12,6 +16,10 @@ updates:
     schedule:
       interval: daily
     open-pull-requests-limit: 1
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
 
   # Covers the `uses:` references in .github/workflows. setup-uv has to name an
   # exact version, because Astral publishes no floating tag for its newest major,
@@ -21,6 +29,10 @@ updates:
     schedule:
       interval: daily
     open-pull-requests-limit: 1
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
 
   # The base image the docker-diff-guard action falls back to. It is pinned in a
   # Dockerfile nothing builds, because this is the only kind of file Dependabot
@@ -30,3 +42,7 @@ updates:
     schedule:
       interval: daily
     open-pull-requests-limit: 1
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
