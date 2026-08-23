@@ -16,6 +16,7 @@ In tests, only the parts that interact with external systems MAY be replaced wit
 
 Commit messages and pull requests MUST be written in plain English and be as concise as possible, so that as many people around the world as possible can read them.
 Pull request descriptions MUST NOT be hard wrapped.
+Commit messages and pull request descriptions MUST carry the attribution of the AI agent that helped write the change.
 Branch names MUST follow Conventional Branch, and commit messages MUST follow Conventional Commits.
 Before a branch is created, the latest changes on the remote default branch MUST be pulled in.
 
