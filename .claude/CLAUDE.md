@@ -8,6 +8,8 @@ The only exceptions:
 - a comment that explains why, only where the reason cannot be understood without it, and as concise as possible, so that it is less likely to go stale or to say something untrue
 - "Arrange", "Act", and "Assert" comments that mark test sections
 
+A comment MUST be written in plain English, so that as many people around the world as possible can read it.
+
 ### Tests
 
 A test case MUST run from as near the entry point as it can to as near the outside as it can.
