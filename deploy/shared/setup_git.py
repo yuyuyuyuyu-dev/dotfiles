@@ -7,7 +7,7 @@ from deploy.shared.paths import HOME_DIR
 def setup_git():
     print("--- Setting up common Git configurations ---")
 
-    # このファイルが存在しなかった場合、`git config --global`で設定したときに~/.config/git/configに書き込まれてしまう
+    # Without this file, `git config --global` writes to ~/.config/git/config instead.
     gitconfig_path = os.path.join(HOME_DIR, ".gitconfig")
     if not os.path.exists(gitconfig_path):
         print(f"  Creating empty {gitconfig_path}")
