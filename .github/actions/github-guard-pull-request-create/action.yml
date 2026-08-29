@@ -1,0 +1,41 @@
+name: should ask before creating a pull request, as an exception
+description: >-
+  Creating a pull request is a write, and the one write this guard exists to
+  permit. It has to reach the user as a prompt: neither denied outright, nor
+  waved through without anyone seeing it.
+
+inputs:
+  guard:
+    description: The github-guard executable to run the payloads through.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: should ask before creating a pull request
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title x --body y"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+
+    - name: should ask when the pull request is created without arguments
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+
+    - name: should ask when the creation is hidden in a nested shell
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh pr create --title x\""}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+
+    - name: should ask when the repository is named before the subcommand
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R owner/repo pr create --title x"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'

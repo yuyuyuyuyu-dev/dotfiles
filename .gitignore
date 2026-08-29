@@ -15,3 +15,4 @@
 .docker/*
 !.docker/config.json
 __pycache__/
+github-guard/target/

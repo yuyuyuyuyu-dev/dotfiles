@@ -1,0 +1,281 @@
+name: should restrict GitHub access to read-only permission
+description: >-
+  Feed github-guard the payloads Claude Code would send and check that anything
+  which can write to GitHub is denied. Reads are checked too, because a guard
+  that denied those as well would satisfy the prohibition and be useless. One
+  step is one thing the guard has to get right.
+
+inputs:
+  guard:
+    description: The github-guard executable to run the payloads through.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # A read produces no decision at all, which hands the command back to the
+    # permission rules rather than approving it here. Empty output is therefore
+    # the assertion, and grep has nothing to match on.
+    - name: should let pull requests be listed
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr list"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a pull request be read
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr view 5"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let the diff of a pull request be read
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr diff 5"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let an issue be read
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh issue view 12"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a repository be read
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh repo view"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let releases be listed
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release list"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a workflow run be read
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh run view 123"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let the REST API be read
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api /repos/o/r/issues"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a GraphQL query be sent
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api graphql -f query=query{viewer{login}}"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let tags be listed
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git tag -l"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    # Pushing a branch is not a GitHub write this guard is about. Only tags are,
+    # because a tag is how a release gets published.
+    - name: should let a branch be pushed
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin main"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let the API be read with curl
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl https://api.github.com/repos/o/r"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should deny merging a pull request
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny reviewing a pull request
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr review 5 --approve"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny commenting on an issue
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh issue comment 12 --body hi"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny creating a release
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny changing repository settings
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh repo edit --visibility public"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny deleting a repository
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh repo delete owner/name"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny setting a secret
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh secret set TOKEN"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    # A subcommand nobody has heard of is denied rather than allowed, so that the
+    # allow-list going stale costs a false denial and never a silent write.
+    - name: should deny a subcommand GitHub has not shipped yet
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr some-future-write 5"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny writing through the REST API
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X POST /repos/o/r/releases"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    # gh switches to POST as soon as it is given fields, so a request with no
+    # method named is still a write.
+    - name: should deny a REST API write that only its fields imply
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api /repos/o/r/issues -f title=x"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a GraphQL mutation
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api graphql -f query=mutation{addComment}"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny writing through curl
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X POST -d x https://api.github.com/repos/o/r"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny creating a tag
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git tag v1.0.0"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny pushing tags
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --tags"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    # A refspec makes a tag on the remote without one ever existing locally, so
+    # watching `git tag` alone would miss it.
+    - name: should deny pushing a tag refspec
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin HEAD:refs/tags/v1.0.0"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    # A permission rule matches the literal command string, so it never sees the
+    # gh call inside a nested shell. This guard has to.
+    # An unauthenticated write to the API is rejected by GitHub anyway, so what
+    # makes curl worth watching is that a token is within reach: `gh auth token`
+    # prints the one gh stored. Reaching for it is itself a gh command that is
+    # not a read, so the denial lands before the curl is even considered.
+    - name: should deny reading the credential gh stored
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh auth token"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a write that fetches a token to authenticate with
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X POST -H \"Authorization: Bearer $(gh auth token)\" https://api.github.com/repos/o/r/releases"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    # A token that is already in the environment needs no gh command to reach,
+    # so here it is the URL and the method that have to do the work.
+    - name: should deny a write that authenticates from the environment
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X POST -H \"Authorization: Bearer $GITHUB_TOKEN\" https://api.github.com/repos/o/r/releases"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a write hidden in a nested shell
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh issue create --title x\""}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a write hidden in a command substitution
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"echo $(gh repo delete owner/name)"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'

@@ -1,0 +1,38 @@
+name: cargo
+
+on:
+  # Limiting push to main avoids running twice for a pull request opened from a
+  # branch in this same repository.
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: github-guard
+
+# What the guard does is checked by github-guard-tests.yml, against the built
+# executable. This workflow is only about the source. The two checks are separate
+# jobs so that both always report: run as steps in one job, a lint failure would
+# stop the job before the format check ran.
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # clippy reports rather than fails on its own, so warnings are promoted here.
+      # --locked fails instead of quietly resolving something other than what the
+      # lockfile pins, which is also what `cargo install` builds from.
+      - run: cargo clippy --all-targets --locked -- -D warnings
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: cargo fmt --check
