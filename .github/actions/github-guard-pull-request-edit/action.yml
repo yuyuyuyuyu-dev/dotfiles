@@ -1,0 +1,66 @@
+name: github-guard asks before editing a pull request, as an exception
+description: >-
+  Editing a pull request is a write, and the second write this guard exists to
+  permit. It has to reach the user as a prompt: neither denied outright, nor
+  waved through without anyone seeing it.
+
+inputs:
+  guard:
+    description: The github-guard executable to run the payloads through.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: should ask before editing a pull request
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --body z"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+
+    - name: should ask when the edit changes the title
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --title x"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+
+    - name: should ask when the edit is hidden in a nested shell
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh pr edit 5 --body z\""}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+
+    - name: should ask when the repository is named before the subcommand
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R owner/repo pr edit 5 --body z"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+
+    # Stated on its own because asking and denying are both a decision, and a
+    # regression that turned one into the other would still be a decision.
+    - name: should not deny editing a pull request
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --body z"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        case "$decision" in
+          *'"permissionDecision":"deny"'*)
+            echo "expected an ask, got a denial: $decision"; exit 1 ;;
+        esac
+
+    # And stated on its own because saying nothing is the other way this could
+    # go wrong: the command would run with nobody asked.
+    - name: should not let the edit through without asking
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --body z"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        test -n "$decision" || { echo "expected an ask, got no decision at all"; exit 1; }

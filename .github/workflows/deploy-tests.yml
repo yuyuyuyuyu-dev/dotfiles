@@ -40,12 +40,43 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # The deployment installs github-guard from the remote default branch. Here
+      # it has to install the revision under test instead, and `cargo install
+      # --git` needs a branch to point at, which a pull request checkout leaves
+      # detached.
+      - run: git switch --create revision-under-test
+
       # An empty HOME is the situation a new machine presents.
       # Closing stdin turns a confirmation prompt -- which would mean something
       # was already in place -- into a failure rather than a hang.
-      - run: |
+      # RUSTUP_HOME stays pointed at the real home, because the toolchains live
+      # there and cargo is a shim that cannot find them otherwise. Everything
+      # cargo writes still lands under the empty HOME.
+      - env:
+          # cargo wants a URL here, so a bare path is not enough.
+          GITHUB_GUARD_REPOSITORY: file://${{ github.workspace }}
+          GITHUB_GUARD_BRANCH: revision-under-test
+        run: |
           mkdir -p "${RUNNER_TEMP}/home"
-          HOME="${RUNNER_TEMP}/home" python3 -m deploy ${{ matrix.platform }} < /dev/null
+          RUSTUP_HOME="${HOME}/.rustup" HOME="${RUNNER_TEMP}/home" \
+            python3 -m deploy ${{ matrix.platform }} < /dev/null
+
+      # Only macOS deploys the guard, because only macOS deploys the rest of the
+      # Claude Code configuration it belongs to.
+      - name: assert the deployment installed github-guard
+        if: matrix.platform == 'mac'
+        run: test -x "${RUNNER_TEMP}/home/.cargo/bin/github-guard"
+
+      # Installed is not the same as working. What the hook is for is answering,
+      # so the deployed copy has to answer.
+      - name: assert the installed github-guard decides
+        if: matrix.platform == 'mac'
+        env:
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+        run: |
+          echo "$PAYLOAD" \
+            | "${RUNNER_TEMP}/home/.cargo/bin/github-guard" \
+            | grep '"permissionDecision":"deny"'
 
       # Resolving both sides answers every way this can go wrong at once: a path
       # that is not a link, a link that dangles, and a link to the wrong file all

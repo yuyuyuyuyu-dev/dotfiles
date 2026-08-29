@@ -1,0 +1,98 @@
+name: github-guard explains a denial well enough for Claude to act on it
+description: >-
+  A denial the agent cannot understand is a denial it will try to get around.
+  Each step here checks one thing the reason has to carry: what was rejected,
+  what about it writes, what to do instead, that the answer will not change on a
+  retry, and that a denial which looks wrong is reported rather than routed
+  around.
+
+inputs:
+  guard:
+    description: The github-guard executable to run the payloads through.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: should return a reason alongside a denial
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecisionReason":"[^"]'
+
+    - name: should name the command it rejected
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep 'gh pr merge'
+
+    - name: should name the flag that made a git command a write
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --tags"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep -- '--tags'
+
+    - name: should name the HTTP method that would have been sent
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X DELETE /repos/o/r"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep 'DELETE'
+
+    # The method a body flag implies is the one thing about curl that is easy to
+    # get wrong, so the reason says it rather than leaving it to be guessed.
+    - name: should explain the method a body flag implies
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -d x https://api.github.com/repos/o/r"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep 'body flag'
+
+    - name: should say what to do instead
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep 'ask the user'
+
+    - name: should say the block is permanent so it is not retried
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep 'permanent'
+
+    - name: should explain why an unreadable command was denied
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5 --body \"unbalanced"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep 'could not be tokenized'
+
+    # Otherwise a denial the guard got wrong is something Claude quietly routes
+    # around, and nobody finds out the guard is wrong.
+    - name: should tell Claude to report a denial that looks like a fault
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep 'fault in the hook'
+
+    - name: should return a reason alongside an ask as well
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title x"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecisionReason":"[^"]'
+
+    # The reason is JSON, so a quote or a newline that reached it unescaped would
+    # produce a decision Claude Code cannot read at all.
+    - name: should stay valid JSON when the command contains quotes
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X POST /repos/o/r -f body=\"quoted\""}}'
+      run: echo "$PAYLOAD" | "$GUARD" | python3 -c 'import json,sys; json.load(sys.stdin)'

@@ -34,6 +34,18 @@ updates:
         patterns: ["*"]
         update-types: [minor, patch]
 
+  # github-guard pins its dependencies in Cargo.lock, which is what `cargo install
+  # --locked` builds from, so the lockfile is what Dependabot has to move.
+  - package-ecosystem: cargo
+    directory: /github-guard
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 1
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
   # The base image the docker-diff-guard action falls back to. It is pinned in a
   # Dockerfile nothing builds, because this is the only kind of file Dependabot
   # reads an image reference out of.
