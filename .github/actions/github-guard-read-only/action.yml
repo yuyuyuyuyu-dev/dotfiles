@@ -1,4 +1,4 @@
-name: should deny every write to GitHub while leaving reads alone
+name: should restrict GitHub access to read-only permission
 description: >-
   Feed github-guard the payloads Claude Code would send and check that anything
   which can write to GitHub is denied. Reads are checked too, because a guard

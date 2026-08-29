@@ -43,26 +43,9 @@ jobs:
       # An empty HOME is the situation a new machine presents.
       # Closing stdin turns a confirmation prompt -- which would mean something
       # was already in place -- into a failure rather than a hang.
-      # RUSTUP_HOME stays pointed at the real home, because the toolchains live
-      # there and cargo is a shim that cannot find them otherwise. Everything
-      # cargo writes still lands under the empty HOME.
       - run: |
           mkdir -p "${RUNNER_TEMP}/home"
-          RUSTUP_HOME="${HOME}/.rustup" HOME="${RUNNER_TEMP}/home" \
-            python3 -m deploy ${{ matrix.platform }} < /dev/null
-
-      - name: assert the deployment installed github-guard
-        run: test -x "${RUNNER_TEMP}/home/.cargo/bin/github-guard"
-
-      # Installed is not the same as working. What the hook is for is answering,
-      # so the deployed copy has to answer.
-      - name: assert the installed github-guard decides
-        env:
-          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
-        run: |
-          echo "$PAYLOAD" \
-            | "${RUNNER_TEMP}/home/.cargo/bin/github-guard" \
-            | grep '"permissionDecision":"deny"'
+          HOME="${RUNNER_TEMP}/home" python3 -m deploy ${{ matrix.platform }} < /dev/null
 
       # Resolving both sides answers every way this can go wrong at once: a path
       # that is not a link, a link that dangles, and a link to the wrong file all

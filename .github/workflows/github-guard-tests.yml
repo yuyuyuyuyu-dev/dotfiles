@@ -21,7 +21,7 @@ permissions:
 # readable on its own.
 jobs:
   read-only:
-    name: should deny every write to GitHub while leaving reads alone
+    name: should restrict GitHub access to read-only permission
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
