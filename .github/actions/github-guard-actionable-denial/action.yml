@@ -1,4 +1,4 @@
-name: github-guard explains a denial well enough for Claude to act on it
+name: should explain a denial well enough for Claude to act on it
 description: >-
   A denial the agent cannot understand is a denial it will try to get around.
   Each step here checks one thing the reason has to carry: what was rejected,

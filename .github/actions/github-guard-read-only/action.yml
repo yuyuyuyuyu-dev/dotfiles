@@ -1,8 +1,9 @@
-name: github-guard is read-only
+name: should deny every write to GitHub while leaving reads alone
 description: >-
-  Feed github-guard the payloads Claude Code would send and check that reading
-  GitHub is left alone while anything that can write is denied. One step is one
-  thing the guard has to get right.
+  Feed github-guard the payloads Claude Code would send and check that anything
+  which can write to GitHub is denied. Reads are checked too, because a guard
+  that denied those as well would satisfy the prohibition and be useless. One
+  step is one thing the guard has to get right.
 
 inputs:
   guard:
@@ -238,6 +239,33 @@ runs:
 
     # A permission rule matches the literal command string, so it never sees the
     # gh call inside a nested shell. This guard has to.
+    # An unauthenticated write to the API is rejected by GitHub anyway, so what
+    # makes curl worth watching is that a token is within reach: `gh auth token`
+    # prints the one gh stored. Reaching for it is itself a gh command that is
+    # not a read, so the denial lands before the curl is even considered.
+    - name: should deny reading the credential gh stored
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh auth token"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a write that fetches a token to authenticate with
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X POST -H \"Authorization: Bearer $(gh auth token)\" https://api.github.com/repos/o/r/releases"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    # A token that is already in the environment needs no gh command to reach,
+    # so here it is the URL and the method that have to do the work.
+    - name: should deny a write that authenticates from the environment
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X POST -H \"Authorization: Bearer $GITHUB_TOKEN\" https://api.github.com/repos/o/r/releases"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
     - name: should deny a write hidden in a nested shell
       shell: bash
       env:
