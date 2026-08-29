@@ -1,4 +1,4 @@
-name: github-guard
+name: cargo
 
 on:
   # Limiting push to main avoids running twice for a pull request opened from a

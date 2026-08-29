@@ -7,11 +7,8 @@ from deploy.shared import paths
 
 # The analyzer is installed from the remote default branch rather than from this
 # checkout, so what guards the machine is a revision the tests have run against.
-# The tests install from somewhere else, which is what these two are here for.
-REPOSITORY = os.environ.get(
-    "GITHUB_GUARD_REPOSITORY", "https://github.com/yuyuyuyuyu-dev/dotfiles.git"
-)
-BRANCH = os.environ.get("GITHUB_GUARD_BRANCH", "main")
+REPOSITORY = "https://github.com/yuyuyuyuyu-dev/dotfiles.git"
+BRANCH = "main"
 CRATE = "github-guard"
 
 
