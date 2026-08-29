@@ -2,9 +2,14 @@ name: should explain a denial well enough for Claude to act on it
 description: >-
   A denial the agent cannot understand is a denial it will try to get around.
   Each step here checks one thing the reason has to carry: what was rejected,
-  what about it writes, what to do instead, that the answer will not change on a
-  retry, and that a denial which looks wrong is reported rather than routed
-  around.
+  what about it writes, what the rule is, what to do instead, that the answer
+  will not change on a retry, and that a denial which looks wrong is reported
+  rather than routed around.
+
+  Where the wording is fixed, the step carries that wording in full rather than
+  a fragment of it, so what the hook says can be read here without opening the
+  implementation. Where it is built from the command being judged, the step
+  matches the part that came from the command.
 
 inputs:
   guard:
@@ -21,13 +26,17 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecisionReason":"[^"]'
 
+    # Claude issues compound commands, and only one part of one is ever the
+    # problem. A reason that does not name it leaves the rest in doubt too.
     - name: should name the command it rejected
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep 'gh pr merge'
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git status && gh pr merge 5"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep -- 'gh pr merge'
 
+    # Most of `git push` is allowed. Naming the flag that is not keeps Claude
+    # from concluding that pushing branches is off the table as well.
     - name: should name the flag that made a git command a write
       shell: bash
       env:
@@ -35,52 +44,93 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --tags"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep -- '--tags'
 
+    # Likewise `gh api` is allowed for GET, so the method is what has to be
+    # named: the endpoint was never the problem.
     - name: should name the HTTP method that would have been sent
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X DELETE /repos/o/r"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep 'DELETE'
+      run: echo "$PAYLOAD" | "$GUARD" | grep -- 'DELETE'
 
-    # The method a body flag implies is the one thing about curl that is easy to
-    # get wrong, so the reason says it rather than leaving it to be guessed.
+    # The one place the reason has to teach rather than report. Without this,
+    # a command nobody wrote a method into looks like a GET that was refused.
     - name: should explain the method a body flag implies
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -d x https://api.github.com/repos/o/r"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep 'body flag'
+        SENTENCE: >-
+          Note that a body flag such as -d, -F or -T sets the method even when
+          -X is absent.
+      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
 
+    # The rule itself, so that a denial is not read as a fact about one command.
+    # It also tells Claude the two things it may still do, which is the
+    # difference between asking the user and abandoning the task.
+    - name: should state the rule the denial comes from
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+        SENTENCE: >-
+          GitHub access is read-only under this hook: every write is denied, and
+          the only exceptions are creating and editing a pull request, which are
+          put to the user for approval instead.
+      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
+
+    # A denial with no way forward is a dead end, and a dead end is where an
+    # agent starts improvising.
     - name: should say what to do instead
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep 'ask the user'
+        SENTENCE: >-
+          Ask the user to run it themselves if the write is genuinely needed.
+      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
 
+    # Rewording and retrying is what an agent does after a block it reads as a
+    # failure, so the reason says outright that it is not one.
     - name: should say the block is permanent so it is not retried
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep 'permanent'
+        SENTENCE: >-
+          This is a permanent PreToolUse hook, not a transient failure:
+          retrying, rewording or wrapping the command will not change the
+          answer.
+      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
 
-    - name: should explain why an unreadable command was denied
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5 --body \"unbalanced"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep 'could not be tokenized'
-
-    # Otherwise a denial the guard got wrong is something Claude quietly routes
-    # around, and nobody finds out the guard is wrong.
+    # A guard that is wrong stays wrong for as long as the agent quietly routes
+    # around it. This is what turns a false denial into something the user sees.
     - name: should tell Claude to report a denial that looks like a fault
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep 'fault in the hook'
+        SENTENCE: >-
+          If the command only reads and this denial looks like a fault in the
+          hook, report that to the user instead of working around it.
+      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
 
+    # The only denial where the command may be innocent, so it is the one that
+    # most needs to say what went wrong rather than what was forbidden.
+    - name: should explain why an unreadable command was denied
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5 --body \"unbalanced"}}'
+        SENTENCE: >-
+          This command mentions gh, a git tag or the GitHub API, but it could
+          not be tokenized -- an unbalanced quote is the usual cause -- so what
+          it would run cannot be determined. It is denied rather than guessed
+          at. Run the GitHub part as a command of its own.
+      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
+
+    # The permission dialog shows this one, so it is the user rather than Claude
+    # who is left without an explanation when it is missing.
     - name: should return a reason alongside an ask as well
       shell: bash
       env:
@@ -88,8 +138,9 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title x"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecisionReason":"[^"]'
 
-    # The reason is JSON, so a quote or a newline that reached it unescaped would
-    # produce a decision Claude Code cannot read at all.
+    # The reason quotes fragments of the command it judged, so an unescaped
+    # quote reaching it would break the decision as JSON. Claude Code would read
+    # that as the hook failing, and a failing hook lets the command through.
     - name: should stay valid JSON when the command contains quotes
       shell: bash
       env:

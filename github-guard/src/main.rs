@@ -35,7 +35,7 @@ pub enum Verdict {
 
 // Appended to every denial. Without it a denial reads like a transient failure,
 // and the next thing the agent does is try a way around it.
-const DENY_NOTE: &str = " This is a permanent PreToolUse hook, not a transient failure: retrying, rewording or wrapping the command will not change the answer. Ask the user to run it themselves if the write is genuinely needed. If the command only reads and this denial looks like a fault in the hook, report that to the user instead of working around it.";
+const DENY_NOTE: &str = " GitHub access is read-only under this hook: every write is denied, and the only exceptions are creating and editing a pull request, which are put to the user for approval instead. This is a permanent PreToolUse hook, not a transient failure: retrying, rewording or wrapping the command will not change the answer. Ask the user to run it themselves if the write is genuinely needed. If the command only reads and this denial looks like a fault in the hook, report that to the user instead of working around it.";
 
 fn main() {
     let mut payload = String::new();
