@@ -56,21 +56,6 @@ jobs:
             HOME="${RUNNER_TEMP}/home" \
             python3 -m deploy ${{ matrix.platform }} < /dev/null
 
-      - name: assert the deployment installed github-guard
-        run: test -x "${RUNNER_TEMP}/home/.cargo/bin/github-guard"
-
-      # Installed is not the same as working, and answering is the whole of what
-      # the hook is for, so the copy the deployment left behind has to answer.
-      # What it answers is settled by the github-guard tests; all this asks is
-      # that the executable which arrived here is that one and it runs.
-      - name: assert the installed github-guard decides
-        env:
-          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
-        run: |
-          echo "$PAYLOAD" \
-            | "${RUNNER_TEMP}/home/.cargo/bin/github-guard" \
-            | grep '"permissionDecision":"deny"'
-
       # Resolving both sides answers every way this can go wrong at once: a path
       # that is not a link, a link that dangles, and a link to the wrong file all
       # resolve to something other than the file in the checkout. Both sides are
@@ -96,3 +81,17 @@ jobs:
             echo "::error::~/.gitconfig was not created"; exit 1; }
           git -C "${GITHUB_WORKSPACE}" diff --quiet -- .config || {
             echo "::error::the deployment modified its own source"; exit 1; }
+
+      # Running it is the whole check. A path with nothing at it, a file that is
+      # not executable, and a binary that cannot run on this machine all fail in
+      # the same place, and none of them would have been told apart by asking
+      # whether a file is there. What it answers is settled by the github-guard
+      # tests; all this asks is that what the deployment installed is that
+      # executable and that it runs.
+      - name: assert the deployment installed github-guard
+        env:
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+        run: |
+          echo "$PAYLOAD" \
+            | "${RUNNER_TEMP}/home/.cargo/bin/github-guard" \
+            | grep '"permissionDecision":"deny"'
