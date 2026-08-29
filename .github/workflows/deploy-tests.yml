@@ -44,16 +44,14 @@ jobs:
       # Closing stdin turns a confirmation prompt -- which would mean something
       # was already in place -- into a failure rather than a hang.
       #
-      # cargo installs into CARGO_HOME, which falls back to the HOME it is given,
-      # so whatever CARGO_HOME the runner set is dropped and github-guard lands
-      # inside the empty home like it would on a new machine. RUSTUP_HOME cannot
-      # be dropped with it: the toolchains are in the real home, and the cargo on
-      # PATH is a shim that would look for them nowhere else.
+      # RUSTUP_HOME has to be named because the toolchains are in the real home,
+      # and the cargo on PATH is a rustup shim that would find none of them under
+      # an empty one. Nothing needs saying about where the install lands: cargo
+      # puts it in CARGO_HOME, the runner sets no CARGO_HOME, and so it follows
+      # HOME to the empty home the checks below look in.
       - run: |
           mkdir -p "${RUNNER_TEMP}/home"
-          env -u CARGO_HOME \
-            RUSTUP_HOME="${HOME}/.rustup" \
-            HOME="${RUNNER_TEMP}/home" \
+          RUSTUP_HOME="${HOME}/.rustup" HOME="${RUNNER_TEMP}/home" \
             python3 -m deploy ${{ matrix.platform }} < /dev/null
 
       # Resolving both sides answers every way this can go wrong at once: a path
@@ -90,7 +88,7 @@ jobs:
       # executable and that it runs.
       - name: assert the deployment installed github-guard
         env:
-          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh issue create --title \"Checking that github-guard was installed correctly\""}}'
         run: |
           echo "$PAYLOAD" \
             | "${RUNNER_TEMP}/home/.cargo/bin/github-guard" \
