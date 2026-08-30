@@ -34,8 +34,6 @@ const BOOL_FLAGS: [&str; 8] = [
 ];
 const FIELD_FLAGS: [&str; 4] = ["-f", "--raw-field", "-F", "--field"];
 
-// gh accepts these before the subcommand and consumes the next token as their value,
-// so the subcommand cannot be located without skipping it.
 const GH_VALUE_FLAGS: [&str; 32] = [
     "-R",
     "--repo",
@@ -71,9 +69,6 @@ const GH_VALUE_FLAGS: [&str; 32] = [
     "--visibility",
 ];
 
-// Allow-list of gh invocations that only read from GitHub. Anything absent is
-// denied, so a subcommand GitHub adds later is closed by default rather than
-// open until someone notices it.
 const READ_GH_COMMANDS: &[&[&str]] = &[
     &["browse"],
     &["status"],
@@ -157,13 +152,8 @@ const READ_GH_COMMANDS: &[&[&str]] = &[
     &["agent-task", "view"],
 ];
 
-// The two writes this hook exists to permit. They still go to the user rather
-// than through, because opening or rewriting a pull request is not something to
-// do on the agent's own judgement.
 const ASK_GH_COMMANDS: &[&[&str]] = &[&["pr", "create"], &["pr", "edit"]];
 
-// `gh <group>` with no subcommand only prints help. Groups that run something
-// on their own, such as copilot and preview, are absent so they stay denied.
 const HELP_ONLY_GROUPS: [&str; 26] = [
     "auth",
     "pr",

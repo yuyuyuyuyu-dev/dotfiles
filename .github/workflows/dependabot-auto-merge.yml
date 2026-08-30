@@ -1,12 +1,7 @@
 name: Dependabot auto-merge
 
-# pull_request_target is what makes the App credentials reachable: a workflow that
-# Dependabot triggers through pull_request sees Dependabot's own secrets instead of
-# the repository's. Nothing from the pull request is checked out or executed here,
-# which is what keeps that trigger safe.
 on: pull_request_target
 
-# Every permission is dropped because the App token, not this one, does the work.
 permissions: {}
 
 jobs:
@@ -25,8 +20,6 @@ jobs:
         with:
           github-token: ${{ steps.app-token.outputs.token }}
 
-      # A grouped pull request reports the highest update type it carries, so the
-      # minor and patch group matches and anything holding a major does not.
       - name: merge once the required checks pass
         if: >-
           steps.metadata.outputs.update-type == 'version-update:semver-minor' ||

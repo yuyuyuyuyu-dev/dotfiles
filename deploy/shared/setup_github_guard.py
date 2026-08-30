@@ -5,8 +5,6 @@ import sys
 
 from deploy.shared import paths
 
-# The analyzer is installed from the remote default branch rather than from this
-# checkout, so what guards the machine is a revision the tests have run against.
 REPOSITORY = "https://github.com/yuyuyuyuyu-dev/dotfiles.git"
 BRANCH = "main"
 CRATE = "github-guard"
@@ -20,9 +18,6 @@ def setup_github_guard():
         print(f"[SKIP] cargo was not found, so {CRATE} was not installed.")
     else:
         print(f"[ACTION] Installing {CRATE} from {REPOSITORY} ({BRANCH})")
-        # --locked builds the versions the lockfile pins. A failure is reported
-        # rather than raised, so that a machine which cannot reach GitHub still
-        # gets the rest of its dotfiles.
         result = subprocess.run(
             [
                 cargo,
@@ -48,8 +43,6 @@ def setup_github_guard():
 
 
 def _report_registration():
-    # The hook only runs once settings.json names it, and that file is left to be
-    # edited by hand because Claude Code writes to it as well.
     settings_path = os.path.join(paths.HOME_DIR, ".claude", "settings.json")
     try:
         with open(settings_path, encoding="utf-8") as handle:

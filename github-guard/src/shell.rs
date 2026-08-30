@@ -3,17 +3,12 @@ use std::sync::LazyLock;
 
 pub const SUBST_PLACEHOLDER: &str = "__SUBST__";
 
-// shlex emits a run of adjacent punctuation as one token (");", "&&", ")&&"),
-// so separators are recognised by content rather than by an exact list.
 const PUNCTUATION: [char; 8] = ['(', ')', ';', '<', '>', '|', '&', '\n'];
 
 static HEREDOC: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"<<-?\s*(?:'([^']*)'|"([^"]*)"|\\?([A-Za-z_][A-Za-z0-9_]*))"#).unwrap()
 });
 
-/// A word the shell would pass on, in both the form the command receives and the
-/// form it was written in. The written form is what says whether an expansion is
-/// live, which the unquoted value can no longer show.
 pub struct Token {
     pub value: String,
     pub raw: String,
@@ -28,12 +23,6 @@ impl std::fmt::Display for Unanalyzable {
     }
 }
 
-/// Drop heredoc bodies, which the lexer has no concept of.
-///
-/// A body is data, so a quote or paren inside it otherwise unbalances the whole
-/// command and the analyzer denies a command it simply could not read. Bodies of
-/// unquoted heredocs are returned separately because the shell still expands
-/// them, so a command substitution in one is live.
 pub fn strip_heredocs(text: &str) -> (String, Vec<String>) {
     let lines: Vec<&str> = text.split('\n').collect();
     let mut kept: Vec<&str> = Vec::new();
@@ -47,8 +36,6 @@ pub fn strip_heredocs(text: &str) -> (String, Vec<String>) {
 
         for captures in HEREDOC.captures_iter(line) {
             let quoted = captures.get(1).or_else(|| captures.get(2));
-            // An empty delimiter is no delimiter, so the lines stay where they are
-            // rather than being matched against the first blank line below.
             let delimiter = [captures.get(1), captures.get(2), captures.get(3)]
                 .into_iter()
                 .flatten()
@@ -62,8 +49,6 @@ pub fn strip_heredocs(text: &str) -> (String, Vec<String>) {
             while end < lines.len() && lines[end].trim() != delimiter {
                 end += 1;
             }
-            // No terminator means this was not a heredoc after all, so leaving the
-            // lines in place is safer than swallowing the rest of the command.
             if end >= lines.len() {
                 continue;
             }
@@ -77,11 +62,6 @@ pub fn strip_heredocs(text: &str) -> (String, Vec<String>) {
     (kept.join("\n"), expanded)
 }
 
-/// Replace $(...) and `...` with a placeholder, returning their contents.
-///
-/// The contents are commands in their own right; leaving them inline hides them
-/// from every check below, since the lexer reports the whole substitution as one
-/// ordinary argument token.
 pub fn extract_substitutions(text: &str) -> (String, Vec<String>) {
     let chars: Vec<char> = text.chars().collect();
     let mut out = String::new();
@@ -167,9 +147,6 @@ pub fn extract_substitutions(text: &str) -> (String, Vec<String>) {
     (out, inners)
 }
 
-/// Split the text into words the way the shell would, keeping the written form
-/// alongside. A newline separates commands, so it stays a token of its own
-/// instead of being swallowed as whitespace.
 pub fn tokenize(text: &str) -> Result<Vec<Token>, Unanalyzable> {
     let chars: Vec<char> = text.chars().collect();
     let mut tokens = Vec::new();
@@ -234,8 +211,6 @@ pub fn tokenize(text: &str) -> Result<Vec<Token>, Unanalyzable> {
                         index += 1;
                         break;
                     }
-                    // Inside double quotes a backslash only escapes a quote or
-                    // another backslash; anywhere else it stays part of the word.
                     if inner == '\\'
                         && let Some(&escaped) = chars.get(index + 1)
                     {
@@ -281,7 +256,6 @@ pub fn tokenize(text: &str) -> Result<Vec<Token>, Unanalyzable> {
     Ok(tokens)
 }
 
-/// True if the written form can expand into extra shell words (or run code).
 pub fn splits_into_words(raw: &str) -> bool {
     let mut quote: Option<char> = None;
     for char in raw.chars() {

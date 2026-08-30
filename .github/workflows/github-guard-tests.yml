@@ -1,8 +1,6 @@
 name: github-guard tests
 
 on:
-  # Limiting push to main avoids running twice for a pull request opened from a
-  # branch in this same repository.
   push:
     branches: [main]
   pull_request:
@@ -11,14 +9,6 @@ on:
 permissions:
   contents: read
 
-# Each job is one thing the guard has to do, and the steps that establish it live
-# in an action of its own under .github/actions, one step per point being made.
-# The executable is what answers, not a function called from a test: these run the
-# same binary Claude Code runs, on the payloads Claude Code sends it.
-#
-# Every job builds its own copy rather than sharing one through an artifact. The
-# build is short, the jobs run at the same time anyway, and each one stays
-# readable on its own.
 jobs:
   read-only:
     name: should restrict GitHub access to read-only permission

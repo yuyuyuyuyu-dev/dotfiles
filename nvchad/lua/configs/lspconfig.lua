@@ -1,10 +1,7 @@
--- load defaults i.e lua_lsp
 require("nvchad.configs.lspconfig").defaults()
 
 local lspconfig = require "lspconfig"
 
--- EXAMPLE
--- local servers = { "html", "cssls" }
 local servers = {
   "clangd",
   "bashls",
@@ -14,11 +11,9 @@ local servers = {
   "html",
   "cssls",
   "ts_ls",
-  -- "angularls",
 }
 local nvlsp = require "nvchad.configs.lspconfig"
 
--- lsps with default config
 for _, lsp in ipairs(servers) do
   lspconfig[lsp].setup {
     on_attach = nvlsp.on_attach,
@@ -27,14 +22,6 @@ for _, lsp in ipairs(servers) do
   }
 end
 
--- configuring single server, example: typescript
--- lspconfig.tsserver.setup {
---   on_attach = nvlsp.on_attach,
---   on_init = nvlsp.on_init,
---   capabilities = nvlsp.capabilities,
--- }
-
--- Angular
 local node_modules = vim.fn.stdpath "data" .. "/mason/packages/angular-language-server/node_modules"
 local ngls_cmd = {
   node_modules .. "/@angular/language-server/bin/ngserver",

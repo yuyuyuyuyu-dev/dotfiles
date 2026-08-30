@@ -1,13 +1,3 @@
-# シェルからexitするときに読み込まれるファイル
-# 今の所zcompileする以外の使い道が思いつかない
-
-
-# コンパイルしたものが最新じゃない&コンパイル前の設定ファイルが存在する場合にコンパイルする
-
-# .zwcのファイルがない場合にも対応するためにif文のところで回りくどい書き方してる
-# こうすると.zwcのファイルが無かったときも全体がtrueになる
-
-#.zlogout
 if test -e ~/.zlogout && [ ! ~/.zlogout -ot ~/.zlogout.zwc ]; then
   zcompile ~/.zlogout
   if type terminal-notifier; then
@@ -17,8 +7,6 @@ if test -e ~/.zlogout && [ ! ~/.zlogout -ot ~/.zlogout.zwc ]; then
   fi
 fi
 
-
-# .zprofile
 if test -e ~/.zprofile && [ ! ~/.zprofile -ot ~/.zprofile.zwc ]; then
   zcompile ~/.zprofile
   if type terminal-notifier; then
@@ -28,8 +16,6 @@ if test -e ~/.zprofile && [ ! ~/.zprofile -ot ~/.zprofile.zwc ]; then
   fi
 fi
 
-
-# .zshenv
 if test -e ~/.zshenv && [ ! ~/.zshenv -ot ~/.zshenv.zwc ]; then
   zcompile ~/.zshenv
   if type terminal-notifier; then
@@ -39,8 +25,6 @@ if test -e ~/.zshenv && [ ! ~/.zshenv -ot ~/.zshenv.zwc ]; then
   fi
 fi
 
-
-# .zshrc
 if test -e ~/.zshrc && [ ! ~/.zshrc -ot ~/.zshrc.zwc ]; then
   zcompile ~/.zshrc
   if type terminal-notifier; then

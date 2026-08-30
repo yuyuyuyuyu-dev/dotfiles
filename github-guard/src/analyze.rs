@@ -19,8 +19,6 @@ static CONTINUATION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\\\r?\n").u
 static ASSIGNMENT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[A-Za-z_][A-Za-z0-9_]*=").unwrap());
 
-// Every gh invocation matters now that the allow-list decides, not a list of
-// known-bad subcommands.
 static GH_INVOCATION: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(^|[^A-Za-z0-9_])([^\s;|&()]*/)?gh\s").unwrap());
 static GIT_TAG_INVOCATION: LazyLock<Regex> = LazyLock::new(|| {
@@ -48,8 +46,6 @@ pub fn check_command(text: &str, depth: u32) -> Option<Verdict> {
         }
     }
 
-    // An unquoted heredoc body is text, not a command list, so only the parts the
-    // shell actually runs are followed.
     for body in &expanded_bodies {
         for inner in shell::extract_substitutions(body).1 {
             if let Some(verdict) = check_command(&inner, depth + 1) {

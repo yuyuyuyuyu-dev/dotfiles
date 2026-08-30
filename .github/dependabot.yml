@@ -1,16 +1,6 @@
 version: 2
 
-# Both ecosystems use the same schedule and limit. Checking daily keeps the gap
-# between a release and the pull request short, and the limit of one keeps that
-# frequency from filling the list: a superseded pull request is replaced rather
-# than accumulating beside the others.
-#
-# Minor and patch updates are grouped so that auto-merge lands them in one pull
-# request, leaving a major update on its own to be read. The group cannot span the
-# ecosystems below: Dependabot filters by update type only within one.
 updates:
-  # uv is its own ecosystem here, separate from pip. It reads pyproject.toml and
-  # uv.lock, which between them are the only place a tool version is pinned.
   - package-ecosystem: uv
     directory: /
     schedule:
@@ -21,9 +11,6 @@ updates:
         patterns: ["*"]
         update-types: [minor, patch]
 
-  # Covers the `uses:` references in .github/workflows. setup-uv has to name an
-  # exact version, because Astral publishes no floating tag for its newest major,
-  # so nothing else would ever move it off v9.0.0.
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -34,8 +21,6 @@ updates:
         patterns: ["*"]
         update-types: [minor, patch]
 
-  # github-guard pins its dependencies in Cargo.lock, which is what `cargo install
-  # --locked` builds from, so the lockfile is what Dependabot has to move.
   - package-ecosystem: cargo
     directory: /github-guard
     schedule:
@@ -46,9 +31,6 @@ updates:
         patterns: ["*"]
         update-types: [minor, patch]
 
-  # The base image the docker-diff-guard action falls back to. It is pinned in a
-  # Dockerfile nothing builds, because this is the only kind of file Dependabot
-  # reads an image reference out of.
   - package-ecosystem: docker
     directory: /.github/actions/docker-diff-guard
     schedule:
