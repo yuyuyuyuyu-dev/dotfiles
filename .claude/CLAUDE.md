@@ -20,6 +20,7 @@ Commit messages and pull requests MUST be written in plain English and be as con
 Pull request descriptions MUST NOT be hard wrapped.
 Commit messages and pull request descriptions MUST carry the attribution of the AI agent that helped write the change.
 Branch names MUST follow Conventional Branch, and commit messages MUST follow Conventional Commits.
+Pull request titles MUST follow Conventional Commits too, because a squash merge makes the title the commit message.
 Before a branch is created, the latest changes on the remote default branch MUST be pulled in.
 
 ## When in Doubt
