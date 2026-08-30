@@ -1,19 +1,12 @@
-# This repository is not a distributable package. The file exists so that uv can
-# pin the development tools, which is all it declares.
 [project]
 name = "dotfiles"
 version = "0"
-# The python3 bundled with macOS is 3.9, and the deploy scripts have to run there.
-# ruff reads this to decide which syntax it may suggest, so it needs no target-version.
 requires-python = ">=3.9"
 
 [tool.uv]
 package = false
 
 [dependency-groups]
-# This bounds what uv.lock may resolve to; the lockfile is what actually fixes a
-# version. CI runs ruff through uv, so it cannot drift from what runs locally,
-# and Dependabot moves the lockfile.
 dev = [
     "ruff>=0.16.3",
 ]

@@ -20,8 +20,6 @@ static ASSIGNMENT_VALUE: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-// curl and wget name these differently, but either way the flag means a request
-// body, and a request body means the method is not a read.
 const BODY_FLAGS: [&str; 14] = [
     "-d",
     "--data",
@@ -40,8 +38,6 @@ const BODY_FLAGS: [&str; 14] = [
 ];
 const UPLOAD_FLAGS: [&str; 2] = ["-T", "--upload-file"];
 
-/// Names of shell variables whose value points at the GitHub API or carries a
-/// token, so that a later `$NAME` in a URL is recognised as targeting GitHub.
 pub fn github_variables(text: &str) -> Vec<String> {
     let mut names = Vec::new();
     for captures in ASSIGNMENT_VALUE.captures_iter(text) {
@@ -66,8 +62,6 @@ struct Request {
     body: bool,
 }
 
-/// Read a bundle such as `-sSLX POST`, where the flags share one dash.
-/// Returns whether the method is the next token instead of part of this one.
 fn read_short_bundle(value: &str, raw: &str, state: &mut Request) -> bool {
     let letters: Vec<char> = value[1..].chars().collect();
     for (position, letter) in letters.iter().enumerate() {

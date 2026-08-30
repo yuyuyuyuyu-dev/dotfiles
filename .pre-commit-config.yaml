@@ -1,12 +1,3 @@
-# これは Git の pre-commit フックを管理する仕組みであり、`git commit --no-verify` で回避できる。
-# したがってここは強制力ではなく早期検知の位置づけで、強制は CI（.github/workflows/）が担う。
-#
-# それでもローカルに置くのは、秘密情報は一度コミットされると履歴から実質的に消せないため。
-# CI が気づくのは「履歴に入った後」であり、公開リポジトリでは手遅れになる。
-#
-# 利用開始時は各クローンで一度だけ実行が必要:
-#   pre-commit install
-
 repos:
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1

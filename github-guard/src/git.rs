@@ -2,7 +2,6 @@ use crate::Verdict;
 use crate::shell::Token;
 use std::collections::HashSet;
 
-// git flags that consume the next token, so the subcommand can be located.
 const GLOBAL_VALUE_FLAGS: [&str; 7] = [
     "-C",
     "-c",
@@ -13,9 +12,6 @@ const GLOBAL_VALUE_FLAGS: [&str; 7] = [
     "--super-prefix",
 ];
 
-// `git tag` both lists and writes depending on its flags, which is why tags
-// cannot be held by a permission rule: a rule broad enough to stop creation
-// also stops listing, and deny rules carry no exceptions.
 const TAG_WRITE_FLAGS: [&str; 17] = [
     "-a",
     "--annotate",
@@ -82,7 +78,6 @@ fn flag_names(args: &[Token]) -> HashSet<&str> {
             continue;
         }
         names.insert(value.split('=').next().unwrap_or(value));
-        // `git tag -n5` is `-n` with a count attached, not a flag of its own.
         if let Some(count) = value.strip_prefix("-n")
             && !count.is_empty()
             && count.chars().all(|char| char.is_ascii_digit())

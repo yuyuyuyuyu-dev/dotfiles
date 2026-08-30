@@ -18,7 +18,6 @@ def deploy_to_linux():
 
     deploy_configs()
 
-    # Last, so that the reminder it may print is the last thing read.
     setup_github_guard()
 
     print("\nLinux deployment finished.")

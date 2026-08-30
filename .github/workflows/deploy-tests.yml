@@ -1,8 +1,6 @@
 name: Deploy tests
 
 on:
-  # Limiting push to main avoids running twice for a pull request opened from a
-  # branch in this same repository.
   push:
     branches: [main]
   pull_request:
@@ -14,7 +12,6 @@ permissions:
 jobs:
   deploy:
     name: should deploy to ${{ matrix.name }}
-    # Android is absent because GitHub hosts no runner for it.
     strategy:
       fail-fast: false
       matrix:
@@ -40,25 +37,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # An empty HOME is the situation a new machine presents.
-      # Closing stdin turns a confirmation prompt -- which would mean something
-      # was already in place -- into a failure rather than a hang.
-      #
-      # RUSTUP_HOME has to be named because the toolchains are in the real home,
-      # and the cargo on PATH is a rustup shim that would find none of them under
-      # an empty one. Nothing needs saying about where the install lands: cargo
-      # puts it in CARGO_HOME, the runner sets no CARGO_HOME, and so it follows
-      # HOME to the empty home the checks below look in.
       - run: |
           mkdir -p "${RUNNER_TEMP}/home"
           RUSTUP_HOME="${HOME}/.rustup" HOME="${RUNNER_TEMP}/home" \
             python3 -m deploy ${{ matrix.platform }} < /dev/null
 
-      # Resolving both sides answers every way this can go wrong at once: a path
-      # that is not a link, a link that dangles, and a link to the wrong file all
-      # resolve to something other than the file in the checkout. Both sides are
-      # resolved because a symlinked parent directory would otherwise make a
-      # correct link look wrong.
       - name: assert every configuration file resolves to the one in this checkout
         run: |
           for link in ${{ matrix.links }}; do
@@ -80,12 +63,6 @@ jobs:
           git -C "${GITHUB_WORKSPACE}" diff --quiet -- .config || {
             echo "::error::the deployment modified its own source"; exit 1; }
 
-      # Running it is the whole check. A path with nothing at it, a file that is
-      # not executable, and a binary that cannot run on this machine all fail in
-      # the same place, and none of them would have been told apart by asking
-      # whether a file is there. What it answers is settled by the github-guard
-      # tests; all this asks is that what the deployment installed is that
-      # executable and that it runs.
       - name: assert the deployment installed github-guard
         env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh issue create --title \"Checking that github-guard was installed correctly\""}}'

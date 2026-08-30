@@ -49,8 +49,6 @@ def create_symlink_safely(source_path, dest_path):
             try:
                 with open(dest_path, encoding="utf-8") as f:
                     print(f.read())
-            # The destination can hold a file that is not readable as text, so a
-            # decode failure has to be caught alongside a read failure.
             except (OSError, UnicodeDecodeError) as e:
                 print(f"Could not read file content: {e}", file=sys.stderr)
             print("-----------------------")

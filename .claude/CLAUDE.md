@@ -3,12 +3,10 @@
 ### Comments
 
 Comments and embedded documentation MUST NOT be written in any file.
-The only exceptions:
+The only exceptions, allowed in a test case alone:
 
-- a comment that explains why, only where the reason cannot be understood without it, and as concise as possible, so that it is less likely to go stale or to say something untrue
 - "Arrange", "Act", and "Assert" comments that mark test sections
-
-A comment MUST be written in plain English, so that as many people around the world as possible can read it.
+- a comment that explains why, only where the user has explicitly asked for it
 
 ### Tests
 

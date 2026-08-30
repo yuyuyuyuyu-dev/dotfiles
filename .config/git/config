@@ -1,32 +1,21 @@
 [init]
-	# デフォルトブランチの名前を"main"に指定する
 	defaultBranch = main
 
-
 [alias]
-	# git diffしたときに、改行コードを気にしないようにする
 	diff = diff -w
 
-	# `git root` でリポジトリのルートディレクトリを出力する
 	root = rev-parse --show-toplevel
 
-	# フェッチしたときにリモートブランチの削除状況に追従する
 	fetch = fetch -p
-	# プルしたときにリモートブランチの削除状況に追従する
 	pull = pull -p
 
 	copy-changed-files = !"f(){ git diff --name-only HEAD | xargs -I{} dirname {} | xargs -tI{} mkdir -p ${1}/{} && git diff --name-only HEAD | xargs -tI{} cp {} ${1}/{}; }; f"
 
-
 [merge]
-	# 可能であればFast-Forwardを行う
 	ff = true
-
 
 [pull]
-	# 可能であればFast-Forwardを行う
 	ff = true
-
 
 [include]
     path = ~/Documents/GitHub/dotfiles-private/.config/git/config

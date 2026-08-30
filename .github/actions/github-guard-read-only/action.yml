@@ -13,9 +13,6 @@ inputs:
 runs:
   using: composite
   steps:
-    # A read produces no decision at all, which hands the command back to the
-    # permission rules rather than approving it here. Empty output is therefore
-    # the assertion, and grep has nothing to match on.
     - name: should let pull requests be listed
       shell: bash
       env:
@@ -106,8 +103,6 @@ runs:
         decision=$(echo "$PAYLOAD" | "$GUARD")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
 
-    # Pushing a branch is not a GitHub write this guard is about. Only tags are,
-    # because a tag is how a release gets published.
     - name: should let a branch be pushed
       shell: bash
       env:
@@ -175,8 +170,6 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh secret set TOKEN"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
 
-    # A subcommand nobody has heard of is denied rather than allowed, so that the
-    # allow-list going stale costs a false denial and never a silent write.
     - name: should deny a subcommand GitHub has not shipped yet
       shell: bash
       env:
@@ -191,8 +184,6 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X POST /repos/o/r/releases"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
 
-    # gh switches to POST as soon as it is given fields, so a request with no
-    # method named is still a write.
     - name: should deny a REST API write that only its fields imply
       shell: bash
       env:
@@ -228,8 +219,6 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --tags"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
 
-    # A refspec makes a tag on the remote without one ever existing locally, so
-    # watching `git tag` alone would miss it.
     - name: should deny pushing a tag refspec
       shell: bash
       env:
@@ -237,12 +226,6 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin HEAD:refs/tags/v1.0.0"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
 
-    # A permission rule matches the literal command string, so it never sees the
-    # gh call inside a nested shell. This guard has to.
-    # An unauthenticated write to the API is rejected by GitHub anyway, so what
-    # makes curl worth watching is that a token is within reach: `gh auth token`
-    # prints the one gh stored. Reaching for it is itself a gh command that is
-    # not a read, so the denial lands before the curl is even considered.
     - name: should deny reading the credential gh stored
       shell: bash
       env:
@@ -257,8 +240,6 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X POST -H \"Authorization: Bearer $(gh auth token)\" https://api.github.com/repos/o/r/releases"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
 
-    # A token that is already in the environment needs no gh command to reach,
-    # so here it is the URL and the method that have to do the work.
     - name: should deny a write that authenticates from the environment
       shell: bash
       env:
