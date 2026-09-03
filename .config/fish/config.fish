@@ -112,6 +112,4 @@ end
 
 set -gx PATH "$HOME/.local/bin" $PATH
 
-### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
-set --export --prepend PATH "$HOME/.rd/bin"
-### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
+set -gx PATH "$HOME/.rd/bin" $PATH
