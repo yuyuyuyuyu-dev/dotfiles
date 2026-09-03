@@ -64,6 +64,8 @@ export PATH="$HOME/.antigravity-ide/antigravity-ide/bin:$PATH"
 
 export PATH="$HOME/.local/bin:$PATH"
 
+export PATH="$HOME/.rd/bin:$PATH"
+
 # pnpm
 export PNPM_HOME="$HOME/Library/pnpm"
 case ":$PATH:" in
@@ -71,7 +73,3 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME/bin:$PATH" ;;
 esac
 # pnpm end
-
-### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
-export PATH="$HOME/.rd/bin:$PATH"
-### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)

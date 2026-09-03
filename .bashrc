@@ -43,6 +43,4 @@ unset _current_dir _dotfiles_bashrc_path _dotfiles_private_bashrc_path
 
 export PATH="$HOME/.local/bin:$PATH"
 
-### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
 export PATH="$HOME/.rd/bin:$PATH"
-### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
