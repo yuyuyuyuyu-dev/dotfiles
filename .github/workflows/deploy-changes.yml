@@ -17,17 +17,17 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: assert the deployment created nothing else
-        uses: ./.github/actions/docker-diff-guard
+        uses: yuyuyuyuyu-dev/assert-no-unexpected-changes@v1
         with:
-          setup: apt-get update && apt-get install --yes --no-install-recommends python3 git
-          run: mkdir /home/fresh && HOME=/home/fresh python3 -m deploy linux
-          allowed: |
-            A /home/fresh/.bash_profile
-            A /home/fresh/.bashrc
-            A /home/fresh/.zshrc
-            A /home/fresh/.zprofile
-            A /home/fresh/.zshenv
-            A /home/fresh/.zlogout
-            A /home/fresh/.vimrc
-            A /home/fresh/.config
-            A /home/fresh/.gitconfig
+          arrange: apt-get update && apt-get install --yes --no-install-recommends python3 git
+          act: mkdir /home/fresh && HOME=/home/fresh python3 -m deploy linux
+          allowlist: |
+            /home/fresh/.bash_profile
+            /home/fresh/.bashrc
+            /home/fresh/.zshrc
+            /home/fresh/.zprofile
+            /home/fresh/.zshenv
+            /home/fresh/.zlogout
+            /home/fresh/.vimrc
+            /home/fresh/.config
+            /home/fresh/.gitconfig
