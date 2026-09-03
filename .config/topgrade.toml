@@ -1,3 +1,5 @@
 [misc]
+[containers]
+ignored_containers = ["ghcr.io/rancher-sandbox/rancher-desktop/rdx-proxy:latest"]
 [commands]
 "Android CLI" = """python3 -c 'import shutil, subprocess, sys; sys.exit(subprocess.run(["android", "update"]).returncode if shutil.which("android") else 0)'"""
