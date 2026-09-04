@@ -1,41 +1,41 @@
-name: should ask before creating a pull request, as an exception
+name: should ask before editing a pull request, as an exception
 description: >-
-  Creating a pull request is a write, and the one write this guard exists to
+  Editing a pull request is a write, and the second write this guard exists to
   permit. It has to reach the user as a prompt: neither denied outright, nor
   waved through without anyone seeing it.
 
 inputs:
   guard:
-    description: The github-guard executable to run the payloads through.
+    description: The remote-write-gate executable to run the payloads through.
     required: true
 
 runs:
   using: composite
   steps:
-    - name: should ask before creating a pull request
+    - name: should ask before editing a pull request
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title x --body y"}}'
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --body z"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
 
-    - name: should ask when the pull request is created without arguments
+    - name: should ask when the edit changes the title
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create"}}'
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --title x"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
 
-    - name: should ask when the creation is hidden in a nested shell
+    - name: should ask when the edit is hidden in a nested shell
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh pr create --title x\""}}'
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh pr edit 5 --body z\""}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the repository is named before the subcommand
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R owner/repo pr create --title x"}}'
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R owner/repo pr edit 5 --body z"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'

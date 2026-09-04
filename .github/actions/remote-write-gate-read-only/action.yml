@@ -1,13 +1,13 @@
 name: should restrict GitHub access to read-only permission
 description: >-
-  Feed github-guard the payloads Claude Code would send and check that anything
+  Feed remote-write-gate the payloads Claude Code would send and check that anything
   which can write to GitHub is denied. Reads are checked too, because a guard
   that denied those as well would satisfy the prohibition and be useless. One
   step is one thing the guard has to get right.
 
 inputs:
   guard:
-    description: The github-guard executable to run the payloads through.
+    description: The remote-write-gate executable to run the payloads through.
     required: true
 
 runs:

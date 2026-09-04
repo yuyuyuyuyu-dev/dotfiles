@@ -1,4 +1,4 @@
-name: github-guard tests
+name: remote-write-gate tests
 
 on:
   push:
@@ -17,11 +17,11 @@ jobs:
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
-        working-directory: github-guard
+        working-directory: remote-write-gate
 
-      - uses: ./.github/actions/github-guard-read-only
+      - uses: ./.github/actions/remote-write-gate-read-only
         with:
-          guard: ${{ github.workspace }}/github-guard/target/release/github-guard
+          guard: ${{ github.workspace }}/remote-write-gate/target/release/remote-write-gate
 
   pull-request-create:
     name: should ask before creating a pull request, as an exception
@@ -30,11 +30,11 @@ jobs:
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
-        working-directory: github-guard
+        working-directory: remote-write-gate
 
-      - uses: ./.github/actions/github-guard-pull-request-create
+      - uses: ./.github/actions/remote-write-gate-pull-request-create
         with:
-          guard: ${{ github.workspace }}/github-guard/target/release/github-guard
+          guard: ${{ github.workspace }}/remote-write-gate/target/release/remote-write-gate
 
   pull-request-edit:
     name: should ask before editing a pull request, as an exception
@@ -43,11 +43,11 @@ jobs:
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
-        working-directory: github-guard
+        working-directory: remote-write-gate
 
-      - uses: ./.github/actions/github-guard-pull-request-edit
+      - uses: ./.github/actions/remote-write-gate-pull-request-edit
         with:
-          guard: ${{ github.workspace }}/github-guard/target/release/github-guard
+          guard: ${{ github.workspace }}/remote-write-gate/target/release/remote-write-gate
 
   actionable-denial:
     name: should explain a denial well enough for Claude to act on it
@@ -56,8 +56,8 @@ jobs:
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
-        working-directory: github-guard
+        working-directory: remote-write-gate
 
-      - uses: ./.github/actions/github-guard-actionable-denial
+      - uses: ./.github/actions/remote-write-gate-actionable-denial
         with:
-          guard: ${{ github.workspace }}/github-guard/target/release/github-guard
+          guard: ${{ github.workspace }}/remote-write-gate/target/release/remote-write-gate

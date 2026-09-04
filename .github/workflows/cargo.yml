@@ -11,7 +11,7 @@ permissions:
 
 defaults:
   run:
-    working-directory: github-guard
+    working-directory: remote-write-gate
 
 jobs:
   lint:

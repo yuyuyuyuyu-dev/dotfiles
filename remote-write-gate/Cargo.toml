@@ -1,5 +1,5 @@
 [package]
-name = "github-guard"
+name = "remote-write-gate"
 version = "0.1.0"
 edition = "2024"
 

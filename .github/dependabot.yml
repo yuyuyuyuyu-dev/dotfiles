@@ -22,7 +22,7 @@ updates:
         update-types: [minor, patch]
 
   - package-ecosystem: cargo
-    directory: /github-guard
+    directory: /remote-write-gate
     schedule:
       interval: daily
     open-pull-requests-limit: 1
