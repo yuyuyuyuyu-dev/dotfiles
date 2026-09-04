@@ -7,11 +7,11 @@ from deploy.shared import paths
 
 REPOSITORY = "https://github.com/yuyuyuyuyu-dev/dotfiles.git"
 BRANCH = "main"
-CRATE = "remote-write-gate"
+CRATE = "write-gate-for-github"
 
 
-def setup_remote_write_gate():
-    print("--- Setting up the remote write gate ---")
+def setup_write_gate_for_github():
+    print("--- Setting up the write gate for GitHub ---")
 
     cargo = shutil.which("cargo")
     if cargo is None:
@@ -39,7 +39,7 @@ def setup_remote_write_gate():
 
     _report_registration()
 
-    print("--- Remote write gate setup complete ---\n")
+    print("--- Write gate for GitHub setup complete ---\n")
 
 
 def _report_registration():

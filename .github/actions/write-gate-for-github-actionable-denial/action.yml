@@ -13,7 +13,7 @@ description: >-
 
 inputs:
   guard:
-    description: The remote-write-gate executable to run the payloads through.
+    description: The write-gate-for-github executable to run the payloads through.
     required: true
 
 runs:

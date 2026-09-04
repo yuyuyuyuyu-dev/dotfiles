@@ -1,5 +1,5 @@
 [package]
-name = "remote-write-gate"
+name = "write-gate-for-github"
 version = "0.1.0"
 edition = "2024"
 

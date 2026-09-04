@@ -1,4 +1,4 @@
-name: remote-write-gate tests
+name: write-gate-for-github tests
 
 on:
   push:
@@ -17,11 +17,11 @@ jobs:
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
-        working-directory: remote-write-gate
+        working-directory: write-gate-for-github
 
-      - uses: ./.github/actions/remote-write-gate-read-only
+      - uses: ./.github/actions/write-gate-for-github-read-only
         with:
-          guard: ${{ github.workspace }}/remote-write-gate/target/release/remote-write-gate
+          guard: ${{ github.workspace }}/write-gate-for-github/target/release/write-gate-for-github
 
   pull-request-create:
     name: should ask before creating a pull request, as an exception
@@ -30,11 +30,11 @@ jobs:
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
-        working-directory: remote-write-gate
+        working-directory: write-gate-for-github
 
-      - uses: ./.github/actions/remote-write-gate-pull-request-create
+      - uses: ./.github/actions/write-gate-for-github-pull-request-create
         with:
-          guard: ${{ github.workspace }}/remote-write-gate/target/release/remote-write-gate
+          guard: ${{ github.workspace }}/write-gate-for-github/target/release/write-gate-for-github
 
   pull-request-edit:
     name: should ask before editing a pull request, as an exception
@@ -43,11 +43,11 @@ jobs:
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
-        working-directory: remote-write-gate
+        working-directory: write-gate-for-github
 
-      - uses: ./.github/actions/remote-write-gate-pull-request-edit
+      - uses: ./.github/actions/write-gate-for-github-pull-request-edit
         with:
-          guard: ${{ github.workspace }}/remote-write-gate/target/release/remote-write-gate
+          guard: ${{ github.workspace }}/write-gate-for-github/target/release/write-gate-for-github
 
   actionable-denial:
     name: should explain a denial well enough for Claude to act on it
@@ -56,8 +56,8 @@ jobs:
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
-        working-directory: remote-write-gate
+        working-directory: write-gate-for-github
 
-      - uses: ./.github/actions/remote-write-gate-actionable-denial
+      - uses: ./.github/actions/write-gate-for-github-actionable-denial
         with:
-          guard: ${{ github.workspace }}/remote-write-gate/target/release/remote-write-gate
+          guard: ${{ github.workspace }}/write-gate-for-github/target/release/write-gate-for-github

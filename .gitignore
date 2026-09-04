@@ -15,4 +15,4 @@
 .docker/*
 !.docker/config.json
 __pycache__/
-remote-write-gate/target/
+write-gate-for-github/target/

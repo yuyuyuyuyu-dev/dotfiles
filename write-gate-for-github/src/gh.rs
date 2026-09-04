@@ -252,7 +252,7 @@ pub fn check_subcommand(args: &[Token]) -> Option<Verdict> {
 
     let named = path[..path.len().min(2)].join(" ");
     Some(Verdict::Deny(format!(
-        "`gh {named}` is not on this hook's allow-list of gh subcommands that only read from GitHub, so it cannot be shown to leave GitHub unchanged. Read the data with a gh command that is on the list, or ask the user to run this one. If `gh {named}` really only reads, the allow-list in remote-write-gate is what needs the entry."
+        "`gh {named}` is not on this hook's allow-list of gh subcommands that only read from GitHub, so it cannot be shown to leave GitHub unchanged. Read the data with a gh command that is on the list, or ask the user to run this one. If `gh {named}` really only reads, the allow-list in write-gate-for-github is what needs the entry."
     )))
 }
 

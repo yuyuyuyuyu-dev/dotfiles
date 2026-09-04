@@ -63,10 +63,10 @@ jobs:
           git -C "${GITHUB_WORKSPACE}" diff --quiet -- .config || {
             echo "::error::the deployment modified its own source"; exit 1; }
 
-      - name: assert the deployment installed remote-write-gate
+      - name: assert the deployment installed write-gate-for-github
         env:
-          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh issue create --title \"Checking that remote-write-gate was installed correctly\""}}'
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh issue create --title \"Checking that write-gate-for-github was installed correctly\""}}'
         run: |
           echo "$PAYLOAD" \
-            | "${RUNNER_TEMP}/home/.cargo/bin/remote-write-gate" \
+            | "${RUNNER_TEMP}/home/.cargo/bin/write-gate-for-github" \
             | grep '"permissionDecision":"deny"'
