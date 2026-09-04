@@ -21,7 +21,7 @@ It also denies writes sent straight to the GitHub API with `curl` or `wget`, inc
 ## How
 
 ```bash
-cargo install --git https://github.com/yuyuyuyuyu-dev/dotfiles --locked claude-gh-admission-hook
+cargo install --git https://github.com/yuyuyuyuyu-dev/dotfiles.git --branch main --locked claude-gh-admission-hook
 ```
 
 After installing it, register it in `~/.claude/settings.json` as a `PreToolUse` hook. Asking Claude Code to do that is probably the easiest way, since it appears to carry documentation on the current structure of the file.
