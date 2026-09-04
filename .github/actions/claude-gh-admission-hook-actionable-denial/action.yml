@@ -13,7 +13,7 @@ description: >-
 
 inputs:
   guard:
-    description: The github-guard executable to run the payloads through.
+    description: The claude-gh-admission-hook executable to run the payloads through.
     required: true
 
 runs:

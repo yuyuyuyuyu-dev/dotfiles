@@ -1,7 +1,8 @@
 [package]
-name = "github-guard"
+name = "claude-gh-admission-hook"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
 
 [dependencies]
 regex = "1"

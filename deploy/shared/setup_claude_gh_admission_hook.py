@@ -7,11 +7,11 @@ from deploy.shared import paths
 
 REPOSITORY = "https://github.com/yuyuyuyuyu-dev/dotfiles.git"
 BRANCH = "main"
-CRATE = "github-guard"
+CRATE = "claude-gh-admission-hook"
 
 
-def setup_github_guard():
-    print("--- Setting up the GitHub guard ---")
+def setup_claude_gh_admission_hook():
+    print("--- Setting up the admission hook ---")
 
     cargo = shutil.which("cargo")
     if cargo is None:
@@ -39,7 +39,7 @@ def setup_github_guard():
 
     _report_registration()
 
-    print("--- GitHub guard setup complete ---\n")
+    print("--- Admission hook setup complete ---\n")
 
 
 def _report_registration():

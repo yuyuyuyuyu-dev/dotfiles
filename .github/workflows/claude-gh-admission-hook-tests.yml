@@ -1,4 +1,4 @@
-name: github-guard tests
+name: claude-gh-admission-hook tests
 
 on:
   push:
@@ -17,11 +17,11 @@ jobs:
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
-        working-directory: github-guard
+        working-directory: claude-gh-admission-hook
 
-      - uses: ./.github/actions/github-guard-read-only
+      - uses: ./.github/actions/claude-gh-admission-hook-read-only
         with:
-          guard: ${{ github.workspace }}/github-guard/target/release/github-guard
+          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   pull-request-create:
     name: should ask before creating a pull request, as an exception
@@ -30,11 +30,11 @@ jobs:
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
-        working-directory: github-guard
+        working-directory: claude-gh-admission-hook
 
-      - uses: ./.github/actions/github-guard-pull-request-create
+      - uses: ./.github/actions/claude-gh-admission-hook-pull-request-create
         with:
-          guard: ${{ github.workspace }}/github-guard/target/release/github-guard
+          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   pull-request-edit:
     name: should ask before editing a pull request, as an exception
@@ -43,11 +43,11 @@ jobs:
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
-        working-directory: github-guard
+        working-directory: claude-gh-admission-hook
 
-      - uses: ./.github/actions/github-guard-pull-request-edit
+      - uses: ./.github/actions/claude-gh-admission-hook-pull-request-edit
         with:
-          guard: ${{ github.workspace }}/github-guard/target/release/github-guard
+          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   actionable-denial:
     name: should explain a denial well enough for Claude to act on it
@@ -56,8 +56,8 @@ jobs:
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
-        working-directory: github-guard
+        working-directory: claude-gh-admission-hook
 
-      - uses: ./.github/actions/github-guard-actionable-denial
+      - uses: ./.github/actions/claude-gh-admission-hook-actionable-denial
         with:
-          guard: ${{ github.workspace }}/github-guard/target/release/github-guard
+          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
