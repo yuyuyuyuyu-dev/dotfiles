@@ -1,5 +1,7 @@
 # claude-gh-admission-hook
 
+[![tests](https://github.com/yuyuyuyuyu-dev/dotfiles/actions/workflows/claude-gh-admission-hook-tests.yml/badge.svg)](https://github.com/yuyuyuyuyu-dev/dotfiles/actions/workflows/claude-gh-admission-hook-tests.yml)
+
 A hook that restricts how Claude Code reaches GitHub.
 
 ## Why
@@ -23,3 +25,7 @@ cargo install --git https://github.com/yuyuyuyuyu-dev/dotfiles --locked claude-g
 ```
 
 After installing it, register it in `~/.claude/settings.json` as a `PreToolUse` hook. Asking Claude Code to do that is probably the easiest way, since it appears to carry documentation on the current structure of the file.
+
+## License
+
+[MIT](../LICENSE)
