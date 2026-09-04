@@ -4,6 +4,13 @@
 
 A hook that restricts how Claude Code reaches GitHub.
 
+**Table of Contents**
+
+- [Why](#why)
+- [What](#what)
+- [How](#how)
+- [License](#license)
+
 ## Why
 
 Claude Code now starts in auto mode by default, and I no longer expect to prevent every unintended change to my local files. So I decided to accept that risk locally, and to defend the remote side properly instead.
