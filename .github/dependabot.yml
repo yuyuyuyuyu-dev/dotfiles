@@ -22,7 +22,7 @@ updates:
         update-types: [minor, patch]
 
   - package-ecosystem: cargo
-    directory: /write-gate-for-github
+    directory: /claude-gh-admission-hook
     schedule:
       interval: daily
     open-pull-requests-limit: 1

@@ -7,11 +7,11 @@ from deploy.shared import paths
 
 REPOSITORY = "https://github.com/yuyuyuyuyu-dev/dotfiles.git"
 BRANCH = "main"
-CRATE = "write-gate-for-github"
+CRATE = "claude-gh-admission-hook"
 
 
-def setup_write_gate_for_github():
-    print("--- Setting up the write gate for GitHub ---")
+def setup_claude_gh_admission_hook():
+    print("--- Setting up the admission hook ---")
 
     cargo = shutil.which("cargo")
     if cargo is None:
@@ -39,7 +39,7 @@ def setup_write_gate_for_github():
 
     _report_registration()
 
-    print("--- Write gate for GitHub setup complete ---\n")
+    print("--- Admission hook setup complete ---\n")
 
 
 def _report_registration():

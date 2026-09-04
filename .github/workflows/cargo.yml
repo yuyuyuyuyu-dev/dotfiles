@@ -11,7 +11,7 @@ permissions:
 
 defaults:
   run:
-    working-directory: write-gate-for-github
+    working-directory: claude-gh-admission-hook
 
 jobs:
   lint:

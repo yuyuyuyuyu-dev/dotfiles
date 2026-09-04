@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "write-gate-for-github"
+name = "claude-gh-admission-hook"
 version = "0.1.0"
 dependencies = [
  "regex",
