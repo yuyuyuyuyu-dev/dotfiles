@@ -8,6 +8,11 @@ The only exceptions, allowed in a test case alone:
 - "Arrange", "Act", and "Assert" comments that mark test sections
 - a comment that explains why, only where the user has explicitly asked for it
 
+### Libraries
+
+A library or framework MAY be introduced without asking, as long as its license is complied with.
+Where the license is unclear or cannot be complied with, the library MUST NOT be introduced.
+
 ### Tests
 
 A test case MUST run from as near the entry point as it can to as near the outside as it can.
