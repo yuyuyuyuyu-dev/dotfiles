@@ -33,6 +33,7 @@ Branch names MUST follow Conventional Branch, and commit messages MUST follow Co
 Pull request titles MUST follow Conventional Commits too, because a squash merge makes the title the commit message.
 Before a branch is created, the latest changes on the remote default branch MUST be pulled in.
 Changes MAY be committed and pushed to a topic branch without asking.
+A pull request MUST NOT be opened until the user asks for one.
 
 ### Replies
 
