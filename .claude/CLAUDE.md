@@ -36,6 +36,7 @@ Before a branch is created, the latest changes on the remote default branch MUST
 ### Replies
 
 Replies to the user MUST be written in Japanese.
+Replies to the user MUST be understandable to someone who has not read the source code.
 A report or explanation MUST start with an overview of the whole, then go into detail one step at a time.
 
 ## When in Doubt
