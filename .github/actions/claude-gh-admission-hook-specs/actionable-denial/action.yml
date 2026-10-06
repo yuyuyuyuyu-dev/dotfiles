@@ -64,8 +64,8 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
         SENTENCE: >-
           GitHub access is read-only under this hook: every write is denied, and
-          the only exceptions are creating and editing a pull request, which are
-          put to the user for approval instead.
+          the only exceptions are creating a draft pull request and editing a
+          pull request, which are put to the user for approval instead.
       run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
 
     - name: should say what to do instead
@@ -83,9 +83,19 @@ runs:
         GUARD: ${{ inputs.guard }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
         SENTENCE: >-
-          This is a permanent PreToolUse hook, not a transient failure:
-          retrying, rewording or wrapping the command will not change the
-          answer.
+          This is a permanent PreToolUse hook, not a transient failure: retrying
+          the command, or rewording or wrapping it to do the same thing, will
+          not change the answer.
+      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
+
+    - name: should say that a pull request can be created as a draft instead
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title x"}}'
+        SENTENCE: >-
+          Only a draft pull request may be created: pass --draft, and leave
+          marking it as ready to the user.
       run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
 
     - name: should tell Claude to report a denial that looks like a fault
@@ -114,7 +124,7 @@ runs:
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title x"}}'
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecisionReason":"[^"]'
 
     - name: should stay valid JSON when the command contains quotes

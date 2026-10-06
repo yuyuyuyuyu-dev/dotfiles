@@ -1,8 +1,10 @@
-name: should ask before creating a pull request, as an exception
+name: should ask before creating a draft pull request, as an exception
 description: >-
-  Creating a pull request is a write, and the one write this guard exists to
-  permit. It has to reach the user as a prompt: neither denied outright, nor
-  waved through without anyone seeing it.
+  Creating a pull request is a write, and one of the few this guard exists to
+  permit, but only as a draft: marking it as ready for review is left to the
+  user. A draft has to reach the user as a prompt, neither denied outright nor
+  waved through without anyone seeing it. A creation that cannot be shown to
+  be a draft has to be denied.
 
 inputs:
   guard:
@@ -12,30 +14,86 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: should ask before creating a pull request
+    - name: should ask before creating a draft pull request
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title x --body y"}}'
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x --body y"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
 
-    - name: should ask when the pull request is created without arguments
+    - name: should ask when the draft flag is given in its short form
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create"}}'
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create -d --title x"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+
+    - name: should ask when the body comes from a quoted command substitution
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x --body \"$(cat body.md)\""}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the creation is hidden in a nested shell
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh pr create --title x\""}}'
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh pr create --draft --title x\""}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the repository is named before the subcommand
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R owner/repo pr create --title x"}}'
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R owner/repo pr create --draft --title x"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+
+    - name: should deny creating a pull request that is ready for review
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title x --body y"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when the draft flag is switched off
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft=false --title x"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when --draft is only the value of another flag
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title --draft"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when --draft is only part of a comment
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title x # --draft"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when an unquoted expansion could turn into further flags
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x $EXTRA"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when further flags could follow a redirection unseen
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x > /dev/null --draft=false"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a flag GitHub has not shipped yet
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --some-future-flag x"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'

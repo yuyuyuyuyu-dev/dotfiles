@@ -72,7 +72,7 @@ pub fn check_command(text: &str, depth: u32) -> Option<Verdict> {
         }
     };
 
-    for segment in shell::segments(&tokens) {
+    for (segment, terminator) in shell::segments(&tokens) {
         let mut segment = segment;
         while segment.first().is_some_and(|token| {
             ASSIGNMENT.is_match(&token.value)
@@ -148,7 +148,7 @@ pub fn check_command(text: &str, depth: u32) -> Option<Verdict> {
                 ))),
             }
         } else {
-            gh::check_subcommand(args)
+            gh::check_subcommand(args, terminator)
         };
         if let Some(verdict) = verdict {
             return Some(verdict);
