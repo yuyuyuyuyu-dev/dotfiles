@@ -1,0 +1,6 @@
+#!/bin/sh
+case "$*" in
+  "release view "*github.com/owner/repo*v1.0.0*) echo true ;;
+  "api "*) echo "HTTP/2.0 404 Not Found"; exit 1 ;;
+  *) echo "release not found" >&2; exit 1 ;;
+esac

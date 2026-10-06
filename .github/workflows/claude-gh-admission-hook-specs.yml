@@ -62,6 +62,19 @@ jobs:
         with:
           guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
+  release-edit:
+    name: should ask before editing a draft release, as an exception
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: cargo build --release --locked
+        working-directory: claude-gh-admission-hook
+
+      - uses: ./.github/actions/claude-gh-admission-hook-specs/release-edit
+        with:
+          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+
   actionable-denial:
     name: should explain a denial well enough for Claude to act on it
     runs-on: ubuntu-latest

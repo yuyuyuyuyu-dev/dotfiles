@@ -65,8 +65,8 @@ runs:
         SENTENCE: >-
           GitHub access is read-only under this hook: every write is denied, and
           the only exceptions are creating a draft pull request, editing a pull
-          request and creating a draft release, which are put to the user for
-          approval instead.
+          request, creating a draft release and editing a draft release, which
+          are put to the user for approval instead.
       run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
 
     - name: should say what to do instead
@@ -107,6 +107,16 @@ runs:
         SENTENCE: >-
           Only a draft release may be created: pass --draft, and leave
           publishing it to the user.
+      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
+
+    - name: should say how to name the repository of a release to edit
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 --notes x"}}'
+        SENTENCE: >-
+          Name that repository in full: pass -R HOST/OWNER/REPO, for example -R
+          github.com/OWNER/REPO.
       run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
 
     - name: should tell Claude to report a denial that looks like a fault
