@@ -1,6 +1,6 @@
 # claude-gh-admission-hook
 
-[![specs](https://github.com/yuyuyuyuyu-dev/dotfiles/actions/workflows/claude-gh-admission-hook-specs.yml/badge.svg)](https://github.com/yuyuyuyuyu-dev/dotfiles/actions/workflows/claude-gh-admission-hook-specs.yml)
+[![claude-gh-admission-hook specs](https://github.com/yuyuyuyuyu-dev/dotfiles/actions/workflows/claude-gh-admission-hook-specs.yml/badge.svg)](https://github.com/yuyuyuyuyu-dev/dotfiles/actions/workflows/claude-gh-admission-hook-specs.yml)
 
 A hook that restricts how Claude Code reaches GitHub.
 
