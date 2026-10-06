@@ -1,4 +1,4 @@
-name: claude-gh-admission-hook tests
+name: claude-gh-admission-hook specs
 
 on:
   push:
