@@ -142,7 +142,7 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh issue comment 12 --body hi"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
 
-    - name: should deny creating a release
+    - name: should deny publishing a release
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}

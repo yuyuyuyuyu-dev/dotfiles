@@ -1,6 +1,6 @@
 name: should ask before editing a pull request, as an exception
 description: >-
-  Editing a pull request is a write, and the second write this guard exists to
+  Editing a pull request is a write, and one of the few this guard exists to
   permit. It has to reach the user as a prompt: neither denied outright, nor
   waved through without anyone seeing it.
 

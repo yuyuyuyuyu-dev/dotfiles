@@ -64,8 +64,9 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
         SENTENCE: >-
           GitHub access is read-only under this hook: every write is denied, and
-          the only exceptions are creating a draft pull request and editing a
-          pull request, which are put to the user for approval instead.
+          the only exceptions are creating a draft pull request, editing a pull
+          request and creating a draft release, which are put to the user for
+          approval instead.
       run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
 
     - name: should say what to do instead
@@ -96,6 +97,16 @@ runs:
         SENTENCE: >-
           Only a draft pull request may be created: pass --draft, and leave
           marking it as ready to the user.
+      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
+
+    - name: should say that a release can be created as a draft instead
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0"}}'
+        SENTENCE: >-
+          Only a draft release may be created: pass --draft, and leave
+          publishing it to the user.
       run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
 
     - name: should tell Claude to report a denial that looks like a fault

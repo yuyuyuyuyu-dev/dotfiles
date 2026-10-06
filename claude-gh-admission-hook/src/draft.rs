@@ -12,54 +12,86 @@ pub struct Command {
     judge: fn(&Arguments) -> Verdict,
 }
 
-static COMMANDS: [Command; 1] = [Command {
-    path: ["pr", "create"],
-    value_flags: &[
-        "-a",
-        "--assignee",
-        "--attach",
-        "-B",
-        "--base",
-        "-b",
-        "--body",
-        "-F",
-        "--body-file",
-        "-H",
-        "--head",
-        "-l",
-        "--label",
-        "-m",
-        "--milestone",
-        "-p",
-        "--project",
-        "--recover",
-        "-r",
-        "--reviewer",
-        "-T",
-        "--template",
-        "-t",
-        "--title",
-        "-R",
-        "--repo",
-    ],
-    bool_flags: &[
-        "-d",
-        "--draft",
-        "--dry-run",
-        "-e",
-        "--editor",
-        "-f",
-        "--fill",
-        "--fill-first",
-        "--fill-verbose",
-        "--no-maintainer-edit",
-        "-w",
-        "--web",
-        "-h",
-        "--help",
-    ],
-    judge: pull_request,
-}];
+static COMMANDS: [Command; 2] = [
+    Command {
+        path: ["pr", "create"],
+        value_flags: &[
+            "-a",
+            "--assignee",
+            "--attach",
+            "-B",
+            "--base",
+            "-b",
+            "--body",
+            "-F",
+            "--body-file",
+            "-H",
+            "--head",
+            "-l",
+            "--label",
+            "-m",
+            "--milestone",
+            "-p",
+            "--project",
+            "--recover",
+            "-r",
+            "--reviewer",
+            "-T",
+            "--template",
+            "-t",
+            "--title",
+            "-R",
+            "--repo",
+        ],
+        bool_flags: &[
+            "-d",
+            "--draft",
+            "--dry-run",
+            "-e",
+            "--editor",
+            "-f",
+            "--fill",
+            "--fill-first",
+            "--fill-verbose",
+            "--no-maintainer-edit",
+            "-w",
+            "--web",
+            "-h",
+            "--help",
+        ],
+        judge: pull_request,
+    },
+    Command {
+        path: ["release", "create"],
+        value_flags: &[
+            "--discussion-category",
+            "-n",
+            "--notes",
+            "-F",
+            "--notes-file",
+            "--notes-start-tag",
+            "--target",
+            "-t",
+            "--title",
+            "-R",
+            "--repo",
+        ],
+        bool_flags: &[
+            "-d",
+            "--draft",
+            "--fail-on-no-commits",
+            "--generate-notes",
+            "--latest",
+            "--notes-from-tag",
+            "-p",
+            "--prerelease",
+            "--verify-tag",
+            "-h",
+            "--help",
+        ],
+        judge: created_release,
+    },
+];
 
 #[derive(Default)]
 struct Arguments<'a> {
@@ -232,6 +264,19 @@ fn pull_request(arguments: &Arguments) -> Verdict {
     }
     Verdict::Deny(
         "`gh pr create` would open a pull request that is ready for review, because --draft is not in effect. Only a draft pull request may be created: pass --draft, and leave marking it as ready to the user."
+            .to_string(),
+    )
+}
+
+fn created_release(arguments: &Arguments) -> Verdict {
+    if arguments.draft == Some(true) {
+        return Verdict::Ask(
+            "`gh release create` would save a draft release. That is one of the few writes this hook allows, so it needs the user to approve it rather than being denied."
+                .to_string(),
+        );
+    }
+    Verdict::Deny(
+        "`gh release create` would publish a release, because --draft is not in effect. Only a draft release may be created: pass --draft, and leave publishing it to the user."
             .to_string(),
     )
 }
