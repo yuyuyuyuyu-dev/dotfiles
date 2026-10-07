@@ -1,0 +1,24 @@
+name: claude-gh-admission-hook tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  closed-draft-pull-request-edit:
+    name: should deny editing a draft pull request that is closed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: cargo build --release --locked
+        working-directory: claude-gh-admission-hook
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/closed-draft-pull-request-edit
+        with:
+          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
