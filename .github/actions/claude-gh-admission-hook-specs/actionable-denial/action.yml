@@ -64,9 +64,9 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
         SENTENCE: >-
           GitHub access is read-only under this hook: every write is denied, and
-          the only exceptions are creating a draft pull request, editing a pull
-          request, creating a draft release and editing a draft release, which
-          are put to the user for approval instead.
+          the only exceptions are creating a draft pull request, editing a draft
+          pull request, creating a draft release and editing a draft release,
+          which are put to the user for approval instead.
       run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
 
     - name: should say what to do instead
@@ -107,6 +107,16 @@ runs:
         SENTENCE: >-
           Only a draft release may be created: pass --draft, and leave
           publishing it to the user.
+      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
+
+    - name: should say how to name the pull request to edit
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit --body z"}}'
+        SENTENCE: >-
+          Name the pull request by its number, as in `gh pr edit 123 -R
+          github.com/OWNER/REPO`.
       run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
 
     - name: should say how to name the repository of a release to edit

@@ -37,7 +37,7 @@ jobs:
           guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   pull-request-edit:
-    name: should ask before editing a pull request, as an exception
+    name: should ask before editing a draft pull request, as an exception
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

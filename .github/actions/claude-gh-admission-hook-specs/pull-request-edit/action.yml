@@ -1,10 +1,17 @@
-name: should ask before editing a pull request, as an exception
+name: should ask before editing a draft pull request, as an exception
 description: >-
   Editing a pull request is a write, and one of the few this guard exists to
-  permit. It has to reach the user as a prompt: neither denied outright, nor
-  waved through without anyone seeing it. An edit the guard cannot read in full
-  has to be denied, because what it cannot read may not be the edit it looks
-  like.
+  permit, but only while the pull request is a draft: one that is ready for
+  review is the user's to change. A draft has to reach the user as a prompt,
+  neither denied outright nor waved through without anyone seeing it. An edit
+  that cannot be shown to reach a draft has to be denied.
+
+  Whether a pull request is a draft is not in the command, so the guard asks
+  GitHub through gh, and the command has to name the pull request by its number
+  and the repository in full for the guard to be sure it asks about the pull
+  request the command would edit. The steps about a draft and about a pull
+  request that is ready for review put a stand-in for gh on the PATH, named
+  after what GitHub would hold. The step about a missing one asks GitHub itself.
 
 inputs:
   guard:
@@ -14,72 +21,137 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: should ask before editing a pull request
+    - name: should ask before editing a draft pull request
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --body z"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body z"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the edit changes the title
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --title x"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --title x"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the body comes from a quoted command substitution
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --body \"$(cat body.md)\""}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body \"$(cat body.md)\""}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the edit is hidden in a nested shell
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh pr edit 5 --body z\""}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh pr edit 5 -R github.com/owner/repo --body z\""}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the repository is named before the subcommand
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R owner/repo pr edit 5 --body z"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R github.com/owner/repo pr edit 5 --body z"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"ask"'
+
+    - name: should deny editing a pull request that is ready for review
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-pull-request-ready-for-review
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body z"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny editing a pull request it cannot find
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        GH_TOKEN: ${{ github.token }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 999999999 -R github.com/${{ github.repository }} --body z"}}'
+        SENTENCE: >-
+          whether 999999999 in github.com/${{ github.repository }} is one could
+          not be found out: `gh pr view` failed (GraphQL: Could not resolve to a
+          PullRequest with the number of 999999999.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$GUARD")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny rather than wait when GitHub does not answer
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        STAND_IN: ${{ github.action_path }}/github-that-does-not-answer
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body z"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when the pull request is not named by its number
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit -R github.com/owner/repo --body z"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when the repository is not named
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --body z"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when the repository is named without its host
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R owner/repo --body z"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"deny"'
 
     - name: should deny when a flag ahead of the subcommand would make gh run another one
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr --subject edit merge 5"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr --subject edit merge 5 -R github.com/owner/repo"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"deny"'
 
     - name: should deny when a comment follows the command
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --title x # --body y"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --title x # --body y"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"deny"'
 
     - name: should deny when an unquoted expansion could turn into further flags
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --title x $EXTRA"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --title x $EXTRA"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"deny"'
 
     - name: should deny when further flags could follow a redirection unseen
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --title x > /dev/null --add-reviewer octocat"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --title x > /dev/null --add-reviewer octocat"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"deny"'
 
     - name: should deny a flag GitHub has not shipped yet
       shell: bash
       env:
         GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --some-future-flag x"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --some-future-flag x"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"deny"'

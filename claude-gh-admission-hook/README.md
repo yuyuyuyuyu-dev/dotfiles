@@ -19,7 +19,7 @@ Online storage is not reachable from my command line, so it was never a problem 
 
 ## What
 
-This is a hook you register in `~/.claude/settings.json`. It keeps GitHub access through the `gh` command read-only, and asks you before the few writes it allows: creating a draft pull request, editing a pull request, creating a draft release, and editing a draft release. Pushing to a topic branch is not restricted, because a pull request needs one.
+This is a hook you register in `~/.claude/settings.json`. It keeps GitHub access through the `gh` command read-only, and asks you before the few writes it allows: creating a draft pull request, editing a draft pull request, creating a draft release, and editing a draft release. Pushing to a topic branch is not restricted, because a pull request needs one.
 
 Creating a tag is denied as well, because a tag can start a release workflow without me. (Stopping only the push turned out to be hard, so I stopped the creation instead.)
 

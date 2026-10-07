@@ -1,4 +1,6 @@
 use crate::Verdict;
+use crate::github::Repository;
+use crate::pull_request::PullRequest;
 use crate::release::Release;
 use crate::shell::{SUBST_PLACEHOLDER, Shape, Token, shape};
 use regex::Regex;
@@ -12,6 +14,7 @@ static REPOSITORY: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"^([A-Za-z0-9.-]+)/([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+)$").unwrap()
 });
 static TAG: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[A-Za-z0-9._/+@-]+$").unwrap());
+static NUMBER: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[1-9][0-9]{0,8}$").unwrap());
 
 pub struct Command {
     path: [&'static str; 2],
@@ -361,11 +364,28 @@ fn created_pull_request(arguments: &Arguments) -> Verdict {
     )
 }
 
-fn edited_pull_request(_: &Arguments) -> Verdict {
-    Verdict::Ask(
-        "`gh pr edit` would change a pull request. That is one of the few writes this hook allows, so it needs the user to approve it rather than being denied."
-            .to_string(),
-    )
+fn edited_pull_request(arguments: &Arguments) -> Verdict {
+    let number = arguments
+        .words
+        .get(2)
+        .filter(|number| NUMBER.is_match(number));
+    let Some(number) = number else {
+        return Verdict::Deny(
+            "`gh pr edit` is only allowed for a draft pull request, and this hook can only look one up by its number: with no number, or with a branch or a URL in its place, it cannot be sure which pull request the command would edit. Name the pull request by its number, as in `gh pr edit 123 -R github.com/OWNER/REPO`."
+                .to_string(),
+        );
+    };
+    let Some(repository) = named_repository(arguments) else {
+        return Verdict::Deny(
+            "`gh pr edit` is only allowed for a draft pull request, and this hook has to look the pull request up in the very repository the command would edit, which it can only be sure of when the command names it in full. Name that repository in full: pass -R HOST/OWNER/REPO, for example -R github.com/OWNER/REPO."
+                .to_string(),
+        );
+    };
+
+    Verdict::AskIfDraftPullRequest(PullRequest {
+        repository,
+        number: number.to_string(),
+    })
 }
 
 fn created_release(arguments: &Arguments) -> Verdict {
@@ -401,22 +421,29 @@ fn edited_release(arguments: &Arguments) -> Verdict {
         ));
     }
 
-    let located = arguments
-        .repository
-        .filter(|repository| repository.literal)
-        .and_then(|repository| REPOSITORY.captures(repository.text));
-    let Some(located) = located else {
+    let Some(repository) = named_repository(arguments) else {
         return Verdict::Deny(
             "`gh release edit` is only allowed for a draft release, and this hook has to look the release up in the very repository the command would edit, which it can only be sure of when the command names it in full. Name that repository in full: pass -R HOST/OWNER/REPO, for example -R github.com/OWNER/REPO."
                 .to_string(),
         );
     };
+
+    Verdict::AskIfDraftRelease(Release {
+        repository,
+        tag: tag.to_string(),
+    })
+}
+
+fn named_repository(arguments: &Arguments) -> Option<Repository> {
+    let located = arguments
+        .repository
+        .filter(|repository| repository.literal)
+        .and_then(|repository| REPOSITORY.captures(repository.text))?;
     let (_, [host, owner, name]) = located.extract();
 
-    Verdict::AskIfDraft(Release {
+    Some(Repository {
         host: host.to_string(),
         owner: owner.to_string(),
         name: name.to_string(),
-        tag: tag.to_string(),
     })
 }
