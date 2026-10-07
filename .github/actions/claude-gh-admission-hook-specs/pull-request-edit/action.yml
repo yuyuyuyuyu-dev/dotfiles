@@ -2,7 +2,9 @@ name: should ask before editing a pull request, as an exception
 description: >-
   Editing a pull request is a write, and one of the few this guard exists to
   permit. It has to reach the user as a prompt: neither denied outright, nor
-  waved through without anyone seeing it.
+  waved through without anyone seeing it. An edit the guard cannot read in full
+  has to be denied, because what it cannot read may not be the edit it looks
+  like.
 
 inputs:
   guard:
@@ -26,6 +28,13 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --title x"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
 
+    - name: should ask when the body comes from a quoted command substitution
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --body \"$(cat body.md)\""}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+
     - name: should ask when the edit is hidden in a nested shell
       shell: bash
       env:
@@ -39,3 +48,38 @@ runs:
         GUARD: ${{ inputs.guard }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R owner/repo pr edit 5 --body z"}}'
       run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+
+    - name: should deny when a flag ahead of the subcommand would make gh run another one
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr --subject edit merge 5"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when a comment follows the command
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --title x # --body y"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when an unquoted expansion could turn into further flags
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --title x $EXTRA"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when further flags could follow a redirection unseen
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --title x > /dev/null --add-reviewer octocat"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a flag GitHub has not shipped yet
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --some-future-flag x"}}'
+      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'

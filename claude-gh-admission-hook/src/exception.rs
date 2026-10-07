@@ -20,7 +20,7 @@ pub struct Command {
     judge: fn(&Arguments) -> Verdict,
 }
 
-static COMMANDS: [Command; 3] = [
+static COMMANDS: [Command; 4] = [
     Command {
         path: ["pr", "create"],
         value_flags: &[
@@ -67,7 +67,35 @@ static COMMANDS: [Command; 3] = [
             "-h",
             "--help",
         ],
-        judge: pull_request,
+        judge: created_pull_request,
+    },
+    Command {
+        path: ["pr", "edit"],
+        value_flags: &[
+            "--add-assignee",
+            "--add-label",
+            "--add-project",
+            "--add-reviewer",
+            "--attach",
+            "-B",
+            "--base",
+            "-b",
+            "--body",
+            "-F",
+            "--body-file",
+            "-m",
+            "--milestone",
+            "--remove-assignee",
+            "--remove-label",
+            "--remove-project",
+            "--remove-reviewer",
+            "-t",
+            "--title",
+            "-R",
+            "--repo",
+        ],
+        bool_flags: &["--remove-milestone", "-h", "--help"],
+        judge: edited_pull_request,
     },
     Command {
         path: ["release", "create"],
@@ -320,7 +348,7 @@ fn shown(token: &Token) -> String {
     token.raw.replace(SUBST_PLACEHOLDER, "$(...)")
 }
 
-fn pull_request(arguments: &Arguments) -> Verdict {
+fn created_pull_request(arguments: &Arguments) -> Verdict {
     if arguments.draft == Some(true) {
         return Verdict::Ask(
             "`gh pr create` would open a draft pull request. That is one of the few writes this hook allows, so it needs the user to approve it rather than being denied."
@@ -329,6 +357,13 @@ fn pull_request(arguments: &Arguments) -> Verdict {
     }
     Verdict::Deny(
         "`gh pr create` would open a pull request that is ready for review, because --draft is not in effect. Only a draft pull request may be created: pass --draft, and leave marking it as ready to the user."
+            .to_string(),
+    )
+}
+
+fn edited_pull_request(_: &Arguments) -> Verdict {
+    Verdict::Ask(
+        "`gh pr edit` would change a pull request. That is one of the few writes this hook allows, so it needs the user to approve it rather than being denied."
             .to_string(),
     )
 }

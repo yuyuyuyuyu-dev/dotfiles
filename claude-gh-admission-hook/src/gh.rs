@@ -1,5 +1,5 @@
 use crate::shell::{Token, Unanalyzable, has_expansion, splits_into_words};
-use crate::{Verdict, draft};
+use crate::{Verdict, exception};
 use regex::Regex;
 use std::sync::LazyLock;
 
@@ -152,8 +152,6 @@ const READ_GH_COMMANDS: &[&[&str]] = &[
     &["agent-task", "view"],
 ];
 
-const ASK_GH_COMMANDS: &[&[&str]] = &[&["pr", "edit"]];
-
 const HELP_ONLY_GROUPS: [&str; 26] = [
     "auth",
     "pr",
@@ -230,24 +228,12 @@ pub fn check_subcommand(args: &[Token], terminator: Option<&Token>) -> Option<Ve
         return None;
     }
 
-    if let Some(command) = draft::command(&path) {
-        return Some(draft::check(command, args, terminator));
+    if let Some(command) = exception::command(&path) {
+        return Some(exception::check(command, args, terminator));
     }
 
-    for length in [3, 2, 1] {
-        if path.len() < length {
-            continue;
-        }
-        let key = &path[..length];
-        if listed(ASK_GH_COMMANDS, key) {
-            let named = key.join(" ");
-            return Some(Verdict::Ask(format!(
-                "`gh {named}` writes to GitHub. It is one of the few writes this hook allows, so it needs the user to approve it rather than being denied."
-            )));
-        }
-        if listed(READ_GH_COMMANDS, key) {
-            return None;
-        }
+    if (1..=path.len()).any(|length| listed(READ_GH_COMMANDS, &path[..length])) {
+        return None;
     }
 
     if path.len() == 1 && HELP_ONLY_GROUPS.contains(&path[0].as_str()) {
