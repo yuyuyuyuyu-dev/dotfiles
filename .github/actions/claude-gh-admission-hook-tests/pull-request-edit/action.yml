@@ -1,17 +1,17 @@
-name: should ask before editing a draft pull request, as an exception
+name: should ask about a pull request edit only when it surely reaches an open draft
 description: >-
-  Editing a pull request is a write, and one of the few this guard exists to
-  permit, but only while the pull request is a draft: one that is ready for
-  review is the user's to change. A draft has to reach the user as a prompt,
-  neither denied outright nor waved through without anyone seeing it. An edit
-  that cannot be shown to reach a draft has to be denied.
+  The specs say that editing a draft pull request is asked about. Each step
+  here is one way of writing the command, or one state GitHub may hold. An
+  edit that still plainly reaches an open draft has to be asked about. An edit
+  that cannot be shown to reach one has to be denied.
 
   Whether a pull request is a draft is not in the command, so the guard asks
-  GitHub through gh, and the command has to name the pull request by its number
-  and the repository in full for the guard to be sure it asks about the pull
-  request the command would edit. The steps about a draft and about a pull
-  request that is ready for review put a stand-in for gh on the PATH, named
-  after what GitHub would hold. The step about a missing one asks GitHub itself.
+  GitHub through gh, and the command has to name the pull request by its
+  number and the repository in full for the guard to be sure it asks about the
+  pull request the command would edit. GitHub goes on calling a pull request a
+  draft after it is closed, so the guard has to look at more than the draft
+  mark. The steps about what GitHub holds put a stand-in for gh on the PATH,
+  named after it. The step about a missing pull request asks GitHub itself.
 
 inputs:
   guard:
@@ -21,14 +21,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: should ask before editing a draft pull request
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body z"}}'
-      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"ask"'
-
     - name: should ask when the edit changes the title
       shell: bash
       env:
@@ -68,6 +60,18 @@ runs:
         STAND_IN: ${{ github.action_path }}/github-with-a-pull-request-ready-for-review
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body z"}}'
       run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD" | grep '"permissionDecision":"deny"'
+
+    - name: should deny editing a draft pull request that is closed
+      shell: bash
+      env:
+        GUARD: ${{ inputs.guard }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-closed-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body z"}}'
+        SENTENCE: Pull request 5 in github.com/owner/repo is closed
+      run: |
+        decision=$(echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$GUARD")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
 
     - name: should deny editing a pull request it cannot find
       shell: bash

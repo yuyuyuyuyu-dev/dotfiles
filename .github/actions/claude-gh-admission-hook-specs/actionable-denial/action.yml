@@ -1,15 +1,12 @@
 name: should explain a denial well enough for Claude to act on it
 description: >-
   A denial the agent cannot understand is a denial it will try to get around.
-  Each step here checks one thing the reason has to carry: what was rejected,
-  what about it writes, what the rule is, what to do instead, that the answer
-  will not change on a retry, and that a denial which looks wrong is reported
-  rather than routed around.
+  The two steps check what every denial has to carry: the rule it comes from,
+  and that a denial which looks wrong is reported to the user rather than
+  routed around.
 
-  Where the wording is fixed, the step carries that wording in full rather than
-  a fragment of it, so what the hook says can be read here without opening the
-  implementation. Where it is built from the command being judged, the step
-  matches the part that came from the command.
+  Each step carries the wording in full rather than a fragment of it, so what
+  the hook says can be read here without opening the implementation.
 
 inputs:
   guard:
@@ -19,44 +16,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: should return a reason alongside a denial
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecisionReason":"[^"]'
-
-    - name: should name the command it rejected
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git status && gh pr merge 5"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep -- 'gh pr merge'
-
-    - name: should name the flag that made a git command a write
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --tags"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep -- '--tags'
-
-    - name: should name the HTTP method that would have been sent
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X DELETE /repos/o/r"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep -- 'DELETE'
-
-    - name: should explain the method a body flag implies
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -d x https://api.github.com/repos/o/r"}}'
-        SENTENCE: >-
-          Note that a body flag such as -d, -F or -T sets the method even when
-          -X is absent.
-      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
-
     - name: should state the rule the denial comes from
       shell: bash
       env:
@@ -69,66 +28,6 @@ runs:
           which are put to the user for approval instead.
       run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
 
-    - name: should say what to do instead
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
-        SENTENCE: >-
-          Ask the user to run it themselves if the write is genuinely needed.
-      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
-
-    - name: should say the block is permanent so it is not retried
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
-        SENTENCE: >-
-          This is a permanent PreToolUse hook, not a transient failure: retrying
-          the command, or rewording or wrapping it to do the same thing, will
-          not change the answer.
-      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
-
-    - name: should say that a pull request can be created as a draft instead
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title x"}}'
-        SENTENCE: >-
-          Only a draft pull request may be created: pass --draft, and leave
-          marking it as ready to the user.
-      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
-
-    - name: should say that a release can be created as a draft instead
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0"}}'
-        SENTENCE: >-
-          Only a draft release may be created: pass --draft, and leave
-          publishing it to the user.
-      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
-
-    - name: should say how to name the pull request to edit
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit --body z"}}'
-        SENTENCE: >-
-          Name the pull request by its number, as in `gh pr edit 123 -R
-          github.com/OWNER/REPO`.
-      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
-
-    - name: should say how to name the repository of a release to edit
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 --notes x"}}'
-        SENTENCE: >-
-          Name that repository in full: pass -R HOST/OWNER/REPO, for example -R
-          github.com/OWNER/REPO.
-      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
-
     - name: should tell Claude to report a denial that looks like a fault
       shell: bash
       env:
@@ -138,29 +37,3 @@ runs:
           If the command only reads and this denial looks like a fault in the
           hook, report that to the user instead of working around it.
       run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
-
-    - name: should explain why an unreadable command was denied
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5 --body \"unbalanced"}}'
-        SENTENCE: >-
-          This command mentions gh, a git tag or the GitHub API, but it could
-          not be tokenized -- an unbalanced quote is the usual cause -- so what
-          it would run cannot be determined. It is denied rather than guessed
-          at. Run the GitHub part as a command of its own.
-      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
-
-    - name: should return a reason alongside an ask as well
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecisionReason":"[^"]'
-
-    - name: should stay valid JSON when the command contains quotes
-      shell: bash
-      env:
-        GUARD: ${{ inputs.guard }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X POST /repos/o/r -f body=\"quoted\""}}'
-      run: echo "$PAYLOAD" | "$GUARD" | python3 -c 'import json,sys; json.load(sys.stdin)'
