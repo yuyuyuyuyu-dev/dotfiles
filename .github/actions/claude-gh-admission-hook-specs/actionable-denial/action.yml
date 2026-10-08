@@ -1,12 +1,5 @@
 name: should explain a denial well enough for Claude to act on it
-description: >-
-  A denial the agent cannot understand is a denial it will try to get around.
-  The two steps check what every denial has to carry: the rule it comes from,
-  and that a denial which looks wrong is reported to the user rather than
-  routed around.
-
-  Each step carries the wording in full rather than a fragment of it, so what
-  the hook says can be read here without opening the implementation.
+description: A spec of claude-gh-admission-hook.
 
 inputs:
   guard:

@@ -1,10 +1,5 @@
 name: should ask about a new release only when it is surely a draft
-description: >-
-  The specs say that a draft release is asked about and that any other is
-  denied. Each step here is one way of writing the command. Where it still
-  plainly creates a draft, it has to be asked about. Where --draft could fail
-  to take effect, or the guard cannot read the command in full, it has to be
-  denied.
+description: Tests of claude-gh-admission-hook.
 
 inputs:
   guard:

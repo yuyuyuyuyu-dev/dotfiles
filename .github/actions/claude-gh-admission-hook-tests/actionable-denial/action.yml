@@ -1,13 +1,5 @@
 name: should say in a denial what was rejected and what to do instead
-description: >-
-  Each step checks one more thing a reason has to carry besides the rule: what
-  was rejected, what about it writes, what to do instead, and that the answer
-  will not change on a retry. An ask has to come with a reason too, and the
-  answer has to stay valid JSON.
-
-  Where the wording is fixed, the step carries that wording in full rather
-  than a fragment of it. Where it is built from the command being judged, the
-  step matches the part that came from the command.
+description: Tests of claude-gh-admission-hook.
 
 inputs:
   guard:

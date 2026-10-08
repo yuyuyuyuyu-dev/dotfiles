@@ -1,10 +1,5 @@
 name: should restrict GitHub access to read-only permission
-description: >-
-  Feed claude-gh-admission-hook the payloads Claude Code would send and check
-  that the writes it exists to stop are denied: creating a pull request, a tag
-  or a release, pushing tags, and sending a write method to the GitHub API.
-  One step is one write. Creating a pull request or a release is denied here
-  as the rule; the drafts that are the exception have jobs of their own.
+description: A spec of claude-gh-admission-hook.
 
 inputs:
   guard:

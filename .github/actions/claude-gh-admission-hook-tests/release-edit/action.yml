@@ -1,15 +1,5 @@
 name: should ask about a release edit only when it surely reaches a draft
-description: >-
-  The specs say that editing a draft release is asked about. Each step here is
-  one way of writing the command, or one state GitHub may hold. An edit that
-  still plainly reaches a draft, and nothing but a draft, has to be asked
-  about. An edit that cannot be shown to do so has to be denied.
-
-  Whether a release is a draft is not in the command, so the guard asks GitHub
-  through gh, and the command has to name the repository in full for the guard
-  to be sure it asks about the release the command would edit. The steps about
-  what GitHub holds put a stand-in for gh on the PATH, named after it. The
-  step about a missing release asks GitHub itself.
+description: Tests of claude-gh-admission-hook.
 
 inputs:
   guard:

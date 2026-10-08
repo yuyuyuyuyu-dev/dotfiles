@@ -1,7 +1,5 @@
 name: should deny the writes that are not exceptions
-description: >-
-  The specs name a handful of writes. Each step here is another way to write
-  to GitHub, or to hide a write, that has to be denied as well.
+description: Tests of claude-gh-admission-hook.
 
 inputs:
   guard:

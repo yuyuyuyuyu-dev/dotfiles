@@ -1,7 +1,5 @@
 name: should let reads through
-description: >-
-  A guard that denied reads as well would keep GitHub unchanged and be
-  useless. Each step is one read that has to pass without a decision.
+description: Tests of claude-gh-admission-hook.
 
 inputs:
   guard:
