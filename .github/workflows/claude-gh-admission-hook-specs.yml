@@ -18,10 +18,11 @@ jobs:
     name: should be installable
     runs-on: macos-latest
     steps:
+      # Act
       - run: cargo install --git "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" --rev "$GITHUB_SHA" --locked claude-gh-admission-hook
 
-      - name: assert the installed hook answers
-        env:
+      # Assert
+      - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh issue create --title x"}}'
         run: echo "$PAYLOAD" | "$HOME/.cargo/bin/claude-gh-admission-hook" | grep '"permissionDecision":"deny"'
 
@@ -29,11 +30,13 @@ jobs:
     name: should restrict GitHub access to read-only permission
     runs-on: macos-latest
     steps:
+      # Arrange
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
         working-directory: claude-gh-admission-hook
 
+      # Act & Assert
       - uses: ./.github/actions/claude-gh-admission-hook-specs/read-only
         with:
           guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
@@ -42,20 +45,25 @@ jobs:
     name: should ask before creating a draft pull request, as an exception
     runs-on: macos-latest
     steps:
+      # Arrange
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
         working-directory: claude-gh-admission-hook
 
-      - name: assert the hook asks
-        env:
+      # Act
+      - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x --body y"}}'
-        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"ask"'
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook > "$RUNNER_TEMP/decision"
+
+      # Assert
+      - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
 
   pull-request-edit:
     name: should ask before editing a draft pull request, as an exception
     runs-on: macos-latest
     steps:
+      # Arrange
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
@@ -71,29 +79,37 @@ jobs:
           chmod +x "$RUNNER_TEMP/github/gh"
           echo "$RUNNER_TEMP/github" >> "$GITHUB_PATH"
 
-      - name: assert the hook asks
-        env:
+      # Act
+      - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body z"}}'
-        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"ask"'
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook > "$RUNNER_TEMP/decision"
+
+      # Assert
+      - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
 
   release-create:
     name: should ask before creating a draft release, as an exception
     runs-on: macos-latest
     steps:
+      # Arrange
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
         working-directory: claude-gh-admission-hook
 
-      - name: assert the hook asks
-        env:
+      # Act
+      - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 --draft --title x --notes y"}}'
-        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"ask"'
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook > "$RUNNER_TEMP/decision"
+
+      # Assert
+      - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
 
   release-edit:
     name: should ask before editing a draft release, as an exception
     runs-on: macos-latest
     steps:
+      # Arrange
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
@@ -112,20 +128,25 @@ jobs:
           chmod +x "$RUNNER_TEMP/github/gh"
           echo "$RUNNER_TEMP/github" >> "$GITHUB_PATH"
 
-      - name: assert the hook asks
-        env:
+      # Act
+      - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 -R github.com/owner/repo --notes x"}}'
-        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"ask"'
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook > "$RUNNER_TEMP/decision"
+
+      # Assert
+      - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
 
   actionable-denial:
     name: should explain a denial well enough for Claude to act on it
     runs-on: macos-latest
     steps:
+      # Arrange
       - uses: actions/checkout@v7
 
       - run: cargo build --release --locked
         working-directory: claude-gh-admission-hook
 
+      # Act & Assert
       - uses: ./.github/actions/claude-gh-admission-hook-specs/actionable-denial
         with:
           guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
@@ -134,8 +155,10 @@ jobs:
     name: should make no unnecessary changes
     runs-on: ubuntu-latest
     steps:
+      # Arrange
       - uses: actions/checkout@v7
 
+      # Act & Assert
       - uses: yuyuyuyuyu-dev/assert-no-unexpected-changes@v1
         with:
           image: rust
