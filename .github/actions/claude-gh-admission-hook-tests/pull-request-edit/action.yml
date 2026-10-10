@@ -1,0 +1,149 @@
+name: should ask about a pull request edit only when it surely reaches an open draft
+description: Tests of claude-gh-admission-hook.
+
+inputs:
+  hook:
+    description: The claude-gh-admission-hook executable to run the payloads through.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: should ask when the edit changes the title
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --title x"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"ask"'
+
+    - name: should ask when the body comes from a quoted command substitution
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body \"$(cat body.md)\""}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"ask"'
+
+    - name: should ask when the edit is hidden in a nested shell
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh pr edit 5 -R github.com/owner/repo --body z\""}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"ask"'
+
+    - name: should ask when the repository is named before the subcommand
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R github.com/owner/repo pr edit 5 --body z"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"ask"'
+
+    - name: should deny editing a pull request that is ready for review
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-pull-request-ready-for-review
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body z"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny editing a draft pull request that is closed
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-closed-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body z"}}'
+        SENTENCE: Pull request 5 in github.com/owner/repo is closed
+      run: |
+        decision=$(echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny editing a pull request it cannot find
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GH_TOKEN: ${{ github.token }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 999999999 -R github.com/${{ github.repository }} --body z"}}'
+        SENTENCE: >-
+          whether 999999999 in github.com/${{ github.repository }} is one could
+          not be found out: `gh pr view` failed (GraphQL: Could not resolve to a
+          PullRequest with the number of 999999999.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny rather than wait when GitHub does not answer
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-that-does-not-answer
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body z"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when the pull request is not named by its number
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit -R github.com/owner/repo --body z"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when the repository is not named
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 --body z"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when the repository is named without its host
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R owner/repo --body z"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when a flag ahead of the subcommand would make gh run another one
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr --subject edit merge 5 -R github.com/owner/repo"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when a comment follows the command
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --title x # --body y"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when an unquoted expansion could turn into further flags
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --title x $EXTRA"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny when further flags could follow a redirection unseen
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --title x > /dev/null --add-reviewer octocat"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a flag GitHub has not shipped yet
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --some-future-flag x"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'

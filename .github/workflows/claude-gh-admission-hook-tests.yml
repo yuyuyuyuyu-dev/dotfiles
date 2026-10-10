@@ -1,0 +1,102 @@
+name: claude-gh-admission-hook tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reads:
+    name: should let reads through
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: cargo build --release --locked
+        working-directory: claude-gh-admission-hook
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/reads
+        with:
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+
+  writes:
+    name: should deny the writes that are not exceptions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: cargo build --release --locked
+        working-directory: claude-gh-admission-hook
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/writes
+        with:
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+
+  pull-request-create:
+    name: should ask about a new pull request only when it is surely a draft
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: cargo build --release --locked
+        working-directory: claude-gh-admission-hook
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/pull-request-create
+        with:
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+
+  pull-request-edit:
+    name: should ask about a pull request edit only when it surely reaches an open draft
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: cargo build --release --locked
+        working-directory: claude-gh-admission-hook
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/pull-request-edit
+        with:
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+
+  release-create:
+    name: should ask about a new release only when it is surely a draft
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: cargo build --release --locked
+        working-directory: claude-gh-admission-hook
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/release-create
+        with:
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+
+  release-edit:
+    name: should ask about a release edit only when it surely reaches a draft
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: cargo build --release --locked
+        working-directory: claude-gh-admission-hook
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/release-edit
+        with:
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+
+  actionable-denial:
+    name: should say in a denial what was rejected and what to do instead
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: cargo build --release --locked
+        working-directory: claude-gh-admission-hook
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/actionable-denial
+        with:
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook

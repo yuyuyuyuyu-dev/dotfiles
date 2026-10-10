@@ -4,6 +4,7 @@ use std::sync::LazyLock;
 pub const SUBST_PLACEHOLDER: &str = "__SUBST__";
 
 const PUNCTUATION: [char; 8] = ['(', ')', ';', '<', '>', '|', '&', '\n'];
+const WORD_GENERATORS: [char; 4] = ['*', '?', '[', '{'];
 
 static HEREDOC: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"<<-?\s*(?:'([^']*)'|"([^"]*)"|\\?([A-Za-z_][A-Za-z0-9_]*))"#).unwrap()
@@ -273,11 +274,68 @@ pub fn has_expansion(raw: &str) -> bool {
     raw.contains('$') || raw.contains('`')
 }
 
-pub fn segments(tokens: &[Token]) -> Vec<&[Token]> {
-    tokens
-        .split(|token| token.separator)
-        .filter(|segment| !segment.is_empty())
-        .collect()
+pub enum Shape {
+    Literal,
+    Opaque,
+    Splitting,
+}
+
+pub fn shape(raw: &str) -> Shape {
+    let mut quote: Option<char> = None;
+    let mut escaped = false;
+    let mut opaque = false;
+
+    for (offset, char) in raw.char_indices() {
+        if escaped {
+            escaped = false;
+            continue;
+        }
+        if quote == Some('\'') {
+            if char == '\'' {
+                quote = None;
+            }
+            continue;
+        }
+        if char == '\\' {
+            escaped = true;
+            continue;
+        }
+
+        let expands = char == '$' || char == '`' || raw[offset..].starts_with(SUBST_PLACEHOLDER);
+        match quote {
+            Some(_) if char == '"' => quote = None,
+            Some(_) => opaque |= expands,
+            None if char == '\'' || char == '"' => quote = Some(char),
+            None if expands || WORD_GENERATORS.contains(&char) => return Shape::Splitting,
+            None => {}
+        }
+    }
+
+    if opaque {
+        Shape::Opaque
+    } else {
+        Shape::Literal
+    }
+}
+
+pub fn segments(tokens: &[Token]) -> Vec<(&[Token], Option<&Token>)> {
+    let mut found = Vec::new();
+    let mut start = 0;
+
+    for (index, token) in tokens.iter().enumerate() {
+        if !token.separator {
+            continue;
+        }
+        if index > start {
+            found.push((&tokens[start..index], Some(token)));
+        }
+        start = index + 1;
+    }
+    if start < tokens.len() {
+        found.push((&tokens[start..], None));
+    }
+
+    found
 }
 
 pub fn basename(path: &str) -> &str {

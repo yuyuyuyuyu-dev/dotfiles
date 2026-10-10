@@ -1,0 +1,115 @@
+name: should deny the writes that are not exceptions
+description: Tests of claude-gh-admission-hook.
+
+inputs:
+  hook:
+    description: The claude-gh-admission-hook executable to run the payloads through.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: should deny merging a pull request
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny reviewing a pull request
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr review 5 --approve"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny commenting on an issue
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh issue comment 12 --body hi"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny changing repository settings
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh repo edit --visibility public"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny deleting a repository
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh repo delete owner/name"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny setting a secret
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh secret set TOKEN"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a subcommand GitHub has not shipped yet
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr some-future-write 5"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a REST API write that only its fields imply
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api /repos/o/r/issues -f title=x"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a GraphQL mutation
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api graphql -f query=mutation{addComment}"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny pushing a tag refspec
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin HEAD:refs/tags/v1.0.0"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny reading the credential gh stored
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh auth token"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a write that fetches a token to authenticate with
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X POST -H \"Authorization: Bearer $(gh auth token)\" https://api.github.com/repos/o/r/releases"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a write that authenticates from the environment
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X POST -H \"Authorization: Bearer $GITHUB_TOKEN\" https://api.github.com/repos/o/r/releases"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a write hidden in a nested shell
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh issue create --title x\""}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a write hidden in a command substitution
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"echo $(gh repo delete owner/name)"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'

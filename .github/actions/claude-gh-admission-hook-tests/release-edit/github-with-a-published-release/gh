@@ -1,0 +1,5 @@
+#!/bin/sh
+case "$*" in
+  "release view "*github.com/owner/repo*v1.0.0*) echo false ;;
+  *) echo "release not found" >&2; exit 1 ;;
+esac

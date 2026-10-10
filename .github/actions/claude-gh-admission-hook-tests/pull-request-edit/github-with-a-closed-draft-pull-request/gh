@@ -1,0 +1,5 @@
+#!/bin/sh
+case "$*" in
+  "pr view "*github.com/owner/repo*" -- 5") echo "CLOSED true" ;;
+  *) echo "GraphQL: Could not resolve to a PullRequest." >&2; exit 1 ;;
+esac

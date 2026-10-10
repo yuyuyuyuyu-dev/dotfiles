@@ -1,7 +1,11 @@
 mod analyze;
+mod exception;
 mod gh;
 mod git;
+mod github;
 mod http;
+mod pull_request;
+mod release;
 mod shell;
 
 use std::io::Read;
@@ -9,9 +13,11 @@ use std::io::Read;
 pub enum Verdict {
     Deny(String),
     Ask(String),
+    AskIfDraftPullRequest(pull_request::PullRequest),
+    AskIfDraftRelease(release::Release),
 }
 
-const DENY_NOTE: &str = " GitHub access is read-only under this hook: every write is denied, and the only exceptions are creating and editing a pull request, which are put to the user for approval instead. This is a permanent PreToolUse hook, not a transient failure: retrying, rewording or wrapping the command will not change the answer. Ask the user to run it themselves if the write is genuinely needed. If the command only reads and this denial looks like a fault in the hook, report that to the user instead of working around it.";
+const DENY_NOTE: &str = " GitHub access is read-only under this hook: every write is denied, and the only exceptions are creating a draft pull request, editing a draft pull request, creating a draft release and editing a draft release, which are put to the user for approval instead. This is a permanent PreToolUse hook, not a transient failure: retrying the command, or rewording or wrapping it to do the same thing, will not change the answer. Ask the user to run it themselves if the write is genuinely needed. If the command only reads and this denial looks like a fault in the hook, report that to the user instead of working around it.";
 
 fn main() {
     let mut payload = String::new();
@@ -36,10 +42,7 @@ fn main() {
         return;
     };
 
-    let (decision, reason) = match verdict {
-        Verdict::Deny(reason) => ("deny", reason + DENY_NOTE),
-        Verdict::Ask(reason) => ("ask", reason),
-    };
+    let (decision, reason) = settle(verdict);
 
     print!(
         "{}",
@@ -51,4 +54,13 @@ fn main() {
             }
         })
     );
+}
+
+fn settle(verdict: Verdict) -> (&'static str, String) {
+    match verdict {
+        Verdict::Deny(reason) => ("deny", reason + DENY_NOTE),
+        Verdict::Ask(reason) => ("ask", reason),
+        Verdict::AskIfDraftPullRequest(pull_request) => settle(pull_request::judge(&pull_request)),
+        Verdict::AskIfDraftRelease(release) => settle(release::judge(&release)),
+    }
 }

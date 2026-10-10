@@ -1,0 +1,134 @@
+name: should say in a denial what was rejected and what to do instead
+description: Tests of claude-gh-admission-hook.
+
+inputs:
+  hook:
+    description: The claude-gh-admission-hook executable to run the payloads through.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: should return a reason alongside a denial
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecisionReason":"[^"]'
+
+    - name: should name the command it rejected
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git status && gh pr merge 5"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep -- 'gh pr merge'
+
+    - name: should name the flag that made a git command a write
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --tags"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep -- '--tags'
+
+    - name: should name the HTTP method that would have been sent
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X DELETE /repos/o/r"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep -- 'DELETE'
+
+    - name: should explain the method a body flag implies
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -d x https://api.github.com/repos/o/r"}}'
+        SENTENCE: >-
+          Note that a body flag such as -d, -F or -T sets the method even when
+          -X is absent.
+      run: echo "$PAYLOAD" | "$HOOK" | grep -F -- "$SENTENCE"
+
+    - name: should say what to do instead
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+        SENTENCE: >-
+          Ask the user to run it themselves if the write is genuinely needed.
+      run: echo "$PAYLOAD" | "$HOOK" | grep -F -- "$SENTENCE"
+
+    - name: should say the block is permanent so it is not retried
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+        SENTENCE: >-
+          This is a permanent PreToolUse hook, not a transient failure: retrying
+          the command, or rewording or wrapping it to do the same thing, will
+          not change the answer.
+      run: echo "$PAYLOAD" | "$HOOK" | grep -F -- "$SENTENCE"
+
+    - name: should say that a pull request can be created as a draft instead
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title x"}}'
+        SENTENCE: >-
+          Only a draft pull request may be created: pass --draft, and leave
+          marking it as ready to the user.
+      run: echo "$PAYLOAD" | "$HOOK" | grep -F -- "$SENTENCE"
+
+    - name: should say that a release can be created as a draft instead
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0"}}'
+        SENTENCE: >-
+          Only a draft release may be created: pass --draft, and leave
+          publishing it to the user.
+      run: echo "$PAYLOAD" | "$HOOK" | grep -F -- "$SENTENCE"
+
+    - name: should say how to name the pull request to edit
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit --body z"}}'
+        SENTENCE: >-
+          Name the pull request by its number, as in `gh pr edit 123 -R
+          github.com/OWNER/REPO`.
+      run: echo "$PAYLOAD" | "$HOOK" | grep -F -- "$SENTENCE"
+
+    - name: should say how to name the repository of a release to edit
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 --notes x"}}'
+        SENTENCE: >-
+          Name that repository in full: pass -R HOST/OWNER/REPO, for example -R
+          github.com/OWNER/REPO.
+      run: echo "$PAYLOAD" | "$HOOK" | grep -F -- "$SENTENCE"
+
+    - name: should explain why an unreadable command was denied
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5 --body \"unbalanced"}}'
+        SENTENCE: >-
+          This command mentions gh, a git tag or the GitHub API, but it could
+          not be tokenized -- an unbalanced quote is the usual cause -- so what
+          it would run cannot be determined. It is denied rather than guessed
+          at. Run the GitHub part as a command of its own.
+      run: echo "$PAYLOAD" | "$HOOK" | grep -F -- "$SENTENCE"
+
+    - name: should return a reason alongside an ask as well
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecisionReason":"[^"]'
+
+    - name: should stay valid JSON when the command contains quotes
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X POST /repos/o/r -f body=\"quoted\""}}'
+      run: echo "$PAYLOAD" | "$HOOK" | python3 -c 'import json,sys; json.load(sys.stdin)'
