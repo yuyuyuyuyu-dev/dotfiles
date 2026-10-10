@@ -103,7 +103,7 @@ runs:
       shell: bash
       env:
         HOOK: ${{ inputs.hook }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin main"}}'
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin HEAD"}}'
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
@@ -157,7 +157,7 @@ runs:
       shell: bash
       env:
         HOOK: ${{ inputs.hook }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git -C \"$DIR\" push origin main"}}'
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git -C \"$DIR\" push origin HEAD"}}'
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
@@ -185,6 +185,33 @@ runs:
       env:
         HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -s -H \"$AUTH\" https://api.github.com/repos/o/r"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a branch be pushed by its full name
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin refs/heads/main"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a branch be pushed to a branch named in full
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -u origin feature/x:refs/heads/feature/x"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a branch be pushed when a push option comes before the remote
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -o ci.skip origin HEAD"}}'
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
