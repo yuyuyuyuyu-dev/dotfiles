@@ -51,7 +51,16 @@ const TAG_READ_FLAGS: [&str; 17] = [
     "--verify",
 ];
 const PUSH_TAG_FLAGS: [&str; 3] = ["--tags", "--follow-tags", "--mirror"];
+const PUSH_VALUE_FLAGS: [&str; 6] = [
+    "-o",
+    "--push-option",
+    "--repo",
+    "--receive-pack",
+    "--exec",
+    "--recurse-submodules",
+];
 const TAG_REF: &str = "refs/tags/";
+const BRANCH_REF: &str = "refs/heads/";
 
 fn subcommand(args: &[Token]) -> Result<Option<(&str, &[Token])>, &Token> {
     let mut index = 0;
@@ -78,6 +87,33 @@ fn subcommand(args: &[Token]) -> Result<Option<(&str, &[Token])>, &Token> {
         return Ok(Some((value, &args[index + 1..])));
     }
     Ok(None)
+}
+
+fn refspecs(args: &[Token]) -> Vec<&str> {
+    let mut words = Vec::new();
+    let mut flags_ended = false;
+    let mut rest = args.iter();
+
+    while let Some(token) = rest.next() {
+        let value = token.value.as_str();
+        if flags_ended || !value.starts_with('-') {
+            words.push(value);
+        } else if value == "--" {
+            flags_ended = true;
+        } else if PUSH_VALUE_FLAGS.contains(&value) {
+            rest.next();
+        }
+    }
+
+    words.into_iter().skip(1).collect()
+}
+
+fn reaches_a_branch(refspec: &str) -> bool {
+    let refspec = refspec.strip_prefix('+').unwrap_or(refspec);
+    match refspec.split_once(':') {
+        Some((_, destination)) => destination.starts_with(BRANCH_REF),
+        None => refspec == "HEAD" || refspec.starts_with(BRANCH_REF),
+    }
 }
 
 fn splitting(name: &str, token: &Token, harm: &str) -> Verdict {
@@ -177,6 +213,14 @@ pub fn check(args: &[Token]) -> Option<Verdict> {
             return Some(Verdict::Deny(format!(
                 "An argument of `git push` ({}) comes out of a shell expansion, so it could turn out to be --tags or a refs/tags/ refspec, and it cannot be shown that no tag is sent to the remote. Write the remote and the branch out literally, or push HEAD.",
                 shown(token)
+            )));
+        }
+        if let Some(refspec) = refspecs(rest)
+            .into_iter()
+            .find(|refspec| !reaches_a_branch(refspec))
+        {
+            return Some(Verdict::Deny(format!(
+                "`git push` names {refspec}, and a bare name reaches a tag when a tag has that name, so it cannot be shown that no tag is sent to the remote. Push the branch that is checked out with `git push origin HEAD`, or name the branch in full, as in refs/heads/NAME or SOURCE:refs/heads/NAME."
             )));
         }
         return None;
