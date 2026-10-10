@@ -41,7 +41,7 @@ jobs:
       # Act & Assert
       - uses: ./.github/actions/claude-gh-admission-hook-specs/read-only
         with:
-          guard: &built-hook ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   pull-request-create:
     name: should ask before creating a draft pull request, as an exception
@@ -55,11 +55,10 @@ jobs:
       # Act
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x --body y"}}'
-        run: &run-the-hook echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook > "$RUNNER_TEMP/decision"
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook > "$RUNNER_TEMP/decision"
 
       # Assert
-      - &assert-it-asks
-        run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
+      - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
 
   pull-request-edit:
     name: should ask before editing a draft pull request, as an exception
@@ -83,10 +82,10 @@ jobs:
       # Act
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body z"}}'
-        run: *run-the-hook
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook > "$RUNNER_TEMP/decision"
 
       # Assert
-      - *assert-it-asks
+      - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
 
   release-create:
     name: should ask before creating a draft release, as an exception
@@ -100,10 +99,10 @@ jobs:
       # Act
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 --draft --title x --notes y"}}'
-        run: *run-the-hook
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook > "$RUNNER_TEMP/decision"
 
       # Assert
-      - *assert-it-asks
+      - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
 
   release-edit:
     name: should ask before editing a draft release, as an exception
@@ -130,10 +129,10 @@ jobs:
       # Act
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 -R github.com/owner/repo --notes x"}}'
-        run: *run-the-hook
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook > "$RUNNER_TEMP/decision"
 
       # Assert
-      - *assert-it-asks
+      - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
 
   actionable-denial:
     name: should explain a denial well enough for Claude to act on it
@@ -147,7 +146,7 @@ jobs:
       # Act & Assert
       - uses: ./.github/actions/claude-gh-admission-hook-specs/actionable-denial
         with:
-          guard: *built-hook
+          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   unnecessary-changes:
     name: should make no unnecessary changes
