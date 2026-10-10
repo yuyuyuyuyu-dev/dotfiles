@@ -2,7 +2,7 @@ use crate::Verdict;
 use crate::github::Repository;
 use crate::pull_request::PullRequest;
 use crate::release::Release;
-use crate::shell::{SUBST_PLACEHOLDER, Shape, Token, shape};
+use crate::shell::{Shape, Token, shape, shown};
 use regex::Regex;
 use std::sync::LazyLock;
 
@@ -200,18 +200,10 @@ pub fn command(path: &[String]) -> Option<&'static Command> {
     })
 }
 
-pub fn check(command: &Command, args: &[Token], terminator: Option<&Token>) -> Verdict {
+pub fn check(command: &Command, args: &[Token]) -> Verdict {
     let named = command.path.join(" ");
 
-    let read = match terminator {
-        Some(separator) if separator.value.contains(['<', '>']) => Err(format!(
-            "a redirection ({}) follows the command, and further arguments could come after it unseen. Run the command without the redirection.",
-            separator.value.trim()
-        )),
-        _ => parse(command, args),
-    };
-
-    match read {
+    match parse(command, args) {
         Ok(arguments) if arguments.words.starts_with(&command.path) => (command.judge)(&arguments),
         Ok(_) => Verdict::Deny(format!(
             "`gh {named}` is put to the user only when this hook can read every argument of it, and here it cannot: `{named}` could not be found among them."
@@ -345,10 +337,6 @@ fn unknown(command: &Command, name: &str) -> String {
         "{name} is not a flag this hook knows for `gh {}`, so it cannot tell whether the argument after it is that flag's value. If {name} is a real flag, the flag table in claude-gh-admission-hook is what needs the entry.",
         command.path.join(" ")
     )
-}
-
-fn shown(token: &Token) -> String {
-    token.raw.replace(SUBST_PLACEHOLDER, "$(...)")
 }
 
 fn created_pull_request(arguments: &Arguments) -> Verdict {

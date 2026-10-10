@@ -41,6 +41,14 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R github.com/owner/repo pr edit 5 --body z"}}'
       run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"ask"'
 
+    - name: should ask when a redirection follows the command
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --title x 2>&1"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"ask"'
+
     - name: should deny editing a pull request that is ready for review
       shell: bash
       env:
@@ -130,14 +138,6 @@ runs:
         HOOK: ${{ inputs.hook }}
         STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --title x $EXTRA"}}'
-      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
-
-    - name: should deny when further flags could follow a redirection unseen
-      shell: bash
-      env:
-        HOOK: ${{ inputs.hook }}
-        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --title x > /dev/null --add-reviewer octocat"}}'
       run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
 
     - name: should deny a flag GitHub has not shipped yet

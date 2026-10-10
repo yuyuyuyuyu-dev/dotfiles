@@ -3,8 +3,11 @@ use std::sync::LazyLock;
 
 pub const SUBST_PLACEHOLDER: &str = "__SUBST__";
 
-const PUNCTUATION: [char; 8] = ['(', ')', ';', '<', '>', '|', '&', '\n'];
-const WORD_GENERATORS: [char; 4] = ['*', '?', '[', '{'];
+const BLANKS: [char; 3] = [' ', '\t', '\r'];
+const SEPARATORS: [char; 6] = ['(', ')', ';', '|', '&', '\n'];
+const REDIRECTORS: [char; 2] = ['<', '>'];
+const REDIRECTION: [char; 5] = ['<', '>', '&', '|', '!'];
+const GLOBS: [char; 3] = ['*', '?', '['];
 
 static HEREDOC: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"<<-?\s*(?:'([^']*)'|"([^"]*)"|\\?([A-Za-z_][A-Za-z0-9_]*))"#).unwrap()
@@ -103,7 +106,8 @@ pub fn extract_substitutions(text: &str) -> (String, Vec<String>) {
             continue;
         }
 
-        if char == '$' && index + 1 < chars.len() && chars[index + 1] == '(' {
+        let substitutes = char == '$' || (quote.is_none() && REDIRECTORS.contains(&char));
+        if substitutes && index + 1 < chars.len() && chars[index + 1] == '(' {
             let mut depth = 0;
             let mut scan = index + 1;
             while scan < chars.len() {
@@ -148,7 +152,7 @@ pub fn extract_substitutions(text: &str) -> (String, Vec<String>) {
     (out, inners)
 }
 
-pub fn tokenize(text: &str) -> Result<Vec<Token>, Unanalyzable> {
+pub fn tokenize(text: &str, comments: bool) -> Result<Vec<Token>, Unanalyzable> {
     let chars: Vec<char> = text.chars().collect();
     let mut tokens = Vec::new();
     let mut index = 0;
@@ -156,14 +160,36 @@ pub fn tokenize(text: &str) -> Result<Vec<Token>, Unanalyzable> {
     while index < chars.len() {
         let char = chars[index];
 
-        if char == ' ' || char == '\t' || char == '\r' {
+        if BLANKS.contains(&char) {
             index += 1;
             continue;
         }
 
-        if PUNCTUATION.contains(&char) {
+        if comments && char == '#' {
+            while index < chars.len() && chars[index] != '\n' {
+                index += 1;
+            }
+            continue;
+        }
+
+        if REDIRECTORS.contains(&char) || joins_outputs(&chars, index) {
+            while index < chars.len() && REDIRECTION.contains(&chars[index]) {
+                index += 1;
+            }
+            while index < chars.len() && BLANKS.contains(&chars[index]) {
+                index += 1;
+            }
+            word(&chars, &mut index)?;
+            continue;
+        }
+
+        if SEPARATORS.contains(&char) {
             let start = index;
-            while index < chars.len() && PUNCTUATION.contains(&chars[index]) {
+            index += 1;
+            while index < chars.len()
+                && SEPARATORS.contains(&chars[index])
+                && (chars[index - 1] == '&' || !joins_outputs(&chars, index))
+            {
                 index += 1;
             }
             let run: String = chars[start..index].iter().collect();
@@ -175,99 +201,102 @@ pub fn tokenize(text: &str) -> Result<Vec<Token>, Unanalyzable> {
             continue;
         }
 
-        let mut value = String::new();
-        let mut raw = String::new();
-        while index < chars.len() {
-            let char = chars[index];
-            if char == ' ' || char == '\t' || char == '\r' || PUNCTUATION.contains(&char) {
-                break;
-            }
-
-            if char == '\'' {
-                raw.push(char);
-                index += 1;
-                loop {
-                    let Some(&inner) = chars.get(index) else {
-                        return Err(Unanalyzable("No closing quotation".to_string()));
-                    };
-                    raw.push(inner);
-                    index += 1;
-                    if inner == '\'' {
-                        break;
-                    }
-                    value.push(inner);
-                }
-                continue;
-            }
-
-            if char == '"' {
-                raw.push(char);
-                index += 1;
-                loop {
-                    let Some(&inner) = chars.get(index) else {
-                        return Err(Unanalyzable("No closing quotation".to_string()));
-                    };
-                    if inner == '"' {
-                        raw.push(inner);
-                        index += 1;
-                        break;
-                    }
-                    if inner == '\\'
-                        && let Some(&escaped) = chars.get(index + 1)
-                    {
-                        raw.push(inner);
-                        raw.push(escaped);
-                        if escaped != '"' && escaped != '\\' {
-                            value.push(inner);
-                        }
-                        value.push(escaped);
-                        index += 2;
-                        continue;
-                    }
-                    raw.push(inner);
-                    value.push(inner);
-                    index += 1;
-                }
-                continue;
-            }
-
-            if char == '\\' {
-                let Some(&escaped) = chars.get(index + 1) else {
-                    return Err(Unanalyzable("No escaped character".to_string()));
-                };
-                raw.push(char);
-                raw.push(escaped);
-                value.push(escaped);
-                index += 2;
-                continue;
-            }
-
-            value.push(char);
-            raw.push(char);
-            index += 1;
+        let (value, raw) = word(&chars, &mut index)?;
+        let descriptor = chars
+            .get(index)
+            .is_some_and(|next| REDIRECTORS.contains(next))
+            && !raw.is_empty()
+            && raw.chars().all(|char| char.is_ascii_digit());
+        if !descriptor {
+            tokens.push(Token {
+                value,
+                raw,
+                separator: false,
+            });
         }
-
-        tokens.push(Token {
-            value,
-            raw,
-            separator: false,
-        });
     }
 
     Ok(tokens)
 }
 
-pub fn splits_into_words(raw: &str) -> bool {
-    let mut quote: Option<char> = None;
-    for char in raw.chars() {
-        match quote {
-            None if char == '\'' || char == '"' => quote = Some(char),
-            None if char == '$' || char == '`' => return true,
-            Some(open) if char == open => quote = None,
-            _ => {}
+fn joins_outputs(chars: &[char], index: usize) -> bool {
+    chars.get(index) == Some(&'&') && chars.get(index + 1) == Some(&'>')
+}
+
+fn word(chars: &[char], index: &mut usize) -> Result<(String, String), Unanalyzable> {
+    let mut value = String::new();
+    let mut raw = String::new();
+
+    while let Some(&char) = chars.get(*index) {
+        if BLANKS.contains(&char) || SEPARATORS.contains(&char) || REDIRECTORS.contains(&char) {
+            break;
         }
+
+        if char == '\'' {
+            raw.push(char);
+            *index += 1;
+            loop {
+                let Some(&inner) = chars.get(*index) else {
+                    return Err(Unanalyzable("No closing quotation".to_string()));
+                };
+                raw.push(inner);
+                *index += 1;
+                if inner == '\'' {
+                    break;
+                }
+                value.push(inner);
+            }
+            continue;
+        }
+
+        if char == '"' {
+            raw.push(char);
+            *index += 1;
+            loop {
+                let Some(&inner) = chars.get(*index) else {
+                    return Err(Unanalyzable("No closing quotation".to_string()));
+                };
+                if inner == '"' {
+                    raw.push(inner);
+                    *index += 1;
+                    break;
+                }
+                if inner == '\\'
+                    && let Some(&escaped) = chars.get(*index + 1)
+                {
+                    raw.push(inner);
+                    raw.push(escaped);
+                    if escaped != '"' && escaped != '\\' {
+                        value.push(inner);
+                    }
+                    value.push(escaped);
+                    *index += 2;
+                    continue;
+                }
+                raw.push(inner);
+                value.push(inner);
+                *index += 1;
+            }
+            continue;
+        }
+
+        if char == '\\' {
+            let Some(&escaped) = chars.get(*index + 1) else {
+                return Err(Unanalyzable("No escaped character".to_string()));
+            };
+            raw.push(char);
+            raw.push(escaped);
+            value.push(escaped);
+            *index += 2;
+            continue;
+        }
+
+        value.push(char);
+        raw.push(char);
+        *index += 1;
     }
-    false
+
+    Ok((value, raw))
 }
 
 pub fn has_expansion(raw: &str) -> bool {
@@ -306,7 +335,9 @@ pub fn shape(raw: &str) -> Shape {
             Some(_) if char == '"' => quote = None,
             Some(_) => opaque |= expands,
             None if char == '\'' || char == '"' => quote = Some(char),
-            None if expands || WORD_GENERATORS.contains(&char) => return Shape::Splitting,
+            None if expands || GLOBS.contains(&char) || braces(&raw[offset..]) => {
+                return Shape::Splitting;
+            }
             None => {}
         }
     }
@@ -318,7 +349,15 @@ pub fn shape(raw: &str) -> Shape {
     }
 }
 
-pub fn segments(tokens: &[Token]) -> Vec<(&[Token], Option<&Token>)> {
+fn braces(rest: &str) -> bool {
+    rest.starts_with('{') && (rest.contains(',') || rest.contains(".."))
+}
+
+pub fn shown(token: &Token) -> String {
+    token.raw.replace(SUBST_PLACEHOLDER, "$(...)")
+}
+
+pub fn segments(tokens: &[Token]) -> Vec<&[Token]> {
     let mut found = Vec::new();
     let mut start = 0;
 
@@ -327,12 +366,12 @@ pub fn segments(tokens: &[Token]) -> Vec<(&[Token], Option<&Token>)> {
             continue;
         }
         if index > start {
-            found.push((&tokens[start..index], Some(token)));
+            found.push(&tokens[start..index]);
         }
         start = index + 1;
     }
     if start < tokens.len() {
-        found.push((&tokens[start..], None));
+        found.push(&tokens[start..]);
     }
 
     found

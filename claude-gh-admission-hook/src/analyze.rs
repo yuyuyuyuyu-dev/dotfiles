@@ -1,4 +1,4 @@
-use crate::shell;
+use crate::shell::{self, Token};
 use crate::{Verdict, gh, git, http};
 use regex::Regex;
 use std::sync::LazyLock;
@@ -30,9 +30,10 @@ static GIT_TAG_INVOCATION: LazyLock<Regex> = LazyLock::new(|| {
 static HTTP_CLIENT_INVOCATION: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(^|[^A-Za-z0-9_])([^\s;|&()]*/)?(curl|wget)\b").unwrap());
 
-pub fn check_command(text: &str, depth: u32) -> Option<Verdict> {
+pub fn check_command(text: &str, depth: u32) -> Vec<Verdict> {
+    let mut verdicts = Vec::new();
     if depth > 3 {
-        return None;
+        return verdicts;
     }
 
     let text = CONTINUATION.replace_all(text, " ");
@@ -41,20 +42,16 @@ pub fn check_command(text: &str, depth: u32) -> Option<Verdict> {
     let (text, inners) = shell::extract_substitutions(&text);
 
     for inner in &inners {
-        if let Some(verdict) = check_command(inner, depth + 1) {
-            return Some(verdict);
-        }
+        verdicts.extend(check_command(inner, depth + 1));
     }
 
     for body in &expanded_bodies {
         for inner in shell::extract_substitutions(body).1 {
-            if let Some(verdict) = check_command(&inner, depth + 1) {
-                return Some(verdict);
-            }
+            verdicts.extend(check_command(&inner, depth + 1));
         }
     }
 
-    let tokens = match shell::tokenize(&text) {
+    let tokens = match shell::tokenize(&text, true) {
         Ok(tokens) => tokens,
         Err(_) => {
             let targets_github =
@@ -63,38 +60,72 @@ pub fn check_command(text: &str, depth: u32) -> Option<Verdict> {
                 || GIT_TAG_INVOCATION.is_match(&text)
                 || (HTTP_CLIENT_INVOCATION.is_match(&text) && targets_github)
             {
-                return Some(Verdict::Deny(
+                verdicts.push(Verdict::Deny(
                     "This command mentions gh, a git tag or the GitHub API, but it could not be tokenized -- an unbalanced quote is the usual cause -- so what it would run cannot be determined. It is denied rather than guessed at. Run the GitHub part as a command of its own."
                         .to_string(),
                 ));
             }
-            return None;
+            return verdicts;
         }
     };
+    check_tokens(&tokens, &github_variables, depth, &mut verdicts);
 
-    for (segment, terminator) in shell::segments(&tokens) {
-        let mut segment = segment;
-        while segment.first().is_some_and(|token| {
-            ASSIGNMENT.is_match(&token.value)
-                || KEYWORDS.contains(&token.value.as_str())
-                || WRAPPERS.contains(&shell::basename(&token.value))
-        }) {
-            segment = &segment[1..];
-        }
-        let Some(head) = segment.first() else {
+    if text.contains('#')
+        && let Ok(tokens) = shell::tokenize(&text, false)
+    {
+        check_tokens(&tokens, &github_variables, depth, &mut verdicts);
+    }
+
+    verdicts
+}
+
+fn commands(segment: &[Token]) -> Vec<&[Token]> {
+    let mut segment = segment;
+    while segment.first().is_some_and(|token| {
+        ASSIGNMENT.is_match(&token.value) || KEYWORDS.contains(&token.value.as_str())
+    }) {
+        segment = &segment[1..];
+    }
+
+    let launches = segment.first().is_some_and(|head| {
+        let name = shell::basename(&head.value);
+        WRAPPERS.contains(&name) || RUNNERS.contains(&name)
+    });
+    if !launches {
+        return vec![segment];
+    }
+
+    (1..segment.len())
+        .filter(|&index| {
+            let name = shell::basename(&segment[index].value);
+            matches!(name, "gh" | "git" | "eval")
+                || SHELLS.contains(&name)
+                || http::HTTP_CLIENTS.contains(&name)
+        })
+        .map(|index| &segment[index..])
+        .collect()
+}
+
+fn check_tokens(
+    tokens: &[Token],
+    github_variables: &[String],
+    depth: u32,
+    verdicts: &mut Vec<Verdict>,
+) {
+    let found = shell::segments(tokens);
+    for command in found.iter().flat_map(|segment| commands(segment)) {
+        let Some(head) = command.first() else {
             continue;
         };
-
-        let mut name = shell::basename(&head.value);
-        let mut args = &segment[1..];
+        let name = shell::basename(&head.value);
+        let args = &command[1..];
 
         if SHELLS.contains(&name) {
             for (index, token) in args.iter().enumerate() {
                 if token.value == "-c"
                     && let Some(script) = args.get(index + 1)
-                    && let Some(nested) = check_command(&script.value, depth + 1)
                 {
-                    return Some(nested);
+                    verdicts.extend(check_command(&script.value, depth + 1));
                 }
             }
             continue;
@@ -106,33 +137,17 @@ pub fn check_command(text: &str, depth: u32) -> Option<Verdict> {
                 .map(|token| token.value.as_str())
                 .collect::<Vec<_>>()
                 .join(" ");
-            if let Some(nested) = check_command(&script, depth + 1) {
-                return Some(nested);
-            }
+            verdicts.extend(check_command(&script, depth + 1));
             continue;
         }
 
-        if RUNNERS.contains(&name)
-            && let Some(index) = args
-                .iter()
-                .position(|token| matches!(shell::basename(&token.value), "gh" | "git"))
-        {
-            segment = &segment[index + 1..];
-            name = shell::basename(&segment[0].value);
-            args = &segment[1..];
-        }
-
         if name == "git" {
-            if let Some(verdict) = git::check(args) {
-                return Some(verdict);
-            }
+            verdicts.extend(git::check(args));
             continue;
         }
 
         if http::HTTP_CLIENTS.contains(&name) {
-            if let Some(verdict) = http::check(name, args, &github_variables) {
-                return Some(verdict);
-            }
+            verdicts.extend(http::check(name, args, github_variables));
             continue;
         }
 
@@ -140,20 +155,15 @@ pub fn check_command(text: &str, depth: u32) -> Option<Verdict> {
             continue;
         }
 
-        let verdict = if args[0].value == "api" {
+        if args[0].value == "api" {
             match gh::check_api(&args[1..]) {
-                Ok(verdict) => verdict,
-                Err(reason) => Some(Verdict::Deny(format!(
+                Ok(verdict) => verdicts.extend(verdict),
+                Err(reason) => verdicts.push(Verdict::Deny(format!(
                     "The `gh api` invocation could not be parsed ({reason}), so the request it would send cannot be determined, and a request that cannot be read cannot be shown to be a read."
                 ))),
             }
         } else {
-            gh::check_subcommand(args, terminator)
-        };
-        if let Some(verdict) = verdict {
-            return Some(verdict);
+            verdicts.extend(gh::check_subcommand(args));
         }
     }
-
-    None
 }

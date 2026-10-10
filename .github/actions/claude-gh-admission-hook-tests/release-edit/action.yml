@@ -25,6 +25,14 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R github.com/owner/repo release edit v1.0.0 --title x"}}'
       run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"ask"'
 
+    - name: should ask when a redirection follows the command
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 -R github.com/owner/repo --notes x 2>&1"}}'
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"ask"'
+
     - name: should deny editing a published release
       shell: bash
       env:
@@ -97,14 +105,6 @@ runs:
         HOOK: ${{ inputs.hook }}
         STAND_IN: ${{ github.action_path }}/github-with-a-draft
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit \"$TAG\" -R github.com/owner/repo --notes x"}}'
-      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
-
-    - name: should deny when further flags could follow a redirection unseen
-      shell: bash
-      env:
-        HOOK: ${{ inputs.hook }}
-        STAND_IN: ${{ github.action_path }}/github-with-a-draft
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 -R github.com/owner/repo --notes x > /dev/null --draft=false"}}'
       run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
 
     - name: should deny a flag GitHub has not shipped yet

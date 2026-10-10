@@ -38,11 +38,9 @@ fn main() {
         return;
     }
 
-    let Some(verdict) = analyze::check_command(command, 0) else {
+    let Some((decision, reason)) = decide(analyze::check_command(command, 0)) else {
         return;
     };
-
-    let (decision, reason) = settle(verdict);
 
     print!(
         "{}",
@@ -54,6 +52,31 @@ fn main() {
             }
         })
     );
+}
+
+fn decide(verdicts: Vec<Verdict>) -> Option<(&'static str, String)> {
+    let (denials, others): (Vec<Verdict>, Vec<Verdict>) = verdicts
+        .into_iter()
+        .partition(|verdict| matches!(verdict, Verdict::Deny(_)));
+    if let Some(denial) = denials.into_iter().next() {
+        return Some(settle(denial));
+    }
+
+    let mut approvals: Vec<String> = Vec::new();
+    for verdict in others {
+        let (decision, reason) = settle(verdict);
+        if decision == "deny" {
+            return Some((decision, reason));
+        }
+        if !approvals.contains(&reason) {
+            approvals.push(reason);
+        }
+    }
+
+    if approvals.is_empty() {
+        return None;
+    }
+    Some(("ask", approvals.join(" ")))
 }
 
 fn settle(verdict: Verdict) -> (&'static str, String) {

@@ -44,6 +44,13 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R owner/repo release create v1.0.0 --draft"}}'
       run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
 
+    - name: should ask when a redirection follows the command
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 --draft 2>&1"}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
+
     - name: should deny when the draft flag is switched off
       shell: bash
       env:
@@ -72,12 +79,34 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 --draft $EXTRA"}}'
       run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
 
-    - name: should deny when further flags could follow a redirection unseen
+    - name: should deny when a flag after a redirection turns --draft off
       shell: bash
       env:
         HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 --draft > /dev/null --draft=false"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+        SENTENCE: >-
+          `gh release create` would publish a release, because --draft is not in
+          effect. Only a draft release may be created: pass --draft, and leave
+          publishing it to the user.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny when a flag ahead of the subcommand takes another subcommand for its value
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release --title view create v1.0.0"}}'
+        SENTENCE: >-
+          `gh release create` is put to the user only when this hook can read
+          every argument of it, and here it cannot: --title comes before `release
+          create`, where gh may take the word after it for its value. Put it after
+          `release create`.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
 
     - name: should deny a flag GitHub has not shipped yet
       shell: bash
