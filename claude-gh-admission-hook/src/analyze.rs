@@ -113,7 +113,8 @@ fn commands(segment: &[Token]) -> Vec<(&[Token], bool)> {
 }
 
 fn check_gh(args: &[Token]) -> Option<Verdict> {
-    if args[0].value == "api" {
+    let head = args.first()?;
+    if head.value == "api" {
         return match gh::check_api(&args[1..]) {
             Ok(verdict) => verdict,
             Err(reason) => Some(Verdict::Deny(format!(
@@ -124,19 +125,22 @@ fn check_gh(args: &[Token]) -> Option<Verdict> {
     gh::check_subcommand(args)
 }
 
-fn check_fed_gh(args: &[Token]) -> Option<Verdict> {
-    let written = check_gh(args);
+fn check_fed(
+    name: &str,
+    args: &[Token],
+    check: impl Fn(&[Token]) -> Option<Verdict>,
+) -> Option<Verdict> {
+    let written = check(args);
     if matches!(written, Some(Verdict::Deny(_))) {
         return written;
     }
 
     let mut extended = args.to_vec();
     extended.push(shell::unseen());
-    match check_gh(&extended) {
-        Some(Verdict::Deny(_)) => Some(Verdict::Deny(
-            "This gh command is run through xargs or parallel, which adds arguments that this hook cannot see, and they could turn it into a write. Give gh all of its arguments on the command line itself."
-                .to_string(),
-        )),
+    match check(&extended) {
+        Some(Verdict::Deny(_)) => Some(Verdict::Deny(format!(
+            "This {name} command is run through xargs or parallel, which adds arguments that this hook cannot see, and they could turn it into a write. Give {name} all of its arguments on the command line itself."
+        ))),
         _ => written,
     }
 }
@@ -176,24 +180,15 @@ fn check_tokens(
             continue;
         }
 
-        if name == "git" {
-            verdicts.extend(git::check(args));
-            continue;
-        }
-
-        if http::HTTP_CLIENTS.contains(&name) {
-            verdicts.extend(http::check(name, args, github_variables));
-            continue;
-        }
-
-        if name != "gh" || args.is_empty() {
-            continue;
-        }
-
-        if fed {
-            verdicts.extend(check_fed_gh(args));
-        } else {
-            verdicts.extend(check_gh(args));
-        }
+        let found = match name {
+            "git" if fed => check_fed(name, args, git::check),
+            "git" => git::check(args),
+            "gh" if fed => check_fed(name, args, check_gh),
+            "gh" => check_gh(args),
+            _ if !http::HTTP_CLIENTS.contains(&name) => None,
+            _ if fed => check_fed(name, args, |args| http::check(name, args, github_variables)),
+            _ => http::check(name, args, github_variables),
+        };
+        verdicts.extend(found);
     }
 }
