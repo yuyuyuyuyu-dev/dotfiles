@@ -113,3 +113,262 @@ runs:
         HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"echo $(gh repo delete owner/name)"}}'
       run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a write whose method a comment seems to turn into a read
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X DELETE repos/o/r/git/refs/heads/x # -X GET"}}'
+        SENTENCE: >-
+          `gh api` would send DELETE, which is not a read and can change GitHub
+          state. Only GET and HEAD are allowed here.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a write whose method only a shell that reads comments would drop
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api repos/o/r/git/refs/heads/x # -X DELETE"}}'
+        SENTENCE: >-
+          `gh api` would send DELETE, which is not a read and can change GitHub
+          state. Only GET and HEAD are allowed here.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a request that an unquoted command substitution could add a method to
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api $(echo -X DELETE) repos/o/r/git/refs/heads/x"}}'
+        SENTENCE: >-
+          An argument of `gh api` contains an unquoted shell expansion or pattern
+          ($(...)), which can turn into further arguments, so the request that
+          would actually be sent cannot be determined. Quote it, or write the
+          request out with literal values.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a request that a command substitution in backticks could add a method to
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api `echo -X DELETE` repos/o/r/git/refs/heads/x"}}'
+        SENTENCE: >-
+          An argument of `gh api` contains an unquoted shell expansion or pattern
+          ($(...)), which can turn into further arguments, so the request that
+          would actually be sent cannot be determined. Quote it, or write the
+          request out with literal values.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a write that a brace expansion unfolds into
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api {-XDELETE,repos/o/r/git/refs/heads/x}"}}'
+        SENTENCE: >-
+          An argument of `gh api` contains an unquoted shell expansion or pattern
+          ({-XDELETE,repos/o/r/git/refs/heads/x}), which can turn into further
+          arguments, so the request that would actually be sent cannot be
+          determined. Quote it, or write the request out with literal values.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a request that a filename pattern could add a method to
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api repos/o/r/git/refs/heads/x -?DELETE"}}'
+        SENTENCE: >-
+          An argument of `gh api` contains an unquoted shell expansion or pattern
+          (-?DELETE), which can turn into further arguments, so the request that
+          would actually be sent cannot be determined. Quote it, or write the
+          request out with literal values.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a write whose method follows a redirection
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api repos/o/r/git/refs/heads/x > /dev/null -X DELETE"}}'
+        SENTENCE: >-
+          `gh api` would send DELETE, which is not a read and can change GitHub
+          state. Only GET and HEAD are allowed here.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a write whose method follows a process substitution
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api repos/o/r/git/refs/heads/x <(true) -X DELETE"}}'
+        SENTENCE: >-
+          An argument of `gh api` contains an unquoted shell expansion or pattern
+          ($(...)), which can turn into further arguments, so the request that
+          would actually be sent cannot be determined. Quote it, or write the
+          request out with literal values.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a write that follows a redirection of its own
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"> /dev/null gh repo delete owner/name"}}'
+        SENTENCE: >-
+          `gh repo delete` is not on this hook's allow-list of gh subcommands that
+          only read from GitHub, so it cannot be shown to leave GitHub unchanged.
+          Read the data with a gh command that is on the list, or ask the user to
+          run this one. If `gh repo delete` really only reads, the allow-list in
+          claude-gh-admission-hook is what needs the entry.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a write behind env and a flag of env
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"env -i gh repo delete owner/name"}}'
+        SENTENCE: >-
+          `gh repo delete` is not on this hook's allow-list of gh subcommands that
+          only read from GitHub, so it cannot be shown to leave GitHub unchanged.
+          Read the data with a gh command that is on the list, or ask the user to
+          run this one. If `gh repo delete` really only reads, the allow-list in
+          claude-gh-admission-hook is what needs the entry.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a write behind sudo and a flag of sudo
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"sudo -n gh repo delete owner/name"}}'
+        SENTENCE: >-
+          `gh repo delete` is not on this hook's allow-list of gh subcommands that
+          only read from GitHub, so it cannot be shown to leave GitHub unchanged.
+          Read the data with a gh command that is on the list, or ask the user to
+          run this one. If `gh repo delete` really only reads, the allow-list in
+          claude-gh-admission-hook is what needs the entry.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a write behind a wrapper whose flag takes the name of another command
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"env -u git gh repo delete owner/name"}}'
+        SENTENCE: >-
+          `gh repo delete` is not on this hook's allow-list of gh subcommands that
+          only read from GitHub, so it cannot be shown to leave GitHub unchanged.
+          Read the data with a gh command that is on the list, or ask the user to
+          run this one. If `gh repo delete` really only reads, the allow-list in
+          claude-gh-admission-hook is what needs the entry.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a write that a flag ahead of the subcommand makes look like a read
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr --subject view merge 5"}}'
+        SENTENCE: >-
+          `gh pr merge` is not on this hook's allow-list of gh subcommands that
+          only read from GitHub, so it cannot be shown to leave GitHub unchanged.
+          Read the data with a gh command that is on the list, or ask the user to
+          run this one. If `gh pr merge` really only reads, the allow-list in
+          claude-gh-admission-hook is what needs the entry.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny when an expansion ahead of the subcommand could name another one
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R $REPO pr view 5"}}'
+        SENTENCE: >-
+          $REPO comes before the end of the gh subcommand and contains a shell
+          expansion or pattern, so which subcommand gh would run cannot be
+          determined. Write the subcommand out literally, and put the flags after
+          it.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny changing the visibility of a codespace port
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh codespace ports visibility 80:public"}}'
+        SENTENCE: >-
+          `gh codespace ports visibility` is not on this hook's allow-list of gh
+          subcommands that only read from GitHub, so it cannot be shown to leave
+          GitHub unchanged. Read the data with a gh command that is on the list,
+          or ask the user to run this one. If `gh codespace ports visibility`
+          really only reads, the allow-list in claude-gh-admission-hook is what
+          needs the entry.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny forwarding a codespace port
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh codespace ports forward 80:80"}}'
+        SENTENCE: >-
+          `gh codespace ports forward` is not on this hook's allow-list of gh
+          subcommands that only read from GitHub, so it cannot be shown to leave
+          GitHub unchanged. Read the data with a gh command that is on the list,
+          or ask the user to run this one. If `gh codespace ports forward` really
+          only reads, the allow-list in claude-gh-admission-hook is what needs the
+          entry.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a write that follows the creation of a draft pull request
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x && gh pr merge 5"}}'
+        SENTENCE: >-
+          `gh pr merge` is not on this hook's allow-list of gh subcommands that
+          only read from GitHub, so it cannot be shown to leave GitHub unchanged.
+          Read the data with a gh command that is on the list, or ask the user to
+          run this one. If `gh pr merge` really only reads, the allow-list in
+          claude-gh-admission-hook is what needs the entry.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"

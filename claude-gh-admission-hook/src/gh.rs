@@ -1,4 +1,4 @@
-use crate::shell::{Token, Unanalyzable, has_expansion, splits_into_words};
+use crate::shell::{Shape, Token, Unanalyzable, has_expansion, shape, shown};
 use crate::{Verdict, exception};
 use regex::Regex;
 use std::sync::LazyLock;
@@ -34,40 +34,7 @@ const BOOL_FLAGS: [&str; 8] = [
 ];
 const FIELD_FLAGS: [&str; 4] = ["-f", "--raw-field", "-F", "--field"];
 
-const GH_VALUE_FLAGS: [&str; 32] = [
-    "-R",
-    "--repo",
-    "-e",
-    "--env",
-    "-o",
-    "--org",
-    "-u",
-    "--user",
-    "-a",
-    "--app",
-    "-b",
-    "--body",
-    "-f",
-    "--body-file",
-    "-c",
-    "--color",
-    "-d",
-    "--description",
-    "-n",
-    "--name",
-    "-t",
-    "--template",
-    "-q",
-    "--jq",
-    "-L",
-    "--limit",
-    "-s",
-    "--state",
-    "-H",
-    "--hostname",
-    "--json",
-    "--visibility",
-];
+const GH_FLAGS_WITHOUT_VALUE: [&str; 2] = ["--help", "--version"];
 
 const READ_GH_COMMANDS: &[&[&str]] = &[
     &["browse"],
@@ -142,7 +109,6 @@ const READ_GH_COMMANDS: &[&[&str]] = &[
     &["codespace", "list"],
     &["codespace", "view"],
     &["codespace", "logs"],
-    &["codespace", "ports"],
     &["discussion", "list"],
     &["discussion", "view"],
     &["skill", "list"],
@@ -152,33 +118,34 @@ const READ_GH_COMMANDS: &[&[&str]] = &[
     &["agent-task", "view"],
 ];
 
-const HELP_ONLY_GROUPS: [&str; 26] = [
-    "auth",
-    "pr",
-    "issue",
-    "repo",
-    "release",
-    "run",
-    "workflow",
-    "cache",
-    "label",
-    "ruleset",
-    "secret",
-    "variable",
-    "org",
-    "project",
-    "gist",
-    "search",
-    "attestation",
-    "gpg-key",
-    "ssh-key",
-    "config",
-    "alias",
-    "extension",
-    "codespace",
-    "discussion",
-    "skill",
-    "agent-task",
+const BARE_READ_GH_COMMANDS: &[&[&str]] = &[
+    &["auth"],
+    &["pr"],
+    &["issue"],
+    &["repo"],
+    &["release"],
+    &["run"],
+    &["workflow"],
+    &["cache"],
+    &["label"],
+    &["ruleset"],
+    &["secret"],
+    &["variable"],
+    &["org"],
+    &["project"],
+    &["gist"],
+    &["search"],
+    &["attestation"],
+    &["gpg-key"],
+    &["ssh-key"],
+    &["config"],
+    &["alias"],
+    &["extension"],
+    &["codespace"],
+    &["discussion"],
+    &["skill"],
+    &["agent-task"],
+    &["codespace", "ports"],
 ];
 
 const GH_ALIASES: [(&str, [&str; 2]); 1] = [("co", ["pr", "checkout"])];
@@ -193,54 +160,71 @@ fn listed(list: &[&[&str]], path: &[String]) -> bool {
         .any(|entry| entry.len() == path.len() && entry.iter().zip(path).all(|(a, b)| a == b))
 }
 
-pub fn check_subcommand(args: &[Token], terminator: Option<&Token>) -> Option<Verdict> {
+fn takes_next_word(flag: &str) -> bool {
+    if flag.contains('=') || GH_FLAGS_WITHOUT_VALUE.contains(&flag) {
+        return false;
+    }
+    match flag.strip_prefix("--") {
+        Some(name) => !name.is_empty(),
+        None => flag.starts_with('-') && flag.len() == 2,
+    }
+}
+
+fn undeterminable(token: &Token) -> Verdict {
+    Verdict::Deny(format!(
+        "{} comes before the end of the gh subcommand and contains a shell expansion or pattern, so which subcommand gh would run cannot be determined. Write the subcommand out literally, and put the flags after it.",
+        shown(token)
+    ))
+}
+
+pub fn check_subcommand(args: &[Token]) -> Option<Verdict> {
     let mut path: Vec<String> = Vec::new();
-    let mut skip_next = false;
-    for token in args {
-        if skip_next {
-            skip_next = false;
+    let mut rest = args.iter();
+
+    while let Some(token) = rest.next() {
+        if !matches!(shape(&token.raw), Shape::Literal) {
+            return Some(undeterminable(token));
+        }
+
+        let value = token.value.as_str();
+        if takes_next_word(value) {
+            if let Some(skipped) = rest.next()
+                && matches!(shape(&skipped.raw), Shape::Splitting)
+            {
+                return Some(undeterminable(skipped));
+            }
             continue;
         }
-        if GH_VALUE_FLAGS.contains(&token.value.as_str()) {
-            skip_next = true;
+        if value != "--" && (value.is_empty() || value.starts_with('-')) {
             continue;
         }
-        if token.value.starts_with('-') {
-            continue;
+
+        path.push(value.to_string());
+        if let Some((_, target)) = GH_ALIASES.iter().find(|(name, _)| path == [*name]) {
+            path = target.iter().map(|part| part.to_string()).collect();
         }
-        path.push(token.value.clone());
+
+        if let Some(command) = exception::command(&path) {
+            return Some(exception::check(command, args));
+        }
+        if listed(READ_GH_COMMANDS, &path) {
+            return None;
+        }
         if path.len() == 3 {
             break;
         }
     }
 
-    if let Some((_, target)) = path
-        .first()
-        .and_then(|head| GH_ALIASES.iter().find(|(name, _)| name == head))
-    {
-        let mut expanded: Vec<String> = target.iter().map(|part| part.to_string()).collect();
-        expanded.extend_from_slice(&path[1..]);
-        expanded.truncate(3);
-        path = expanded;
-    }
-
-    if path.is_empty() {
+    if path.is_empty() || listed(BARE_READ_GH_COMMANDS, &path) {
         return None;
     }
 
-    if let Some(command) = exception::command(&path) {
-        return Some(exception::check(command, args, terminator));
-    }
-
-    if (1..=path.len()).any(|length| listed(READ_GH_COMMANDS, &path[..length])) {
-        return None;
-    }
-
-    if path.len() == 1 && HELP_ONLY_GROUPS.contains(&path[0].as_str()) {
-        return None;
-    }
-
-    let named = path[..path.len().min(2)].join(" ");
+    let group = path.len().min(2);
+    let named = if listed(BARE_READ_GH_COMMANDS, &path[..group]) {
+        path.join(" ")
+    } else {
+        path[..group].join(" ")
+    };
     Some(Verdict::Deny(format!(
         "`gh {named}` is not on this hook's allow-list of gh subcommands that only read from GitHub, so it cannot be shown to leave GitHub unchanged. Read the data with a gh command that is on the list, or ask the user to run this one. If `gh {named}` really only reads, the allow-list in claude-gh-admission-hook is what needs the entry."
     )))
@@ -380,10 +364,10 @@ fn normalize_endpoint(endpoint: &str) -> String {
 
 pub fn check_api(args: &[Token]) -> Result<Option<Verdict>, Unanalyzable> {
     for token in args {
-        if splits_into_words(&token.raw) {
+        if matches!(shape(&token.raw), Shape::Splitting) {
             return Ok(Some(Verdict::Deny(format!(
-                "An argument of `gh api` contains an unquoted shell expansion ({}), which can split into further arguments, so the request that would actually be sent cannot be determined. Quote the expansion, or write the request out with literal values.",
-                token.raw
+                "An argument of `gh api` contains an unquoted shell expansion or pattern ({}), which can turn into further arguments, so the request that would actually be sent cannot be determined. Quote it, or write the request out with literal values.",
+                shown(token)
             ))));
         }
     }
