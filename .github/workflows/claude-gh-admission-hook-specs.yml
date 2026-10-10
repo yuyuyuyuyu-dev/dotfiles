@@ -40,8 +40,6 @@ jobs:
 
       # Act & Assert
       - uses: ./.github/actions/claude-gh-admission-hook-specs/read-only
-        with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   pull-request-create:
     name: should ask before creating a draft pull request, as an exception
@@ -145,8 +143,6 @@ jobs:
 
       # Act & Assert
       - uses: ./.github/actions/claude-gh-admission-hook-specs/actionable-denial
-        with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   unnecessary-changes:
     name: should make no unnecessary changes

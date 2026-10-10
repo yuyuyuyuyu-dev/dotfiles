@@ -1,122 +1,133 @@
 name: should restrict GitHub access to read-only permission
 description: A spec of claude-gh-admission-hook.
 
-inputs:
-  hook:
-    description: The claude-gh-admission-hook executable to run the payloads through.
-    required: true
-
 runs:
   using: composite
   steps:
     - name: should deny creating a pull request
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title x --body y"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny pushing tags
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --tags"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny creating a tag
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git tag v1.0.0"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny creating a release
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny a POST sent with gh api
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X POST /repos/o/r/issues"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny a PUT sent with gh api
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X PUT /repos/o/r/topics"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny a PATCH sent with gh api
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X PATCH /repos/o/r"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny a DELETE sent with gh api
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X DELETE /repos/o/r"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny a POST sent with curl
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X POST https://api.github.com/repos/o/r/issues"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny a PUT sent with curl
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X PUT https://api.github.com/repos/o/r/topics"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny a PATCH sent with curl
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X PATCH https://api.github.com/repos/o/r"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny a DELETE sent with curl
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X DELETE https://api.github.com/repos/o/r"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny a POST sent with wget
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"wget --method=POST https://api.github.com/repos/o/r/issues"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny a PUT sent with wget
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"wget --method=PUT https://api.github.com/repos/o/r/topics"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny a PATCH sent with wget
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"wget --method=PATCH https://api.github.com/repos/o/r"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
     - name: should deny a DELETE sent with wget
       shell: bash
+      # Arrange
       env:
-        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"wget --method=DELETE https://api.github.com/repos/o/r"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
