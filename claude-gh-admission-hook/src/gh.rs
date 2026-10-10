@@ -1,4 +1,6 @@
-use crate::shell::{Shape, Token, Unanalyzable, has_expansion, shape, shown};
+use crate::shell::{
+    SUBST_PLACEHOLDER, Shape, Token, Unanalyzable, has_expansion, literal, shape, shown,
+};
 use crate::{Verdict, exception};
 use regex::Regex;
 use std::sync::LazyLock;
@@ -182,7 +184,7 @@ pub fn check_subcommand(args: &[Token]) -> Option<Verdict> {
     let mut rest = args.iter();
 
     while let Some(token) = rest.next() {
-        if !matches!(shape(&token.raw), Shape::Literal) {
+        if !literal(token) {
             return Some(undeterminable(token));
         }
 
@@ -237,10 +239,18 @@ struct Api {
     body_params: bool,
     queries: Vec<String>,
     opaque_query: bool,
+    expanded_query: bool,
+    flag_like: Option<String>,
 }
 
-fn collect(pair: &str, api: &mut Api) {
+fn collect(pair: &str, token: &Token, api: &mut Api) {
     let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
+    if !literal(token)
+        && (has_expansion(key) || key.contains(SUBST_PLACEHOLDER) || key.trim() == "query")
+    {
+        api.expanded_query = true;
+        return;
+    }
     if key.trim() != "query" {
         return;
     }
@@ -259,6 +269,8 @@ fn parse_api(args: &[Token]) -> Result<Api, Unanalyzable> {
         body_params: false,
         queries: Vec::new(),
         opaque_query: false,
+        expanded_query: false,
+        flag_like: None,
     };
 
     let mut index = 0;
@@ -283,7 +295,7 @@ fn parse_api(args: &[Token]) -> Result<Api, Unanalyzable> {
                 api.method_raw = Some(token.raw.clone());
             } else if FIELD_FLAGS.contains(&name) {
                 api.body_params = true;
-                collect(inline, &mut api);
+                collect(inline, token, &mut api);
             } else if name == "--input" {
                 api.body_params = true;
                 api.opaque_query = true;
@@ -303,8 +315,7 @@ fn parse_api(args: &[Token]) -> Result<Api, Unanalyzable> {
                 api.method_raw = Some(next.raw.clone());
             } else if FIELD_FLAGS.contains(&value) {
                 api.body_params = true;
-                let field = next.value.clone();
-                collect(&field, &mut api);
+                collect(&next.value, next, &mut api);
             } else if value == "--input" {
                 api.body_params = true;
                 api.opaque_query = true;
@@ -329,8 +340,7 @@ fn parse_api(args: &[Token]) -> Result<Api, Unanalyzable> {
 
         if value.len() > 2 && (value.starts_with("-f") || value.starts_with("-F")) {
             api.body_params = true;
-            let field = value[2..].to_string();
-            collect(&field, &mut api);
+            collect(&value[2..], token, &mut api);
             index += 1;
             continue;
         }
@@ -344,6 +354,12 @@ fn parse_api(args: &[Token]) -> Result<Api, Unanalyzable> {
             return Err(Unanalyzable(format!("unknown flag {value}")));
         }
 
+        if !literal(token)
+            && (has_expansion(value) || value.contains(SUBST_PLACEHOLDER))
+            && !value.starts_with(|first: char| first.is_ascii_alphanumeric() || first == '/')
+        {
+            api.flag_like.get_or_insert_with(|| shown(token));
+        }
         if api.endpoint.is_none() {
             api.endpoint = Some(value.to_string());
         }
@@ -374,6 +390,12 @@ pub fn check_api(args: &[Token]) -> Result<Option<Verdict>, Unanalyzable> {
 
     let api = parse_api(args)?;
 
+    if let Some(word) = api.flag_like.as_deref() {
+        return Ok(Some(Verdict::Deny(format!(
+            "An argument of `gh api` ({word}) comes out of a shell expansion and is not the value of a flag, so it could turn out to be a flag that changes the request. Start it with literal text, or write it out literally."
+        ))));
+    }
+
     let Some(endpoint) = api.endpoint.as_deref() else {
         return Err(Unanalyzable("no endpoint".to_string()));
     };
@@ -382,6 +404,12 @@ pub fn check_api(args: &[Token]) -> Result<Option<Verdict>, Unanalyzable> {
         if api.opaque_query {
             return Ok(Some(Verdict::Deny(
                 "The query body of `gh api graphql` is read from a file or stdin, so it cannot be shown to be free of mutations. Pass the query inline, as -f query='query { ... }', and it can be checked."
+                    .to_string(),
+            )));
+        }
+        if api.expanded_query {
+            return Ok(Some(Verdict::Deny(
+                "A field of `gh api graphql` comes out of a shell expansion and could be the query, so the query cannot be shown to be free of mutations. Write the query out literally, and pass what varies as a GraphQL variable with -F."
                     .to_string(),
             )));
         }
