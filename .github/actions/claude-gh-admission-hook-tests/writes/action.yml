@@ -372,3 +372,90 @@ runs:
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
         echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a request that a quoted expansion could add a method to
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api repos/o/r/git/refs/heads/x \"$FLAG\""}}'
+        SENTENCE: >-
+          An argument of `gh api` (\"$FLAG\") comes out of a shell expansion and
+          is not the value of a flag, so it could turn out to be a flag that
+          changes the request. Start it with literal text, or write it out
+          literally.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a GraphQL query that comes out of a shell expansion
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api graphql -f query=\"$QUERY\""}}'
+        SENTENCE: >-
+          A field of `gh api graphql` comes out of a shell expansion and could be
+          the query, so the query cannot be shown to be free of mutations. Write
+          the query out literally, and pass what varies as a GraphQL variable with
+          -F.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a GraphQL field that a shell expansion could make the query
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api graphql -f query=query{viewer{login}} -f \"$FIELD\""}}'
+        SENTENCE: >-
+          A field of `gh api graphql` comes out of a shell expansion and could be
+          the query, so the query cannot be shown to be free of mutations. Write
+          the query out literally, and pass what varies as a GraphQL variable with
+          -F.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a group of subcommands that xargs could complete into a write
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"echo merge 5 | xargs gh pr"}}'
+        SENTENCE: >-
+          This gh command is run through xargs or parallel, which adds arguments
+          that this hook cannot see, and they could turn it into a write. Give gh
+          all of its arguments on the command line itself.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a request that xargs could add a method to
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"echo -X DELETE | xargs gh api repos/o/r/git/refs/heads/x"}}'
+        SENTENCE: >-
+          This gh command is run through xargs or parallel, which adds arguments
+          that this hook cannot see, and they could turn it into a write. Give gh
+          all of its arguments on the command line itself.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a group of subcommands that parallel could complete into a write
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"echo merge 5 | parallel gh pr"}}'
+        SENTENCE: >-
+          This gh command is run through xargs or parallel, which adds arguments
+          that this hook cannot see, and they could turn it into a write. Give gh
+          all of its arguments on the command line itself.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"

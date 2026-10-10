@@ -13,6 +13,7 @@ static HEREDOC: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r#"<<-?\s*(?:'([^']*)'|"([^"]*)"|\\?([A-Za-z_][A-Za-z0-9_]*))"#).unwrap()
 });
 
+#[derive(Clone)]
 pub struct Token {
     pub value: String,
     pub raw: String,
@@ -301,6 +302,18 @@ fn word(chars: &[char], index: &mut usize) -> Result<(String, String), Unanalyza
 
 pub fn has_expansion(raw: &str) -> bool {
     raw.contains('$') || raw.contains('`')
+}
+
+pub fn literal(token: &Token) -> bool {
+    matches!(shape(&token.raw), Shape::Literal)
+}
+
+pub fn unseen() -> Token {
+    Token {
+        value: SUBST_PLACEHOLDER.to_string(),
+        raw: SUBST_PLACEHOLDER.to_string(),
+        separator: false,
+    }
 }
 
 pub enum Shape {

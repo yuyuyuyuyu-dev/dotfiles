@@ -13,6 +13,7 @@ const WRAPPERS: [&str; 10] = [
 const RUNNERS: [&str; 7] = [
     "xargs", "timeout", "watch", "parallel", "ionice", "flock", "retry",
 ];
+const FEEDERS: [&str; 2] = ["xargs", "parallel"];
 const SHELLS: [&str; 5] = ["bash", "sh", "zsh", "dash", "ksh"];
 
 static CONTINUATION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\\\r?\n").unwrap());
@@ -79,7 +80,7 @@ pub fn check_command(text: &str, depth: u32) -> Vec<Verdict> {
     verdicts
 }
 
-fn commands(segment: &[Token]) -> Vec<&[Token]> {
+fn commands(segment: &[Token]) -> Vec<(&[Token], bool)> {
     let mut segment = segment;
     while segment.first().is_some_and(|token| {
         ASSIGNMENT.is_match(&token.value) || KEYWORDS.contains(&token.value.as_str())
@@ -92,7 +93,7 @@ fn commands(segment: &[Token]) -> Vec<&[Token]> {
         WRAPPERS.contains(&name) || RUNNERS.contains(&name)
     });
     if !launches {
-        return vec![segment];
+        return vec![(segment, false)];
     }
 
     (1..segment.len())
@@ -102,8 +103,42 @@ fn commands(segment: &[Token]) -> Vec<&[Token]> {
                 || SHELLS.contains(&name)
                 || http::HTTP_CLIENTS.contains(&name)
         })
-        .map(|index| &segment[index..])
+        .map(|index| {
+            let fed = segment[..index]
+                .iter()
+                .any(|token| FEEDERS.contains(&shell::basename(&token.value)));
+            (&segment[index..], fed)
+        })
         .collect()
+}
+
+fn check_gh(args: &[Token]) -> Option<Verdict> {
+    if args[0].value == "api" {
+        return match gh::check_api(&args[1..]) {
+            Ok(verdict) => verdict,
+            Err(reason) => Some(Verdict::Deny(format!(
+                "The `gh api` invocation could not be parsed ({reason}), so the request it would send cannot be determined, and a request that cannot be read cannot be shown to be a read."
+            ))),
+        };
+    }
+    gh::check_subcommand(args)
+}
+
+fn check_fed_gh(args: &[Token]) -> Option<Verdict> {
+    let written = check_gh(args);
+    if matches!(written, Some(Verdict::Deny(_))) {
+        return written;
+    }
+
+    let mut extended = args.to_vec();
+    extended.push(shell::unseen());
+    match check_gh(&extended) {
+        Some(Verdict::Deny(_)) => Some(Verdict::Deny(
+            "This gh command is run through xargs or parallel, which adds arguments that this hook cannot see, and they could turn it into a write. Give gh all of its arguments on the command line itself."
+                .to_string(),
+        )),
+        _ => written,
+    }
 }
 
 fn check_tokens(
@@ -113,7 +148,7 @@ fn check_tokens(
     verdicts: &mut Vec<Verdict>,
 ) {
     let found = shell::segments(tokens);
-    for command in found.iter().flat_map(|segment| commands(segment)) {
+    for (command, fed) in found.iter().flat_map(|segment| commands(segment)) {
         let Some(head) = command.first() else {
             continue;
         };
@@ -155,15 +190,10 @@ fn check_tokens(
             continue;
         }
 
-        if args[0].value == "api" {
-            match gh::check_api(&args[1..]) {
-                Ok(verdict) => verdicts.extend(verdict),
-                Err(reason) => verdicts.push(Verdict::Deny(format!(
-                    "The `gh api` invocation could not be parsed ({reason}), so the request it would send cannot be determined, and a request that cannot be read cannot be shown to be a read."
-                ))),
-            }
+        if fed {
+            verdicts.extend(check_fed_gh(args));
         } else {
-            verdicts.extend(gh::check_subcommand(args));
+            verdicts.extend(check_gh(args));
         }
     }
 }
