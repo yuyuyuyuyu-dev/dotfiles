@@ -304,6 +304,25 @@ pub fn has_expansion(raw: &str) -> bool {
     raw.contains('$') || raw.contains('`')
 }
 
+pub fn expands(text: &str) -> bool {
+    has_expansion(text) || text.contains(SUBST_PLACEHOLDER)
+}
+
+pub fn splits(token: &Token) -> bool {
+    matches!(shape(&token.raw), Shape::Splitting)
+}
+
+pub fn may_be_flag(token: &Token) -> bool {
+    if literal(token) {
+        return false;
+    }
+    let value = token.value.as_str();
+    if value.starts_with('-') {
+        return expands(value.split('=').next().unwrap_or(value));
+    }
+    value.starts_with(['$', '`']) || value.starts_with(SUBST_PLACEHOLDER)
+}
+
 pub fn literal(token: &Token) -> bool {
     matches!(shape(&token.raw), Shape::Literal)
 }

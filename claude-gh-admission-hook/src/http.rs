@@ -1,5 +1,5 @@
 use crate::Verdict;
-use crate::shell::{Token, has_expansion};
+use crate::shell::{Token, has_expansion, may_be_flag, shown, splits};
 use regex::Regex;
 use std::sync::LazyLock;
 
@@ -38,6 +38,71 @@ const BODY_FLAGS: [&str; 14] = [
 ];
 const UPLOAD_FLAGS: [&str; 2] = ["-T", "--upload-file"];
 
+const METHOD_FLAGS: [&str; 3] = ["-X", "--request", "--method"];
+const CURL_VALUE_FLAGS: [&str; 22] = [
+    "--header",
+    "--output",
+    "--user",
+    "--user-agent",
+    "--referer",
+    "--cookie",
+    "--cookie-jar",
+    "--write-out",
+    "--max-time",
+    "--connect-timeout",
+    "--retry",
+    "--retry-delay",
+    "--retry-max-time",
+    "--proxy",
+    "--url",
+    "--cacert",
+    "--cert",
+    "--key",
+    "--range",
+    "--resolve",
+    "--dump-header",
+    "--stderr",
+];
+const WGET_VALUE_FLAGS: [&str; 10] = [
+    "--header",
+    "--output-document",
+    "--user-agent",
+    "--user",
+    "--password",
+    "--tries",
+    "--timeout",
+    "--directory-prefix",
+    "--output-file",
+    "--wait",
+];
+const CURL_VALUE_LETTERS: &str = "HouAebcwmxrDEyYzKCXdFT";
+const WGET_VALUE_LETTERS: &str = "OUtTPoawQADe";
+
+fn takes_next_word(name: &str, flag: &str) -> bool {
+    let (words, letters): (&[&str], &str) = if name == "wget" {
+        (&WGET_VALUE_FLAGS, WGET_VALUE_LETTERS)
+    } else {
+        (&CURL_VALUE_FLAGS, CURL_VALUE_LETTERS)
+    };
+
+    if flag.starts_with("--") {
+        return words.contains(&flag)
+            || METHOD_FLAGS.contains(&flag)
+            || BODY_FLAGS.contains(&flag)
+            || UPLOAD_FLAGS.contains(&flag);
+    }
+    let Some(bundle) = flag.strip_prefix('-') else {
+        return false;
+    };
+    match bundle
+        .char_indices()
+        .find(|(_, letter)| letters.contains(*letter))
+    {
+        Some((offset, letter)) => offset + letter.len_utf8() == bundle.len(),
+        None => false,
+    }
+}
+
 pub fn github_variables(text: &str) -> Vec<String> {
     let mut names = Vec::new();
     for captures in ASSIGNMENT_VALUE.captures_iter(text) {
@@ -60,6 +125,8 @@ struct Request {
     force_get: bool,
     upload: bool,
     body: bool,
+    splitting: Option<String>,
+    flag_like: Option<String>,
 }
 
 fn read_short_bundle(value: &str, raw: &str, state: &mut Request) -> bool {
@@ -102,9 +169,17 @@ pub fn check(name: &str, args: &[Token], github_variables: &[String]) -> Option<
     let mut state = Request::default();
     let mut targets_github = false;
     let mut take_method_next = false;
+    let mut value_expected = false;
 
     for token in args {
         let value = token.value.as_str();
+
+        if splits(token) {
+            state.splitting.get_or_insert_with(|| shown(token));
+        } else if !value_expected && may_be_flag(token) {
+            state.flag_like.get_or_insert_with(|| shown(token));
+        }
+        value_expected = !value_expected && takes_next_word(name, value);
 
         if take_method_next {
             state.method = Some(value.to_string());
@@ -163,6 +238,17 @@ pub fn check(name: &str, args: &[Token], github_variables: &[String]) -> Option<
 
     if !targets_github {
         return None;
+    }
+
+    if let Some(word) = state.splitting.as_deref() {
+        return Some(Verdict::Deny(format!(
+            "An argument of `{name}` contains an unquoted shell expansion or pattern ({word}), which can turn into further arguments, so the request that would be sent to the GitHub API cannot be determined. Quote it, or write the request out with literal values."
+        )));
+    }
+    if let Some(word) = state.flag_like.as_deref() {
+        return Some(Verdict::Deny(format!(
+            "An argument of `{name}` ({word}) comes out of a shell expansion and is not the value of a flag this hook knows, so it could turn out to be a flag that changes the request sent to the GitHub API. Start it with literal text, or write it out literally."
+        )));
     }
 
     if let Some(raw) = state.method_raw.as_deref()

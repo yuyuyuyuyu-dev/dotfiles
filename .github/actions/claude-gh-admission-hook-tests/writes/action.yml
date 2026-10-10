@@ -459,3 +459,177 @@ runs:
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
         echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny when xargs could name the gh subcommand
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"echo pr merge 5 | xargs gh"}}'
+        SENTENCE: >-
+          This gh command is run through xargs or parallel, which adds arguments
+          that this hook cannot see, and they could turn it into a write. Give gh
+          all of its arguments on the command line itself.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny when an expansion could name the git subcommand
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git $COMMAND"}}'
+        SENTENCE: >-
+          $COMMAND comes before the end of the git subcommand and contains a shell
+          expansion or pattern, so which subcommand git would run cannot be
+          determined. Quote it if it is the value of a flag, and write the
+          subcommand out literally.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny when an unquoted expansion ahead of the git subcommand could name another one
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git -C $DIR status"}}'
+        SENTENCE: >-
+          $DIR comes before the end of the git subcommand and contains a shell
+          expansion or pattern, so which subcommand git would run cannot be
+          determined. Quote it if it is the value of a flag, and write the
+          subcommand out literally.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push that an unquoted expansion could add tags to
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin $REFS"}}'
+        SENTENCE: >-
+          An argument of `git push` contains an unquoted shell expansion or
+          pattern ($REFS), which can turn into further arguments, so it cannot be
+          shown that no tag is sent to the remote. Quote it, or write it out
+          literally.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push whose refspec comes out of a quoted expansion
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin \"$BRANCH\""}}'
+        SENTENCE: >-
+          An argument of `git push` (\"$BRANCH\") comes out of a shell expansion,
+          so it could turn out to be --tags or a refs/tags/ refspec, and it cannot
+          be shown that no tag is sent to the remote. Write the remote and the
+          branch out literally, or push HEAD.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push that xargs could add tags to
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"echo --tags | xargs git push origin"}}'
+        SENTENCE: >-
+          This git command is run through xargs or parallel, which adds arguments
+          that this hook cannot see, and they could turn it into a write. Give git
+          all of its arguments on the command line itself.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a tag listing that an unquoted expansion could turn into a new tag
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git tag -l $PATTERN"}}'
+        SENTENCE: >-
+          An argument of `git tag` contains an unquoted shell expansion or pattern
+          ($PATTERN), which can turn into further arguments, so it cannot be shown
+          that no tag is created or deleted. Quote it, or write it out literally.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a tag listing that a quoted expansion could add a flag to
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git tag --contains \"$COMMIT\""}}'
+        SENTENCE: >-
+          An argument of `git tag` (\"$COMMIT\") comes out of a shell expansion
+          and could turn out to be a flag that creates or deletes a tag. Give it
+          as --flag=value, start it with literal text, or write it out literally.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a ref update whose ref comes out of an expansion
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git update-ref \"$REF\" abc123"}}'
+        SENTENCE: >-
+          An argument of `git update-ref` (\"$REF\") comes out of a shell
+          expansion, so it could turn out to name a ref under refs/tags/, and it
+          cannot be shown that no tag is created. Write the ref out literally.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a request to the GitHub API that an unquoted expansion could add a method to
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -s $ARGS https://api.github.com/repos/o/r"}}'
+        SENTENCE: >-
+          An argument of `curl` contains an unquoted shell expansion or pattern
+          ($ARGS), which can turn into further arguments, so the request that
+          would be sent to the GitHub API cannot be determined. Quote it, or write
+          the request out with literal values.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a request to the GitHub API that a quoted expansion could add a method to
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -s \"$FLAG\" https://api.github.com/repos/o/r"}}'
+        SENTENCE: >-
+          An argument of `curl` (\"$FLAG\") comes out of a shell expansion and is
+          not the value of a flag this hook knows, so it could turn out to be a
+          flag that changes the request sent to the GitHub API. Start it with
+          literal text, or write it out literally.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a request to the GitHub API that xargs could add a method to
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"echo -X DELETE | xargs curl https://api.github.com/repos/o/r"}}'
+        SENTENCE: >-
+          This curl command is run through xargs or parallel, which adds arguments
+          that this hook cannot see, and they could turn it into a write. Give
+          curl all of its arguments on the command line itself.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
