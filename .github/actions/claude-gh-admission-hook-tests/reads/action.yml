@@ -2,7 +2,7 @@ name: should let reads through
 description: Tests of claude-gh-admission-hook.
 
 inputs:
-  guard:
+  hook:
     description: The claude-gh-admission-hook executable to run the payloads through.
     required: true
 
@@ -12,107 +12,107 @@ runs:
     - name: should let pull requests be listed
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr list"}}'
       run: |
-        decision=$(echo "$PAYLOAD" | "$GUARD")
+        decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
 
     - name: should let a pull request be read
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr view 5"}}'
       run: |
-        decision=$(echo "$PAYLOAD" | "$GUARD")
+        decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
 
     - name: should let the diff of a pull request be read
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr diff 5"}}'
       run: |
-        decision=$(echo "$PAYLOAD" | "$GUARD")
+        decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
 
     - name: should let an issue be read
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh issue view 12"}}'
       run: |
-        decision=$(echo "$PAYLOAD" | "$GUARD")
+        decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
 
     - name: should let a repository be read
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh repo view"}}'
       run: |
-        decision=$(echo "$PAYLOAD" | "$GUARD")
+        decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
 
     - name: should let releases be listed
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release list"}}'
       run: |
-        decision=$(echo "$PAYLOAD" | "$GUARD")
+        decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
 
     - name: should let a workflow run be read
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh run view 123"}}'
       run: |
-        decision=$(echo "$PAYLOAD" | "$GUARD")
+        decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
 
     - name: should let the REST API be read
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api /repos/o/r/issues"}}'
       run: |
-        decision=$(echo "$PAYLOAD" | "$GUARD")
+        decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
 
     - name: should let a GraphQL query be sent
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api graphql -f query=query{viewer{login}}"}}'
       run: |
-        decision=$(echo "$PAYLOAD" | "$GUARD")
+        decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
 
     - name: should let tags be listed
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git tag -l"}}'
       run: |
-        decision=$(echo "$PAYLOAD" | "$GUARD")
+        decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
 
     - name: should let a branch be pushed
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin main"}}'
       run: |
-        decision=$(echo "$PAYLOAD" | "$GUARD")
+        decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
 
     - name: should let the API be read with curl
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl https://api.github.com/repos/o/r"}}'
       run: |
-        decision=$(echo "$PAYLOAD" | "$GUARD")
+        decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }

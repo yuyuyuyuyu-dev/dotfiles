@@ -41,7 +41,7 @@ jobs:
       # Act & Assert
       - uses: ./.github/actions/claude-gh-admission-hook-specs/read-only
         with:
-          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   pull-request-create:
     name: should ask before creating a draft pull request, as an exception
@@ -146,7 +146,7 @@ jobs:
       # Act & Assert
       - uses: ./.github/actions/claude-gh-admission-hook-specs/actionable-denial
         with:
-          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   unnecessary-changes:
     name: should make no unnecessary changes
@@ -161,7 +161,7 @@ jobs:
           image: rust
           arrange: cargo build --release --locked --manifest-path claude-gh-admission-hook/Cargo.toml
           act: |
-            guard=claude-gh-admission-hook/target/release/claude-gh-admission-hook
-            echo '{"tool_name":"Bash","tool_input":{"command":"gh pr list"}}' | "$guard"
-            echo '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}' | "$guard"
-            echo '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x"}}' | "$guard"
+            hook=claude-gh-admission-hook/target/release/claude-gh-admission-hook
+            echo '{"tool_name":"Bash","tool_input":{"command":"gh pr list"}}' | "$hook"
+            echo '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}' | "$hook"
+            echo '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x"}}' | "$hook"

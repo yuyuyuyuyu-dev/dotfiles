@@ -2,7 +2,7 @@ name: should explain a denial well enough for Claude to act on it
 description: A spec of claude-gh-admission-hook.
 
 inputs:
-  guard:
+  hook:
     description: The claude-gh-admission-hook executable to run the payloads through.
     required: true
 
@@ -12,21 +12,21 @@ runs:
     - name: should state the rule the denial comes from
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
         SENTENCE: >-
           GitHub access is read-only under this hook: every write is denied, and
           the only exceptions are creating a draft pull request, editing a draft
           pull request, creating a draft release and editing a draft release,
           which are put to the user for approval instead.
-      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
+      run: echo "$PAYLOAD" | "$HOOK" | grep -F -- "$SENTENCE"
 
     - name: should tell Claude to report a denial that looks like a fault
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
         SENTENCE: >-
           If the command only reads and this denial looks like a fault in the
           hook, report that to the user instead of working around it.
-      run: echo "$PAYLOAD" | "$GUARD" | grep -F -- "$SENTENCE"
+      run: echo "$PAYLOAD" | "$HOOK" | grep -F -- "$SENTENCE"

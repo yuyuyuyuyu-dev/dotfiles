@@ -21,7 +21,7 @@ jobs:
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/reads
         with:
-          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   writes:
     name: should deny the writes that are not exceptions
@@ -34,7 +34,7 @@ jobs:
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/writes
         with:
-          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   pull-request-create:
     name: should ask about a new pull request only when it is surely a draft
@@ -47,7 +47,7 @@ jobs:
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/pull-request-create
         with:
-          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   pull-request-edit:
     name: should ask about a pull request edit only when it surely reaches an open draft
@@ -60,7 +60,7 @@ jobs:
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/pull-request-edit
         with:
-          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   release-create:
     name: should ask about a new release only when it is surely a draft
@@ -73,7 +73,7 @@ jobs:
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/release-create
         with:
-          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   release-edit:
     name: should ask about a release edit only when it surely reaches a draft
@@ -86,7 +86,7 @@ jobs:
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/release-edit
         with:
-          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
 
   actionable-denial:
     name: should say in a denial what was rejected and what to do instead
@@ -99,4 +99,4 @@ jobs:
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/actionable-denial
         with:
-          guard: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook

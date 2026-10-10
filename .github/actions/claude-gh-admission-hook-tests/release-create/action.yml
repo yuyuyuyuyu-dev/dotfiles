@@ -2,7 +2,7 @@ name: should ask about a new release only when it is surely a draft
 description: Tests of claude-gh-admission-hook.
 
 inputs:
-  guard:
+  hook:
     description: The claude-gh-admission-hook executable to run the payloads through.
     required: true
 
@@ -12,76 +12,76 @@ runs:
     - name: should ask when the draft flag is given in its short form
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 -d --generate-notes"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
 
     - name: should ask when files are attached to the draft
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 --draft dist/app.tar.gz"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the notes come from a quoted command substitution
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 --draft --notes \"$(cat notes.md)\""}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the creation is hidden in a nested shell
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh release create v1.0.0 --draft\""}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the repository is named before the subcommand
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh -R owner/repo release create v1.0.0 --draft"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"ask"'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
 
     - name: should deny when the draft flag is switched off
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 --draft=false"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
 
     - name: should deny when --draft is only the value of another flag
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 --notes --draft"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
 
     - name: should deny when --draft is only part of a comment
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 # --draft"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
 
     - name: should deny when an unquoted expansion could turn into further flags
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 --draft $EXTRA"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
 
     - name: should deny when further flags could follow a redirection unseen
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 --draft > /dev/null --draft=false"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
 
     - name: should deny a flag GitHub has not shipped yet
       shell: bash
       env:
-        GUARD: ${{ inputs.guard }}
+        HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 --draft --some-future-flag x"}}'
-      run: echo "$PAYLOAD" | "$GUARD" | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
