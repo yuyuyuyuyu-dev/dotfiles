@@ -678,3 +678,222 @@ runs:
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
         echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push when the git configuration makes every push send tags
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin HEAD"}}'
+        SENTENCE: >-
+          `git push` would also send tags, because push.followTags is on in the
+          git configuration, and sending a tag creates it on the remote. Ask the
+          user to push, or to turn push.followTags off.
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet
+        git config push.followTags 'true'
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push when the git configuration makes a remote a mirror
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin HEAD"}}'
+        SENTENCE: >-
+          `git push` could mirror every ref, tags included, because
+          remote.origin.mirror is on in the git configuration. Ask the user to
+          push.
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet
+        git config remote.origin.url 'https://github.com/owner/repo'
+        git config remote.origin.mirror 'true'
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push that names nothing when the git configuration makes that a tag refspec
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push"}}'
+        SENTENCE: >-
+          `git push` names nothing to push, and remote.origin.push in the git
+          configuration makes that refs/tags/*:refs/tags/*, which does not surely
+          reach a branch. Name what to push, as in `git push origin HEAD`.
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet
+        git config remote.origin.url 'https://github.com/owner/repo'
+        git config remote.origin.push 'refs/tags/*:refs/tags/*'
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push that names nothing when the git configuration has a branch follow a tag
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push"}}'
+        SENTENCE: >-
+          `git push` names nothing to push, and branch.main.merge in the git
+          configuration points at refs/tags/v1.0.0, which is not a branch. Name
+          what to push, as in `git push origin HEAD`.
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet
+        git config branch.main.merge 'refs/tags/v1.0.0'
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push when the command line sets the git configuration to send tags
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git -c push.followTags=true push origin HEAD"}}'
+        SENTENCE: >-
+          `git push` would also send tags, because push.followTags is on in the
+          git configuration, and sending a tag creates it on the remote. Ask the
+          user to push, or to turn push.followTags off.
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push by the git configuration of the directory the payload names
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
+        SENTENCE: >-
+          `git push` would also send tags, because push.followTags is on in the
+          git configuration, and sending a tag creates it on the remote. Ask the
+          user to push, or to turn push.followTags off.
+      run: |
+        repository=$(mktemp -d)
+        git init --quiet "$repository"
+        git -C "$repository" config push.followTags true
+        PAYLOAD=$(printf '{"tool_name":"Bash","cwd":"%s","tool_input":{"command":"git push origin HEAD"}}' "$repository")
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push when the git configuration cannot be looked up
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        SENTENCE: >-
+          `git push` is let through only after this hook has looked at the git
+          configuration it would run under, and that could not be done: `git
+          config` could not be started
+      run: |
+        PAYLOAD='{"tool_name":"Bash","cwd":"/no/such/directory","tool_input":{"command":"git push origin HEAD"}}'
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push when the directory ahead of it comes out of an expansion
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git -C \"$DIR\" push origin HEAD"}}'
+        SENTENCE: >-
+          \"$DIR\" comes ahead of `git push` and out of a shell expansion, so the
+          git configuration the push would run under cannot be looked up. Write it
+          out literally.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push in a command that also changes the git configuration
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git config push.followTags true && git push origin HEAD"}}'
+        SENTENCE: >-
+          `git push` is let through only after this hook has looked at the git
+          configuration it would run under, and this command also changes the git
+          configuration with `git config`, so that configuration could be another
+          one by the time the push runs. Run `git push` in a call of its own.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push in a command that also changes a remote
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git remote add mirror https://github.com/owner/mirror && git push mirror HEAD"}}'
+        SENTENCE: >-
+          `git push` is let through only after this hook has looked at the git
+          configuration it would run under, and this command also changes a remote
+          with `git remote`, so that configuration could be another one by the
+          time the push runs. Run `git push` in a call of its own.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push in a command that also changes the directory
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"cd ../other && git push origin HEAD"}}'
+        SENTENCE: >-
+          `git push` is let through only after this hook has looked at the git
+          configuration it would run under, and this command also changes the
+          directory, so that configuration could be another one by the time the
+          push runs. Run `git push` in a call of its own.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push in a command that also sets a git environment variable
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=push.followTags GIT_CONFIG_VALUE_0=true git push origin HEAD"}}'
+        SENTENCE: >-
+          `git push` is let through only after this hook has looked at the git
+          configuration it would run under, and this command also sets a GIT_
+          environment variable, so that configuration could be another one by the
+          time the push runs. Run `git push` in a call of its own.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a push in a command that also mentions a git configuration file
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"echo followTags=true >> .git/config; git push origin HEAD"}}'
+        SENTENCE: >-
+          `git push` is let through only after this hook has looked at the git
+          configuration it would run under, and this command also mentions the
+          .git directory or a git configuration file, so that configuration could
+          be another one by the time the push runs. Run `git push` in a call of
+          its own.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"

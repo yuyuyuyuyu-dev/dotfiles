@@ -1,6 +1,8 @@
 use crate::Verdict;
+use crate::lookup;
 use crate::shell::{Token, literal, may_be_flag, shown, splits};
 use std::collections::HashSet;
+use std::process::Command;
 
 const GLOBAL_VALUE_FLAGS: [&str; 7] = [
     "-C",
@@ -59,10 +61,39 @@ const PUSH_VALUE_FLAGS: [&str; 6] = [
     "--exec",
     "--recurse-submodules",
 ];
+const CONFIG_READ_FLAGS: [&str; 6] = [
+    "--get",
+    "--get-all",
+    "--get-regexp",
+    "--get-urlmatch",
+    "--list",
+    "-l",
+];
+const CONFIG_READ_ACTIONS: [&str; 2] = ["get", "list"];
+const REMOTE_WRITE_ACTIONS: [&str; 9] = [
+    "add",
+    "rename",
+    "remove",
+    "rm",
+    "set-head",
+    "set-branches",
+    "set-url",
+    "prune",
+    "update",
+];
+const PUSH_SETTINGS: &str = r"^(push\.followtags|remote\..*\.(mirror|push)|branch\..*\.merge)$";
+const FALSE_VALUES: [&str; 4] = ["false", "no", "off", ""];
 const TAG_REF: &str = "refs/tags/";
 const BRANCH_REF: &str = "refs/heads/";
 
-fn subcommand(args: &[Token]) -> Result<Option<(&str, &[Token])>, &Token> {
+pub struct Push {
+    globals: Vec<String>,
+    bare: bool,
+}
+
+type Invocation<'a> = (&'a [Token], &'a str, &'a [Token]);
+
+fn subcommand(args: &[Token]) -> Result<Option<Invocation<'_>>, &Token> {
     let mut index = 0;
     while index < args.len() {
         let token = &args[index];
@@ -84,7 +115,7 @@ fn subcommand(args: &[Token]) -> Result<Option<(&str, &[Token])>, &Token> {
             index += 1;
             continue;
         }
-        return Ok(Some((value, &args[index + 1..])));
+        return Ok(Some((&args[..index], value, &args[index + 1..])));
     }
     Ok(None)
 }
@@ -114,6 +145,89 @@ fn reaches_a_branch(refspec: &str) -> bool {
         Some((_, destination)) => destination.starts_with(BRANCH_REF),
         None => refspec == "HEAD" || refspec.starts_with(BRANCH_REF),
     }
+}
+
+fn action(args: &[Token]) -> Option<&Token> {
+    args.iter().find(|token| !token.value.starts_with('-'))
+}
+
+fn reads_config(args: &[Token]) -> bool {
+    args.iter()
+        .any(|token| literal(token) && CONFIG_READ_FLAGS.contains(&token.value.as_str()))
+        || action(args).is_some_and(|token| {
+            literal(token) && CONFIG_READ_ACTIONS.contains(&token.value.as_str())
+        })
+}
+
+fn writes_remote(args: &[Token]) -> bool {
+    args.iter().any(|token| !literal(token))
+        || action(args).is_some_and(|token| REMOTE_WRITE_ACTIONS.contains(&token.value.as_str()))
+}
+
+fn on(value: Option<&str>) -> bool {
+    let Some(value) = value else {
+        return true;
+    };
+    let value = value.to_lowercase();
+    !FALSE_VALUES.contains(&value.as_str()) && value.parse::<i64>() != Ok(0)
+}
+
+pub fn judge(push: &Push, directory: Option<&str>) -> Option<Verdict> {
+    let mut command = Command::new("git");
+    command
+        .args(&push.globals)
+        .args(["config", "-z", "--get-regexp", PUSH_SETTINGS]);
+    if let Some(directory) = directory {
+        command.current_dir(directory);
+    }
+
+    let found = lookup::run(command).and_then(|answer| match answer.status {
+        Some(0 | 1) => Ok(answer.stdout),
+        _ => Err(answer.failure()),
+    });
+    let settings = match found {
+        Ok(settings) => settings,
+        Err(failure) => {
+            return Some(Verdict::Deny(format!(
+                "`git push` is let through only after this hook has looked at the git configuration it would run under, and that could not be done: `git config` {failure}."
+            )));
+        }
+    };
+
+    for setting in settings.split('\0').filter(|setting| !setting.is_empty()) {
+        let (key, value) = match setting.split_once('\n') {
+            Some((key, value)) => (key, Some(value)),
+            None => (setting, None),
+        };
+        let shown = value.unwrap_or_default();
+
+        if key == "push.followtags" && on(value) {
+            return Some(Verdict::Deny(
+                "`git push` would also send tags, because push.followTags is on in the git configuration, and sending a tag creates it on the remote. Ask the user to push, or to turn push.followTags off."
+                    .to_string(),
+            ));
+        }
+        if key.starts_with("remote.") && key.ends_with(".mirror") && on(value) {
+            return Some(Verdict::Deny(format!(
+                "`git push` could mirror every ref, tags included, because {key} is on in the git configuration. Ask the user to push."
+            )));
+        }
+        if !push.bare {
+            continue;
+        }
+        if key.starts_with("remote.") && key.ends_with(".push") && !reaches_a_branch(shown) {
+            return Some(Verdict::Deny(format!(
+                "`git push` names nothing to push, and {key} in the git configuration makes that {shown}, which does not surely reach a branch. Name what to push, as in `git push origin HEAD`."
+            )));
+        }
+        if key.starts_with("branch.") && key.ends_with(".merge") && !shown.starts_with(BRANCH_REF) {
+            return Some(Verdict::Deny(format!(
+                "`git push` names nothing to push, and {key} in the git configuration points at {shown}, which is not a branch. Name what to push, as in `git push origin HEAD`."
+            )));
+        }
+    }
+
+    None
 }
 
 fn splitting(name: &str, token: &Token, harm: &str) -> Verdict {
@@ -156,7 +270,7 @@ fn matched(flags: &HashSet<&str>, against: &[&str]) -> Option<String> {
 }
 
 pub fn check(args: &[Token]) -> Option<Verdict> {
-    let (name, rest) = match subcommand(args) {
+    let (globals, name, rest) = match subcommand(args) {
         Ok(found) => found?,
         Err(token) => {
             return Some(Verdict::Deny(format!(
@@ -223,7 +337,25 @@ pub fn check(args: &[Token]) -> Option<Verdict> {
                 "`git push` names {refspec}, and a bare name reaches a tag when a tag has that name, so it cannot be shown that no tag is sent to the remote. Push the branch that is checked out with `git push origin HEAD`, or name the branch in full, as in refs/heads/NAME or SOURCE:refs/heads/NAME."
             )));
         }
-        return None;
+        if let Some(token) = globals.iter().find(|token| !literal(token)) {
+            return Some(Verdict::Deny(format!(
+                "{} comes ahead of `git push` and out of a shell expansion, so the git configuration the push would run under cannot be looked up. Write it out literally.",
+                shown(token)
+            )));
+        }
+        return Some(Verdict::PassIfPushLeavesTags(Push {
+            globals: globals.iter().map(|token| token.value.clone()).collect(),
+            bare: refspecs(rest).is_empty(),
+        }));
+    }
+
+    if name == "config" && !reads_config(rest) {
+        return Some(Verdict::Unsettling(
+            "changes the git configuration with `git config`",
+        ));
+    }
+    if name == "remote" && writes_remote(rest) {
+        return Some(Verdict::Unsettling("changes a remote with `git remote`"));
     }
 
     if name == "update-ref" {

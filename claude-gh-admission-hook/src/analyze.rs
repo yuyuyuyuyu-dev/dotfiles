@@ -14,11 +14,18 @@ const RUNNERS: [&str; 7] = [
     "xargs", "timeout", "watch", "parallel", "ionice", "flock", "retry",
 ];
 const FEEDERS: [&str; 2] = ["xargs", "parallel"];
+const MOVERS: [&str; 3] = ["cd", "pushd", "popd"];
 const SHELLS: [&str; 5] = ["bash", "sh", "zsh", "dash", "ksh"];
 
 static CONTINUATION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\\\r?\n").unwrap());
 static ASSIGNMENT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[A-Za-z_][A-Za-z0-9_]*=").unwrap());
+
+static GIT_FILES: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(^|[^A-Za-z0-9_-])\.git(/|$|[^A-Za-z0-9_-])|gitconfig|git/config").unwrap()
+});
+static GIT_VARIABLE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^GIT_[A-Za-z0-9_]*=").unwrap());
 
 static GH_INVOCATION: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(^|[^A-Za-z0-9_])([^\s;|&()]*/)?gh\s").unwrap());
@@ -38,6 +45,11 @@ pub fn check_command(text: &str, depth: u32) -> Vec<Verdict> {
     }
 
     let text = CONTINUATION.replace_all(text, " ");
+    if GIT_FILES.is_match(&text) {
+        verdicts.push(Verdict::Unsettling(
+            "mentions the .git directory or a git configuration file",
+        ));
+    }
     let (text, expanded_bodies) = shell::strip_heredocs(&text);
     let github_variables = http::github_variables(&text);
     let (text, inners) = shell::extract_substitutions(&text);
@@ -112,6 +124,26 @@ fn commands(segment: &[Token]) -> Vec<(&[Token], bool)> {
         .collect()
 }
 
+fn unsettles(segment: &[Token]) -> Option<&'static str> {
+    if segment
+        .iter()
+        .any(|token| GIT_VARIABLE.is_match(&token.value))
+    {
+        return Some("sets a GIT_ environment variable");
+    }
+
+    let head = segment.iter().find(|token| {
+        let name = shell::basename(&token.value);
+        !ASSIGNMENT.is_match(&token.value)
+            && !KEYWORDS.contains(&token.value.as_str())
+            && !WRAPPERS.contains(&name)
+            && !token.value.starts_with('-')
+    })?;
+    MOVERS
+        .contains(&head.value.as_str())
+        .then_some("changes the directory")
+}
+
 fn check_gh(args: &[Token]) -> Option<Verdict> {
     let head = args.first()?;
     if head.value == "api" {
@@ -152,6 +184,12 @@ fn check_tokens(
     verdicts: &mut Vec<Verdict>,
 ) {
     let found = shell::segments(tokens);
+    verdicts.extend(
+        found
+            .iter()
+            .filter_map(|segment| unsettles(segment))
+            .map(Verdict::Unsettling),
+    );
     for (command, fed) in found.iter().flat_map(|segment| commands(segment)) {
         let Some(head) = command.first() else {
             continue;

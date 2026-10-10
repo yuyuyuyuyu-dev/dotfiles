@@ -153,15 +153,6 @@ runs:
         decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
 
-    - name: should let a branch be pushed when the directory comes out of a quoted expansion
-      shell: bash
-      env:
-        HOOK: ${{ inputs.hook }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git -C \"$DIR\" push origin HEAD"}}'
-      run: |
-        decision=$(echo "$PAYLOAD" | "$HOOK")
-        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
-
     - name: should let tags be listed when an expansion is given as --flag=value
       shell: bash
       env:
@@ -213,5 +204,60 @@ runs:
         HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -o ci.skip origin HEAD"}}'
       run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a branch be pushed when the git configuration keeps tags from following
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin HEAD"}}'
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet
+        git config push.followTags 'false'
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a push that names nothing through when the git configuration makes that a branch refspec
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push"}}'
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet
+        git config remote.origin.url 'https://github.com/owner/repo'
+        git config remote.origin.push 'refs/heads/*:refs/heads/*'
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a branch be pushed in a command that also commits
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git add . && git commit -m x && git push origin HEAD"}}'
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a branch be pushed in a command that only reads the git configuration
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git config --get user.name && git push origin HEAD"}}'
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet
         decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
