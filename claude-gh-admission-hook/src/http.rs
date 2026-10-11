@@ -78,6 +78,7 @@ const WGET_VALUE_FLAGS: [&str; 10] = [
 const CURL_VALUE_LETTERS: &str = "HouAebcwmxrDEyYzKCXdFT";
 const WGET_VALUE_LETTERS: &str = "OUtTPoawQADe";
 
+const CURL_WITHOUT_FILE: [&str; 2] = ["-q", "--disable"];
 const CURL_OPTION_FILES: [&str; 2] = ["--config", "-K"];
 const WGET_OPTION_FILES: [&str; 3] = ["--config", "--execute", "-e"];
 
@@ -124,6 +125,29 @@ fn reads_options(name: &str, flag: &str) -> bool {
     }
     value_letter(name, flag)
         .is_some_and(|(letter, _)| files.contains(&format!("-{letter}").as_str()))
+}
+
+fn unseen_options(name: &str, args: &[Token]) -> Option<Verdict> {
+    if name == "wget" {
+        if args.iter().any(|token| token.raw == "--no-config") {
+            return None;
+        }
+        return Some(Verdict::Deny(
+            "`wget` reads further options from its wgetrc file unless --no-config is given, and those options could change the request sent to the GitHub API. Add --no-config."
+                .to_string(),
+        ));
+    }
+
+    if args
+        .first()
+        .is_some_and(|token| CURL_WITHOUT_FILE.contains(&token.raw.as_str()))
+    {
+        return None;
+    }
+    Some(Verdict::Deny(
+        "`curl` reads further options from its .curlrc file unless -q is its first argument, and those options could change the request sent to the GitHub API. Put -q first, as in `curl -q URL`."
+            .to_string(),
+    ))
 }
 
 pub fn github_variables(text: &str) -> Vec<String> {
@@ -301,7 +325,7 @@ pub fn check(name: &str, args: &[Token], github_variables: &[String]) -> Option<
     };
 
     if READ_METHODS.contains(&effective.as_str()) {
-        return None;
+        return unseen_options(name, args);
     }
 
     Some(Verdict::Deny(format!(
