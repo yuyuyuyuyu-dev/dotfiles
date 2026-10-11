@@ -83,8 +83,194 @@ const REMOTE_WRITE_ACTIONS: [&str; 9] = [
 ];
 const PUSH_SETTINGS: &str = r"^(push\.followtags|remote\..*\.(mirror|push)|branch\..*\.merge)$";
 const FALSE_VALUES: [&str; 4] = ["false", "no", "off", ""];
+const SHIPPED_COMMANDS: [&str; 174] = [
+    "add",
+    "am",
+    "annotate",
+    "apply",
+    "archive",
+    "backfill",
+    "bisect",
+    "blame",
+    "branch",
+    "bugreport",
+    "bundle",
+    "cat-file",
+    "check-attr",
+    "check-ignore",
+    "check-mailmap",
+    "check-ref-format",
+    "checkout",
+    "checkout--worker",
+    "checkout-index",
+    "cherry",
+    "cherry-pick",
+    "clean",
+    "clone",
+    "column",
+    "commit",
+    "commit-graph",
+    "commit-tree",
+    "config",
+    "count-objects",
+    "credential",
+    "credential-cache",
+    "credential-cache--daemon",
+    "credential-osxkeychain",
+    "credential-store",
+    "daemon",
+    "describe",
+    "diagnose",
+    "diff",
+    "diff-files",
+    "diff-index",
+    "diff-pairs",
+    "diff-tree",
+    "difftool",
+    "difftool--helper",
+    "fast-export",
+    "fast-import",
+    "fetch",
+    "fetch-pack",
+    "filter-branch",
+    "fmt-merge-msg",
+    "for-each-ref",
+    "for-each-repo",
+    "format-patch",
+    "fsck",
+    "fsck-objects",
+    "fsmonitor--daemon",
+    "gc",
+    "get-tar-commit-id",
+    "grep",
+    "gui--askpass",
+    "gui--askyesno",
+    "hash-object",
+    "help",
+    "history",
+    "hook",
+    "http-backend",
+    "http-fetch",
+    "http-push",
+    "imap-send",
+    "index-pack",
+    "init",
+    "init-db",
+    "interpret-trailers",
+    "last-modified",
+    "log",
+    "ls-files",
+    "ls-remote",
+    "ls-tree",
+    "mailinfo",
+    "mailsplit",
+    "maintenance",
+    "merge",
+    "merge-base",
+    "merge-file",
+    "merge-index",
+    "merge-octopus",
+    "merge-one-file",
+    "merge-ours",
+    "merge-recursive",
+    "merge-recursive-ours",
+    "merge-recursive-theirs",
+    "merge-resolve",
+    "merge-subtree",
+    "merge-tree",
+    "mergetool",
+    "mktag",
+    "mktree",
+    "multi-pack-index",
+    "mv",
+    "name-rev",
+    "notes",
+    "p4",
+    "pack-objects",
+    "pack-redundant",
+    "pack-refs",
+    "patch-id",
+    "pickaxe",
+    "prune",
+    "prune-packed",
+    "pull",
+    "push",
+    "quiltimport",
+    "range-diff",
+    "read-tree",
+    "rebase",
+    "receive-pack",
+    "reflog",
+    "refs",
+    "remote",
+    "remote-ext",
+    "remote-fd",
+    "remote-ftp",
+    "remote-ftps",
+    "remote-http",
+    "remote-https",
+    "repack",
+    "replace",
+    "replay",
+    "repo",
+    "request-pull",
+    "rerere",
+    "reset",
+    "restore",
+    "rev-list",
+    "rev-parse",
+    "revert",
+    "rm",
+    "send-email",
+    "send-pack",
+    "sh-i18n--envsubst",
+    "shell",
+    "shortlog",
+    "show",
+    "show-branch",
+    "show-index",
+    "show-ref",
+    "sparse-checkout",
+    "stage",
+    "stash",
+    "status",
+    "stripspace",
+    "submodule",
+    "submodule--helper",
+    "subtree",
+    "switch",
+    "symbolic-ref",
+    "tag",
+    "unpack-file",
+    "unpack-objects",
+    "update-index",
+    "update-ref",
+    "update-server-info",
+    "upload-archive",
+    "upload-archive--writer",
+    "upload-pack",
+    "var",
+    "verify-commit",
+    "verify-pack",
+    "verify-tag",
+    "version",
+    "web--browse",
+    "whatchanged",
+    "worktree",
+    "write-tree",
+];
+const PUSH_PLUMBING: [&str; 2] = ["send-pack", "http-push"];
+const REF_WRITERS: [&str; 2] = ["update-ref", "symbolic-ref"];
+const FETCHERS: [&str; 2] = ["fetch", "pull"];
 const TAG_REF: &str = "refs/tags/";
 const BRANCH_REF: &str = "refs/heads/";
+
+pub struct Alias {
+    globals: Vec<String>,
+    name: String,
+    written: String,
+    rest: String,
+}
 
 pub struct Push {
     globals: Vec<String>,
@@ -162,6 +348,56 @@ fn reads_config(args: &[Token]) -> bool {
 fn writes_remote(args: &[Token]) -> bool {
     args.iter().any(|token| !literal(token))
         || action(args).is_some_and(|token| REMOTE_WRITE_ACTIONS.contains(&token.value.as_str()))
+}
+
+fn could_be_alias(name: &str) -> bool {
+    !SHIPPED_COMMANDS.contains(&name)
+        && !name.is_empty()
+        && name
+            .chars()
+            .all(|char| char.is_ascii_alphanumeric() || char == '-')
+}
+
+fn makes_a_tag(refspec: &str) -> bool {
+    let refspec = refspec.strip_prefix('+').unwrap_or(refspec);
+    refspec
+        .split_once(':')
+        .is_some_and(|(source, destination)| {
+            destination.starts_with(TAG_REF) && source != destination
+        })
+}
+
+pub fn resolve(alias: &Alias, directory: Option<&str>) -> Result<Option<String>, String> {
+    let mut command = Command::new("git");
+    command
+        .args(&alias.globals)
+        .args(["config", "--get", &format!("alias.{}", alias.name)]);
+    if let Some(directory) = directory {
+        command.current_dir(directory);
+    }
+
+    let named = &alias.name;
+    let answer = lookup::run(command).map_err(|failure| {
+        format!(
+            "`git {named}` is not a command git ships, so it may be an alias, and whether it is one could not be looked up: `git config` {failure}."
+        )
+    })?;
+    match answer.status {
+        Some(0) => {}
+        Some(1) => return Ok(None),
+        _ => {
+            return Err(format!(
+                "`git {named}` is not a command git ships, so it may be an alias, and whether it is one could not be looked up: `git config` {}.",
+                answer.failure()
+            ));
+        }
+    }
+
+    let value = answer.stdout.trim();
+    Ok(Some(match value.strip_prefix('!') {
+        Some(script) => format!("{script} {}", alias.rest),
+        None => format!("git {} {value} {}", alias.written, alias.rest),
+    }))
 }
 
 fn on(value: Option<&str>) -> bool {
@@ -269,7 +505,15 @@ fn matched(flags: &HashSet<&str>, against: &[&str]) -> Option<String> {
     }
 }
 
-pub fn check(args: &[Token]) -> Option<Verdict> {
+fn written(tokens: &[Token]) -> String {
+    tokens
+        .iter()
+        .map(|token| token.raw.as_str())
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+pub fn check(args: &[Token], aliases: bool) -> Option<Verdict> {
     let (globals, name, rest) = match subcommand(args) {
         Ok(found) => found?,
         Err(token) => {
@@ -358,22 +602,52 @@ pub fn check(args: &[Token]) -> Option<Verdict> {
         return Some(Verdict::Unsettling("changes a remote with `git remote`"));
     }
 
-    if name == "update-ref" {
+    if REF_WRITERS.contains(&name) {
         if rest.iter().any(|token| token.value.contains(TAG_REF)) {
-            return Some(Verdict::Deny(
-                "`git update-ref` writes a ref under refs/tags/, which creates a tag without `git tag` being involved. Ask the user to create the tag."
-                    .to_string(),
-            ));
+            return Some(Verdict::Deny(format!(
+                "`git {name}` writes a ref under refs/tags/, which creates a tag without `git tag` being involved. Ask the user to create the tag."
+            )));
         }
         if let Some(token) = rest.iter().find(|token| splits(token)) {
             return Some(splitting(name, token, "no ref under refs/tags/ is written"));
         }
         if let Some(token) = rest.iter().find(|token| !literal(token)) {
             return Some(Verdict::Deny(format!(
-                "An argument of `git update-ref` ({}) comes out of a shell expansion, so it could turn out to name a ref under refs/tags/, and it cannot be shown that no tag is created. Write the ref out literally.",
+                "An argument of `git {name}` ({}) comes out of a shell expansion, so it could turn out to name a ref under refs/tags/, and it cannot be shown that no tag is created. Write the ref out literally.",
                 shown(token)
             )));
         }
+        return None;
+    }
+
+    if PUSH_PLUMBING.contains(&name) {
+        return Some(Verdict::Deny(format!(
+            "`git {name}` sends refs to a remote the way `git push` does, and this hook only reads `git push`, so it cannot be shown that no tag is sent. Use `git push`."
+        )));
+    }
+
+    if FETCHERS.contains(&name)
+        && let Some(token) = rest.iter().find(|token| makes_a_tag(&token.value))
+    {
+        return Some(Verdict::Deny(format!(
+            "`git {name}` was given {}, which writes a ref under refs/tags/ from another ref and so creates a tag. Ask the user to create the tag.",
+            shown(token)
+        )));
+    }
+
+    if aliases && could_be_alias(name) {
+        if let Some(token) = globals.iter().find(|token| !literal(token)) {
+            return Some(Verdict::Deny(format!(
+                "`git {name}` is not a command git ships, so it may be an alias, and {} comes ahead of it and out of a shell expansion, so the git configuration that would say so cannot be looked up. Write it out literally.",
+                shown(token)
+            )));
+        }
+        return Some(Verdict::PassIfNotAlias(Alias {
+            globals: globals.iter().map(|token| token.value.clone()).collect(),
+            name: name.to_string(),
+            written: written(globals),
+            rest: written(rest),
+        }));
     }
 
     None

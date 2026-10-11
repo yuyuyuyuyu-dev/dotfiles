@@ -78,11 +78,29 @@ const WGET_VALUE_FLAGS: [&str; 10] = [
 const CURL_VALUE_LETTERS: &str = "HouAebcwmxrDEyYzKCXdFT";
 const WGET_VALUE_LETTERS: &str = "OUtTPoawQADe";
 
-fn takes_next_word(name: &str, flag: &str) -> bool {
-    let (words, letters): (&[&str], &str) = if name == "wget" {
-        (&WGET_VALUE_FLAGS, WGET_VALUE_LETTERS)
+const CURL_OPTION_FILES: [&str; 2] = ["--config", "-K"];
+const WGET_OPTION_FILES: [&str; 3] = ["--config", "--execute", "-e"];
+
+fn value_letter(name: &str, flag: &str) -> Option<(char, bool)> {
+    let letters = if name == "wget" {
+        WGET_VALUE_LETTERS
     } else {
-        (&CURL_VALUE_FLAGS, CURL_VALUE_LETTERS)
+        CURL_VALUE_LETTERS
+    };
+    let bundle = flag
+        .strip_prefix('-')
+        .filter(|rest| !rest.starts_with('-'))?;
+    bundle
+        .char_indices()
+        .find(|(_, letter)| letters.contains(*letter))
+        .map(|(offset, letter)| (letter, offset + letter.len_utf8() == bundle.len()))
+}
+
+fn takes_next_word(name: &str, flag: &str) -> bool {
+    let words: &[&str] = if name == "wget" {
+        &WGET_VALUE_FLAGS
+    } else {
+        &CURL_VALUE_FLAGS
     };
 
     if flag.starts_with("--") {
@@ -91,16 +109,21 @@ fn takes_next_word(name: &str, flag: &str) -> bool {
             || BODY_FLAGS.contains(&flag)
             || UPLOAD_FLAGS.contains(&flag);
     }
-    let Some(bundle) = flag.strip_prefix('-') else {
-        return false;
+    value_letter(name, flag).is_some_and(|(_, last)| last)
+}
+
+fn reads_options(name: &str, flag: &str) -> bool {
+    let files: &[&str] = if name == "wget" {
+        &WGET_OPTION_FILES
+    } else {
+        &CURL_OPTION_FILES
     };
-    match bundle
-        .char_indices()
-        .find(|(_, letter)| letters.contains(*letter))
-    {
-        Some((offset, letter)) => offset + letter.len_utf8() == bundle.len(),
-        None => false,
+
+    if flag.starts_with("--") {
+        return files.contains(&flag.split('=').next().unwrap_or(flag));
     }
+    value_letter(name, flag)
+        .is_some_and(|(letter, _)| files.contains(&format!("-{letter}").as_str()))
 }
 
 pub fn github_variables(text: &str) -> Vec<String> {
@@ -127,6 +150,7 @@ struct Request {
     body: bool,
     splitting: Option<String>,
     flag_like: Option<String>,
+    options: Option<String>,
 }
 
 fn read_short_bundle(value: &str, raw: &str, state: &mut Request) -> bool {
@@ -178,6 +202,9 @@ pub fn check(name: &str, args: &[Token], github_variables: &[String]) -> Option<
             state.splitting.get_or_insert_with(|| shown(token));
         } else if !value_expected && may_be_flag(token) {
             state.flag_like.get_or_insert_with(|| shown(token));
+        }
+        if !value_expected && reads_options(name, value) {
+            state.options.get_or_insert_with(|| shown(token));
         }
         value_expected = !value_expected && takes_next_word(name, value);
 
@@ -243,6 +270,11 @@ pub fn check(name: &str, args: &[Token], github_variables: &[String]) -> Option<
     if let Some(word) = state.splitting.as_deref() {
         return Some(Verdict::Deny(format!(
             "An argument of `{name}` contains an unquoted shell expansion or pattern ({word}), which can turn into further arguments, so the request that would be sent to the GitHub API cannot be determined. Quote it, or write the request out with literal values."
+        )));
+    }
+    if let Some(word) = state.options.as_deref() {
+        return Some(Verdict::Deny(format!(
+            "`{name}` was given {word}, which makes it read further options from somewhere this hook cannot see, so the request that would be sent to the GitHub API cannot be determined. Write the options out on the command line."
         )));
     }
     if let Some(word) = state.flag_like.as_deref() {

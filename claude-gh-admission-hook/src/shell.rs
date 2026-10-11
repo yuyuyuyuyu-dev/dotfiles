@@ -28,10 +28,15 @@ impl std::fmt::Display for Unanalyzable {
     }
 }
 
-pub fn strip_heredocs(text: &str) -> (String, Vec<String>) {
+pub struct Heredoc {
+    pub body: String,
+    pub expands: bool,
+}
+
+pub fn strip_heredocs(text: &str) -> (String, Vec<Heredoc>) {
     let lines: Vec<&str> = text.split('\n').collect();
     let mut kept: Vec<&str> = Vec::new();
-    let mut expanded: Vec<String> = Vec::new();
+    let mut bodies: Vec<Heredoc> = Vec::new();
     let mut index = 0;
 
     while index < lines.len() {
@@ -57,14 +62,15 @@ pub fn strip_heredocs(text: &str) -> (String, Vec<String>) {
             if end >= lines.len() {
                 continue;
             }
-            if quoted.is_none() {
-                expanded.push(lines[index..end].join("\n"));
-            }
+            bodies.push(Heredoc {
+                body: lines[index..end].join("\n"),
+                expands: quoted.is_none(),
+            });
             index = end + 1;
         }
     }
 
-    (kept.join("\n"), expanded)
+    (kept.join("\n"), bodies)
 }
 
 pub fn extract_substitutions(text: &str) -> (String, Vec<String>) {

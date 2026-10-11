@@ -1,4 +1,4 @@
-use crate::shell::{self, Token};
+use crate::shell::{self, Heredoc, Token};
 use crate::{Verdict, gh, git, http};
 use regex::Regex;
 use std::sync::LazyLock;
@@ -16,6 +16,7 @@ const RUNNERS: [&str; 7] = [
 const FEEDERS: [&str; 2] = ["xargs", "parallel"];
 const MOVERS: [&str; 3] = ["cd", "pushd", "popd"];
 const SHELLS: [&str; 5] = ["bash", "sh", "zsh", "dash", "ksh"];
+const SHELL_VALUE_FLAGS: [&str; 2] = ["--rcfile", "--init-file"];
 
 static CONTINUATION: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\\\r?\n").unwrap());
 static ASSIGNMENT: LazyLock<Regex> =
@@ -38,9 +39,29 @@ static GIT_TAG_INVOCATION: LazyLock<Regex> = LazyLock::new(|| {
 static HTTP_CLIENT_INVOCATION: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(^|[^A-Za-z0-9_])([^\s;|&()]*/)?(curl|wget)\b").unwrap());
 
+fn mentions_github(text: &str) -> bool {
+    GH_INVOCATION.is_match(text)
+        || GIT_TAG_INVOCATION.is_match(text)
+        || (HTTP_CLIENT_INVOCATION.is_match(text)
+            && (http::GH_API_URL.is_match(text) || http::GH_CREDENTIAL.is_match(text)))
+}
+
+struct Script<'a> {
+    text: &'a str,
+    heredocs: &'a [Heredoc],
+    github_variables: &'a [String],
+    depth: u32,
+}
+
 pub fn check_command(text: &str, depth: u32) -> Vec<Verdict> {
     let mut verdicts = Vec::new();
     if depth > 3 {
+        if mentions_github(text) {
+            verdicts.push(Verdict::Deny(
+                "This command mentions gh, a git tag or the GitHub API inside more nested shells and substitutions than this hook reads, so what it would run cannot be determined. Run the GitHub part as a command of its own."
+                    .to_string(),
+            ));
+        }
         return verdicts;
     }
 
@@ -50,7 +71,7 @@ pub fn check_command(text: &str, depth: u32) -> Vec<Verdict> {
             "mentions the .git directory or a git configuration file",
         ));
     }
-    let (text, expanded_bodies) = shell::strip_heredocs(&text);
+    let (text, heredocs) = shell::strip_heredocs(&text);
     let github_variables = http::github_variables(&text);
     let (text, inners) = shell::extract_substitutions(&text);
 
@@ -58,8 +79,8 @@ pub fn check_command(text: &str, depth: u32) -> Vec<Verdict> {
         verdicts.extend(check_command(inner, depth + 1));
     }
 
-    for body in &expanded_bodies {
-        for inner in shell::extract_substitutions(body).1 {
+    for heredoc in heredocs.iter().filter(|heredoc| heredoc.expands) {
+        for inner in shell::extract_substitutions(&heredoc.body).1 {
             verdicts.extend(check_command(&inner, depth + 1));
         }
     }
@@ -67,12 +88,7 @@ pub fn check_command(text: &str, depth: u32) -> Vec<Verdict> {
     let tokens = match shell::tokenize(&text, true) {
         Ok(tokens) => tokens,
         Err(_) => {
-            let targets_github =
-                http::GH_API_URL.is_match(&text) || http::GH_CREDENTIAL.is_match(&text);
-            if GH_INVOCATION.is_match(&text)
-                || GIT_TAG_INVOCATION.is_match(&text)
-                || (HTTP_CLIENT_INVOCATION.is_match(&text) && targets_github)
-            {
+            if mentions_github(&text) {
                 verdicts.push(Verdict::Deny(
                     "This command mentions gh, a git tag or the GitHub API, but it could not be tokenized -- an unbalanced quote is the usual cause -- so what it would run cannot be determined. It is denied rather than guessed at. Run the GitHub part as a command of its own."
                         .to_string(),
@@ -81,18 +97,30 @@ pub fn check_command(text: &str, depth: u32) -> Vec<Verdict> {
             return verdicts;
         }
     };
-    check_tokens(&tokens, &github_variables, depth, &mut verdicts);
+    let script = Script {
+        text: &text,
+        heredocs: &heredocs,
+        github_variables: &github_variables,
+        depth,
+    };
+    check_tokens(&tokens, &script, &mut verdicts);
 
     if text.contains('#')
         && let Ok(tokens) = shell::tokenize(&text, false)
     {
-        check_tokens(&tokens, &github_variables, depth, &mut verdicts);
+        check_tokens(&tokens, &script, &mut verdicts);
     }
 
     verdicts
 }
 
-fn commands(segment: &[Token]) -> Vec<(&[Token], bool)> {
+struct Launch<'a> {
+    command: &'a [Token],
+    fed: bool,
+    direct: bool,
+}
+
+fn commands(segment: &[Token]) -> Vec<Launch<'_>> {
     let mut segment = segment;
     while segment.first().is_some_and(|token| {
         ASSIGNMENT.is_match(&token.value) || KEYWORDS.contains(&token.value.as_str())
@@ -104,24 +132,39 @@ fn commands(segment: &[Token]) -> Vec<(&[Token], bool)> {
         let name = shell::basename(&head.value);
         WRAPPERS.contains(&name) || RUNNERS.contains(&name)
     });
+    let mut found = Vec::new();
     if !launches {
-        return vec![(segment, false)];
+        found.push(Launch {
+            command: segment,
+            fed: false,
+            direct: true,
+        });
     }
 
-    (1..segment.len())
-        .filter(|&index| {
-            let name = shell::basename(&segment[index].value);
-            matches!(name, "gh" | "git" | "eval")
-                || SHELLS.contains(&name)
-                || http::HTTP_CLIENTS.contains(&name)
-        })
-        .map(|index| {
-            let fed = segment[..index]
-                .iter()
-                .any(|token| FEEDERS.contains(&shell::basename(&token.value)));
-            (&segment[index..], fed)
-        })
-        .collect()
+    for index in 1..segment.len() {
+        let name = shell::basename(&segment[index].value);
+        let named = match name {
+            "git" => true,
+            "eval" => launches,
+            "gh" => {
+                launches
+                    || segment
+                        .get(index + 1)
+                        .is_some_and(|next| gh::names_command(&next.value))
+            }
+            _ => SHELLS.contains(&name) || http::HTTP_CLIENTS.contains(&name),
+        };
+        if named {
+            found.push(Launch {
+                command: &segment[index..],
+                fed: segment[..index]
+                    .iter()
+                    .any(|token| FEEDERS.contains(&shell::basename(&token.value))),
+                direct: launches,
+            });
+        }
+    }
+    found
 }
 
 fn unsettles(segment: &[Token]) -> Option<&'static str> {
@@ -177,12 +220,76 @@ fn check_fed(
     }
 }
 
-fn check_tokens(
-    tokens: &[Token],
-    github_variables: &[String],
-    depth: u32,
+enum Source<'a> {
+    Inline(&'a Token),
+    Input,
+    File,
+}
+
+fn source(args: &[Token]) -> Source<'_> {
+    let mut inline = false;
+    let mut input = false;
+    let mut rest = args.iter();
+
+    while let Some(token) = rest.next() {
+        let value = token.value.as_str();
+        if value == "-" {
+            return Source::Input;
+        }
+        if value.starts_with("--") {
+            if SHELL_VALUE_FLAGS.contains(&value) {
+                rest.next();
+            }
+            continue;
+        }
+        if let Some(letters) = value.strip_prefix(['-', '+']) {
+            inline |= value.starts_with('-') && letters.contains('c');
+            input |= letters.contains('s');
+            if letters.ends_with(['o', 'O']) {
+                rest.next();
+            }
+            continue;
+        }
+        return match (inline, input) {
+            (true, _) => Source::Inline(token),
+            (false, true) => Source::Input,
+            (false, false) => Source::File,
+        };
+    }
+    Source::Input
+}
+
+fn check_shell(
+    name: &str,
+    args: &[Token],
+    direct: bool,
+    script: &Script,
     verdicts: &mut Vec<Verdict>,
 ) {
+    match source(args) {
+        Source::Inline(given) => {
+            if shell::may_be_flag(given) && mentions_github(script.text) {
+                verdicts.push(Verdict::Deny(format!(
+                    "The script given to `{name} -c` comes out of a shell expansion, and this command mentions gh, a git tag or the GitHub API, so what the script would run cannot be determined. Write the script out literally."
+                )));
+            }
+            verdicts.extend(check_command(&given.value, script.depth + 1));
+        }
+        Source::Input if direct => {
+            for heredoc in script.heredocs {
+                verdicts.extend(check_command(&heredoc.body, script.depth + 1));
+            }
+            if mentions_github(script.text) {
+                verdicts.push(Verdict::Deny(format!(
+                    "`{name}` is given its script on standard input here, and this command mentions gh, a git tag or the GitHub API outside a here-document, so what the script would run cannot be determined. Run the GitHub part as a command of its own."
+                )));
+            }
+        }
+        _ => {}
+    }
+}
+
+fn check_tokens(tokens: &[Token], script: &Script, verdicts: &mut Vec<Verdict>) {
     let found = shell::segments(tokens);
     verdicts.extend(
         found
@@ -190,42 +297,46 @@ fn check_tokens(
             .filter_map(|segment| unsettles(segment))
             .map(Verdict::Unsettling),
     );
-    for (command, fed) in found.iter().flat_map(|segment| commands(segment)) {
-        let Some(head) = command.first() else {
+
+    for launch in found.iter().flat_map(|segment| commands(segment)) {
+        let Some(head) = launch.command.first() else {
             continue;
         };
         let name = shell::basename(&head.value);
-        let args = &command[1..];
+        let args = &launch.command[1..];
+        let fed = launch.fed;
 
         if SHELLS.contains(&name) {
-            for (index, token) in args.iter().enumerate() {
-                if token.value == "-c"
-                    && let Some(script) = args.get(index + 1)
-                {
-                    verdicts.extend(check_command(&script.value, depth + 1));
-                }
-            }
+            check_shell(name, args, launch.direct, script, verdicts);
             continue;
         }
 
         if name == "eval" {
-            let script = args
+            if args.iter().any(shell::may_be_flag) && mentions_github(script.text) {
+                verdicts.push(Verdict::Deny(
+                    "An argument of `eval` comes out of a shell expansion, and this command mentions gh, a git tag or the GitHub API, so what `eval` would run cannot be determined. Write the command out literally."
+                        .to_string(),
+                ));
+            }
+            let joined = args
                 .iter()
                 .map(|token| token.value.as_str())
                 .collect::<Vec<_>>()
                 .join(" ");
-            verdicts.extend(check_command(&script, depth + 1));
+            verdicts.extend(check_command(&joined, script.depth + 1));
             continue;
         }
 
+        let git = |args: &[Token]| git::check(args, launch.direct);
+        let http = |args: &[Token]| http::check(name, args, script.github_variables);
         let found = match name {
-            "git" if fed => check_fed(name, args, git::check),
-            "git" => git::check(args),
+            "git" if fed => check_fed(name, args, git),
+            "git" => git(args),
             "gh" if fed => check_fed(name, args, check_gh),
             "gh" => check_gh(args),
             _ if !http::HTTP_CLIENTS.contains(&name) => None,
-            _ if fed => check_fed(name, args, |args| http::check(name, args, github_variables)),
-            _ => http::check(name, args, github_variables),
+            _ if fed => check_fed(name, args, http),
+            _ => http(args),
         };
         verdicts.extend(found);
     }

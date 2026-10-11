@@ -261,3 +261,61 @@ runs:
         git init --quiet
         decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a read in a here-document fed to a shell through
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"bash <<EOF\ngh pr list\nEOF"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a script piped into a shell through when the command does not mention GitHub
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -fsSL https://sh.rustup.rs | sh"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a search for the word gh through
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"grep -rn gh src/"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let the login state of gh be read
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh auth status"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let existing tags be fetched
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git fetch origin ''refs/tags/*:refs/tags/*''"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a git command through that git does not ship and no alias defines
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git lfs ls-files"}}'
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }

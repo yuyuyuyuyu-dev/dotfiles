@@ -162,6 +162,22 @@ fn listed(list: &[&[&str]], path: &[String]) -> bool {
         .any(|entry| entry.len() == path.len() && entry.iter().zip(path).all(|(a, b)| a == b))
 }
 
+pub fn names_command(word: &str) -> bool {
+    word == "api"
+        || GH_ALIASES.iter().any(|(name, _)| *name == word)
+        || READ_GH_COMMANDS
+            .iter()
+            .chain(BARE_READ_GH_COMMANDS)
+            .any(|entry| entry[0] == word)
+}
+
+fn shows_token(flag: &str) -> bool {
+    match flag.strip_prefix("--") {
+        Some(name) => name.starts_with("show-token"),
+        None => flag.starts_with('-') && flag.contains('t'),
+    }
+}
+
 fn takes_next_word(flag: &str) -> bool {
     if flag.contains('=') || GH_FLAGS_WITHOUT_VALUE.contains(&flag) {
         return false;
@@ -208,6 +224,16 @@ pub fn check_subcommand(args: &[Token]) -> Option<Verdict> {
 
         if let Some(command) = exception::command(&path) {
             return Some(exception::check(command, args));
+        }
+        if path == ["auth", "status"] {
+            return rest
+                .find(|token| !literal(token) || shows_token(&token.value))
+                .map(|token| {
+                    Verdict::Deny(format!(
+                        "`gh auth status` was given {}, which could print the credential gh stored, and with that credential any write can be made past this hook. Run `gh auth status` without it.",
+                        shown(token)
+                    ))
+                });
         }
         if listed(READ_GH_COMMANDS, &path) {
             return None;
