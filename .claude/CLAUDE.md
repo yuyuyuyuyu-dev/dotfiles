@@ -20,6 +20,8 @@ Where the license is unclear or cannot be complied with, the library MUST NOT be
 
 ### Tests
 
+A test MAY be added without asking.
+A specification MUST NOT be added until the user explicitly asks for one.
 A test case MUST run from as near the entry point as it can to as near the outside as it can.
 A part MAY be replaced with a fake only where the test cannot have the real thing.
 Where it can, a fake is allowed only when the real thing would let the assertion pass where the specification does not, and another test case states what that part does.
