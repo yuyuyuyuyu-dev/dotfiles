@@ -75,6 +75,54 @@ const WGET_VALUE_FLAGS: [&str; 10] = [
     "--output-file",
     "--wait",
 ];
+const CURL_PLAIN_FLAGS: [&str; 27] = [
+    "--silent",
+    "--show-error",
+    "--location",
+    "--location-trusted",
+    "--fail",
+    "--fail-with-body",
+    "--include",
+    "--verbose",
+    "--insecure",
+    "--disable",
+    "--no-buffer",
+    "--remote-name",
+    "--remote-header-name",
+    "--remote-time",
+    "--globoff",
+    "--compressed",
+    "--head",
+    "--get",
+    "--http1.1",
+    "--http2",
+    "--no-progress-meter",
+    "--progress-bar",
+    "--ipv4",
+    "--ipv6",
+    "--netrc",
+    "--tlsv1.2",
+    "--tlsv1.3",
+];
+const WGET_PLAIN_FLAGS: [&str; 14] = [
+    "--quiet",
+    "--verbose",
+    "--no-verbose",
+    "--server-response",
+    "--continue",
+    "--timestamping",
+    "--no-check-certificate",
+    "--no-config",
+    "--spider",
+    "--content-on-error",
+    "--no-clobber",
+    "--inet4-only",
+    "--inet6-only",
+    "--debug",
+];
+const WGET_PLAIN_WORDS: [&str; 4] = ["-nv", "-nc", "-nd", "-nH"];
+const CURL_PLAIN_LETTERS: &str = "sSLfivkqNOJg46#IGnR";
+const WGET_PLAIN_LETTERS: &str = "qvSc46N";
 const CURL_VALUE_LETTERS: &str = "HouAebcwmxrDEyYzKCXdFT";
 const WGET_VALUE_LETTERS: &str = "OUtTPoawQADe";
 
@@ -111,6 +159,45 @@ fn takes_next_word(name: &str, flag: &str) -> bool {
             || UPLOAD_FLAGS.contains(&flag);
     }
     value_letter(name, flag).is_some_and(|(_, last)| last)
+}
+
+fn known(name: &str, flag: &str) -> bool {
+    let (values, plain, files): (&[&str], &[&str], &[&str]) = if name == "wget" {
+        (&WGET_VALUE_FLAGS, &WGET_PLAIN_FLAGS, &WGET_OPTION_FILES)
+    } else {
+        (&CURL_VALUE_FLAGS, &CURL_PLAIN_FLAGS, &CURL_OPTION_FILES)
+    };
+    let (value_letters, plain_letters) = if name == "wget" {
+        (WGET_VALUE_LETTERS, WGET_PLAIN_LETTERS)
+    } else {
+        (CURL_VALUE_LETTERS, CURL_PLAIN_LETTERS)
+    };
+
+    if flag == "-" || flag == "--" || (name == "wget" && WGET_PLAIN_WORDS.contains(&flag)) {
+        return true;
+    }
+    if flag.starts_with("--") {
+        let stem = flag.split('=').next().unwrap_or(flag);
+        return [
+            values,
+            plain,
+            files,
+            &METHOD_FLAGS,
+            &BODY_FLAGS,
+            &UPLOAD_FLAGS,
+        ]
+        .iter()
+        .any(|list| list.contains(&stem));
+    }
+    for letter in flag.chars().skip(1) {
+        if value_letters.contains(letter) {
+            return true;
+        }
+        if !plain_letters.contains(letter) {
+            return false;
+        }
+    }
+    true
 }
 
 fn reads_options(name: &str, flag: &str) -> bool {
@@ -175,6 +262,7 @@ struct Request {
     splitting: Option<String>,
     flag_like: Option<String>,
     options: Option<String>,
+    unknown: Option<String>,
 }
 
 fn read_short_bundle(value: &str, raw: &str, state: &mut Request) -> bool {
@@ -226,6 +314,9 @@ pub fn check(name: &str, args: &[Token], github_variables: &[String]) -> Option<
             state.splitting.get_or_insert_with(|| shown(token));
         } else if !value_expected && may_be_flag(token) {
             state.flag_like.get_or_insert_with(|| shown(token));
+        }
+        if !value_expected && value.starts_with('-') && !known(name, value) {
+            state.unknown.get_or_insert_with(|| shown(token));
         }
         if !value_expected && reads_options(name, value) {
             state.options.get_or_insert_with(|| shown(token));
@@ -325,6 +416,11 @@ pub fn check(name: &str, args: &[Token], github_variables: &[String]) -> Option<
     };
 
     if READ_METHODS.contains(&effective.as_str()) {
+        if let Some(flag) = state.unknown.as_deref() {
+            return Some(Verdict::Deny(format!(
+                "`{name}` was given {flag}, a flag this hook does not know, so the request that would be sent to the GitHub API cannot be determined. If {flag} leaves the request a read, the flag table in claude-gh-admission-hook is what needs the entry."
+            )));
+        }
         return unseen_options(name, args);
     }
 

@@ -328,3 +328,65 @@ runs:
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a here-document that mentions a write be written to a file
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"cat <<EOF > notes.md\ngh pr merge 5\nEOF"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a commit through whose message is a here-document that mentions a write
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git commit -m \"$(cat <<''EOF''\nfix: don''t run gh pr merge (ever)\nEOF\n)\""}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let tags be listed in an order
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git tag --sort=refname"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let the API be read with curl and flags this hook knows
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -q -sSL -H \"Accept: application/vnd.github+json\" https://api.github.com/repos/o/r"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a branch be pushed in a command that reads one git setting
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git config user.name && git push origin HEAD"}}'
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a branch be pushed after a commit whose message names a git configuration file
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git commit -m \"update gitconfig\" && git push origin HEAD"}}'
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }

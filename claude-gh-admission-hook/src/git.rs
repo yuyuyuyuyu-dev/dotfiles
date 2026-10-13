@@ -4,7 +4,7 @@ use crate::shell::{Token, literal, may_be_flag, shown, splits};
 use std::collections::HashSet;
 use std::process::Command;
 
-const GLOBAL_VALUE_FLAGS: [&str; 7] = [
+const GLOBAL_VALUE_FLAGS: [&str; 9] = [
     "-C",
     "-c",
     "--git-dir",
@@ -12,6 +12,8 @@ const GLOBAL_VALUE_FLAGS: [&str; 7] = [
     "--namespace",
     "--exec-path",
     "--super-prefix",
+    "--config-env",
+    "--attr-source",
 ];
 
 const TAG_WRITE_FLAGS: [&str; 17] = [
@@ -33,7 +35,7 @@ const TAG_WRITE_FLAGS: [&str; 17] = [
     "--edit",
     "--cleanup",
 ];
-const TAG_READ_FLAGS: [&str; 17] = [
+const TAG_LIST_FLAGS: [&str; 10] = [
     "-l",
     "--list",
     "-n",
@@ -42,16 +44,10 @@ const TAG_READ_FLAGS: [&str; 17] = [
     "--points-at",
     "--merged",
     "--no-merged",
-    "--sort",
-    "--format",
-    "--column",
-    "--no-column",
-    "-i",
-    "--ignore-case",
-    "--omit-empty",
     "-v",
     "--verify",
 ];
+const INPUT_FLAGS: [&str; 1] = ["--stdin"];
 const PUSH_TAG_FLAGS: [&str; 3] = ["--tags", "--follow-tags", "--mirror"];
 const PUSH_VALUE_FLAGS: [&str; 6] = [
     "-o",
@@ -69,7 +65,28 @@ const CONFIG_READ_FLAGS: [&str; 6] = [
     "--list",
     "-l",
 ];
+const CONFIG_WRITE_FLAGS: [&str; 8] = [
+    "--add",
+    "--replace-all",
+    "--unset",
+    "--unset-all",
+    "--rename-section",
+    "--remove-section",
+    "--edit",
+    "-e",
+];
+const CONFIG_VALUE_FLAGS: [&str; 7] = [
+    "-f",
+    "--file",
+    "--blob",
+    "--type",
+    "--default",
+    "--comment",
+    "--value",
+];
 const CONFIG_READ_ACTIONS: [&str; 2] = ["get", "list"];
+const CONFIG_WRITE_ACTIONS: [&str; 5] =
+    ["set", "unset", "edit", "rename-section", "remove-section"];
 const REMOTE_WRITE_ACTIONS: [&str; 9] = [
     "add",
     "rename",
@@ -338,11 +355,33 @@ fn action(args: &[Token]) -> Option<&Token> {
 }
 
 fn reads_config(args: &[Token]) -> bool {
-    args.iter()
-        .any(|token| literal(token) && CONFIG_READ_FLAGS.contains(&token.value.as_str()))
-        || action(args).is_some_and(|token| {
-            literal(token) && CONFIG_READ_ACTIONS.contains(&token.value.as_str())
-        })
+    if args.iter().any(|token| !literal(token))
+        || matched(&flag_names(args), &CONFIG_WRITE_FLAGS).is_some()
+    {
+        return false;
+    }
+    if args
+        .iter()
+        .any(|token| CONFIG_READ_FLAGS.contains(&token.value.as_str()))
+    {
+        return true;
+    }
+
+    let mut words = Vec::new();
+    let mut rest = args.iter();
+    while let Some(token) = rest.next() {
+        let value = token.value.as_str();
+        if CONFIG_VALUE_FLAGS.contains(&value) {
+            rest.next();
+        } else if !value.starts_with('-') {
+            words.push(value);
+        }
+    }
+    match words.as_slice() {
+        [] => true,
+        [only] => !CONFIG_WRITE_ACTIONS.contains(only),
+        [first, ..] => CONFIG_READ_ACTIONS.contains(first),
+    }
 }
 
 fn writes_remote(args: &[Token]) -> bool {
@@ -367,37 +406,35 @@ fn makes_a_tag(refspec: &str) -> bool {
         })
 }
 
-pub fn resolve(alias: &Alias, directory: Option<&str>) -> Result<Option<String>, String> {
+pub fn resolve(alias: &Alias, directory: Option<&str>) -> Result<Vec<String>, String> {
+    let named = &alias.name;
+    let keys = format!(r"^alias\.({}|{named}\.command)$", named.to_lowercase());
     let mut command = Command::new("git");
     command
         .args(&alias.globals)
-        .args(["config", "--get", &format!("alias.{}", alias.name)]);
+        .args(["config", "-z", "--get-regexp", &keys]);
     if let Some(directory) = directory {
         command.current_dir(directory);
     }
 
-    let named = &alias.name;
-    let answer = lookup::run(command).map_err(|failure| {
+    let found = lookup::run(command).and_then(|answer| match answer.status {
+        Some(0 | 1) => Ok(answer.stdout),
+        _ => Err(answer.failure()),
+    });
+    let settings = found.map_err(|failure| {
         format!(
             "`git {named}` is not a command git ships, so it may be an alias, and whether it is one could not be looked up: `git config` {failure}."
         )
     })?;
-    match answer.status {
-        Some(0) => {}
-        Some(1) => return Ok(None),
-        _ => {
-            return Err(format!(
-                "`git {named}` is not a command git ships, so it may be an alias, and whether it is one could not be looked up: `git config` {}.",
-                answer.failure()
-            ));
-        }
-    }
 
-    let value = answer.stdout.trim();
-    Ok(Some(match value.strip_prefix('!') {
-        Some(script) => format!("{script} {}", alias.rest),
-        None => format!("git {} {value} {}", alias.written, alias.rest),
-    }))
+    Ok(settings
+        .split('\0')
+        .filter_map(|setting| setting.split_once('\n'))
+        .map(|(_, value)| match value.trim().strip_prefix('!') {
+            Some(script) => format!("{script} {}", alias.rest),
+            None => format!("git {} {} {}", alias.written, value.trim(), alias.rest),
+        })
+        .collect())
 }
 
 fn on(value: Option<&str>) -> bool {
@@ -492,9 +529,14 @@ fn flag_names(args: &[Token]) -> HashSet<&str> {
 }
 
 fn matched(flags: &HashSet<&str>, against: &[&str]) -> Option<String> {
-    let mut found: Vec<&str> = flags
+    let mut found: Vec<&str> = against
         .iter()
-        .filter(|flag| against.contains(*flag))
+        .filter(|known| {
+            flags.iter().any(|flag| {
+                flag == *known
+                    || (flag.len() > 2 && flag.starts_with("--") && known.starts_with(flag))
+            })
+        })
         .copied()
         .collect();
     found.sort_unstable();
@@ -540,7 +582,7 @@ pub fn check(args: &[Token], aliases: bool) -> Option<Verdict> {
                 shown(token)
             )));
         }
-        if flags.iter().any(|flag| TAG_READ_FLAGS.contains(flag)) {
+        if flags.iter().any(|flag| TAG_LIST_FLAGS.contains(flag)) {
             return None;
         }
         if rest.iter().any(|token| !token.value.starts_with('-')) {
@@ -600,6 +642,14 @@ pub fn check(args: &[Token], aliases: bool) -> Option<Verdict> {
     }
     if name == "remote" && writes_remote(rest) {
         return Some(Verdict::Unsettling("changes a remote with `git remote`"));
+    }
+
+    if (REF_WRITERS.contains(&name) || FETCHERS.contains(&name))
+        && matched(&flag_names(rest), &INPUT_FLAGS).is_some()
+    {
+        return Some(Verdict::Deny(format!(
+            "`git {name}` was given --stdin, which makes it read the refs to write from standard input, where this hook cannot see them, so it cannot be shown that no tag is created. Name the refs on the command line."
+        )));
     }
 
     if REF_WRITERS.contains(&name) {

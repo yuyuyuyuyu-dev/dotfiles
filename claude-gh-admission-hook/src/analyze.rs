@@ -7,8 +7,26 @@ const KEYWORDS: [&str; 18] = [
     "if", "then", "else", "elif", "fi", "while", "until", "do", "done", "for", "case", "esac",
     "in", "select", "function", "!", "{", "}",
 ];
-const WRAPPERS: [&str; 10] = [
-    "command", "builtin", "exec", "env", "nohup", "time", "nice", "stdbuf", "sudo", "doas",
+const WRAPPERS: [&str; 19] = [
+    "command",
+    "builtin",
+    "exec",
+    "env",
+    "nohup",
+    "time",
+    "nice",
+    "stdbuf",
+    "sudo",
+    "doas",
+    "su",
+    "noglob",
+    "nocorrect",
+    "coproc",
+    "setsid",
+    "caffeinate",
+    "unbuffer",
+    "arch",
+    "chronic",
 ];
 const RUNNERS: [&str; 7] = [
     "xargs", "timeout", "watch", "parallel", "ionice", "flock", "retry",
@@ -66,11 +84,6 @@ pub fn check_command(text: &str, depth: u32) -> Vec<Verdict> {
     }
 
     let text = CONTINUATION.replace_all(text, " ");
-    if GIT_FILES.is_match(&text) {
-        verdicts.push(Verdict::Unsettling(
-            "mentions the .git directory or a git configuration file",
-        ));
-    }
     let (text, heredocs) = shell::strip_heredocs(&text);
     let github_variables = http::github_variables(&text);
     let (text, inners) = shell::extract_substitutions(&text);
@@ -85,8 +98,8 @@ pub fn check_command(text: &str, depth: u32) -> Vec<Verdict> {
         }
     }
 
-    let tokens = match shell::tokenize(&text, true) {
-        Ok(tokens) => tokens,
+    let (tokens, targets) = match shell::tokenize(&text, true) {
+        Ok(words) => words,
         Err(_) => {
             if mentions_github(&text) {
                 verdicts.push(Verdict::Deny(
@@ -103,15 +116,28 @@ pub fn check_command(text: &str, depth: u32) -> Vec<Verdict> {
         github_variables: &github_variables,
         depth,
     };
-    check_tokens(&tokens, &script, &mut verdicts);
+    check_tokens(&tokens, &targets, &script, &mut verdicts);
 
     if text.contains('#')
-        && let Ok(tokens) = shell::tokenize(&text, false)
+        && let Ok((tokens, targets)) = shell::tokenize(&text, false)
     {
-        check_tokens(&tokens, &script, &mut verdicts);
+        let mut uncommented = Vec::new();
+        check_tokens(&tokens, &targets, &script, &mut uncommented);
+        verdicts.extend(uncommented.into_iter().map(|verdict| match verdict {
+            Verdict::Deny(_) => Verdict::Deny(
+                "This command has a # in it, and when the text after the # is read as arguments rather than as a comment, the command is one this hook denies. Run it without the comment."
+                    .to_string(),
+            ),
+            other => other,
+        }));
     }
 
     verdicts
+}
+
+fn command_name(token: &Token) -> &str {
+    let name = shell::basename(&token.value);
+    name.strip_prefix('=').unwrap_or(name)
 }
 
 struct Launch<'a> {
@@ -129,7 +155,7 @@ fn commands(segment: &[Token]) -> Vec<Launch<'_>> {
     }
 
     let launches = segment.first().is_some_and(|head| {
-        let name = shell::basename(&head.value);
+        let name = command_name(head);
         WRAPPERS.contains(&name) || RUNNERS.contains(&name)
     });
     let mut found = Vec::new();
@@ -142,7 +168,7 @@ fn commands(segment: &[Token]) -> Vec<Launch<'_>> {
     }
 
     for index in 1..segment.len() {
-        let name = shell::basename(&segment[index].value);
+        let name = command_name(&segment[index]);
         let named = match name {
             "git" => true,
             "eval" => launches,
@@ -289,7 +315,29 @@ fn check_shell(
     }
 }
 
-fn check_tokens(tokens: &[Token], script: &Script, verdicts: &mut Vec<Verdict>) {
+fn scripts(segment: &[Token]) -> impl Iterator<Item = &Token> {
+    let launches = segment.iter().find(|token| {
+        !ASSIGNMENT.is_match(&token.value) && !KEYWORDS.contains(&token.value.as_str())
+    });
+    let launches = launches.is_some_and(|head| {
+        let name = command_name(head);
+        WRAPPERS.contains(&name) || RUNNERS.contains(&name)
+    });
+    segment
+        .iter()
+        .filter(move |token| launches && token.value.contains(char::is_whitespace))
+}
+
+fn names_git_file(word: &str) -> bool {
+    !word.contains(char::is_whitespace) && GIT_FILES.is_match(word)
+}
+
+fn check_tokens(
+    tokens: &[Token],
+    targets: &[String],
+    script: &Script,
+    verdicts: &mut Vec<Verdict>,
+) {
     let found = shell::segments(tokens);
     verdicts.extend(
         found
@@ -297,12 +345,22 @@ fn check_tokens(tokens: &[Token], script: &Script, verdicts: &mut Vec<Verdict>) 
             .filter_map(|segment| unsettles(segment))
             .map(Verdict::Unsettling),
     );
+    if targets.iter().any(|target| names_git_file(target))
+        || tokens.iter().any(|token| names_git_file(&token.value))
+    {
+        verdicts.push(Verdict::Unsettling(
+            "names the .git directory or a git configuration file",
+        ));
+    }
+    for given in found.iter().flat_map(|segment| scripts(segment)) {
+        verdicts.extend(check_command(&given.value, script.depth + 1));
+    }
 
     for launch in found.iter().flat_map(|segment| commands(segment)) {
         let Some(head) = launch.command.first() else {
             continue;
         };
-        let name = shell::basename(&head.value);
+        let name = command_name(head);
         let args = &launch.command[1..];
         let fed = launch.fed;
 

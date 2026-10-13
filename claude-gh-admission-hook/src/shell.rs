@@ -10,7 +10,7 @@ const REDIRECTION: [char; 5] = ['<', '>', '&', '|', '!'];
 const GLOBS: [char; 3] = ['*', '?', '['];
 
 static HEREDOC: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"<<-?\s*(?:'([^']*)'|"([^"]*)"|\\?([A-Za-z_][A-Za-z0-9_]*))"#).unwrap()
+    Regex::new(r#"^<<-?[ \t]*(?:'([^']*)'|"([^"]*)"|\\?([A-Za-z_][A-Za-z0-9_]*))"#).unwrap()
 });
 
 #[derive(Clone)]
@@ -33,44 +33,177 @@ pub struct Heredoc {
     pub expands: bool,
 }
 
+#[derive(Default)]
+struct Level {
+    quote: Option<char>,
+    parens: u32,
+    backticks: bool,
+}
+
+fn closing(chars: &[char], from: usize, pair: [char; 2]) -> Option<usize> {
+    (from..chars.len().saturating_sub(1))
+        .take_while(|&at| chars[at] != '\n')
+        .find(|&at| chars[at] == pair[0] && chars[at + 1] == pair[1])
+        .map(|at| at + 2)
+}
+
+fn body(chars: &[char], from: usize, delimiter: &str) -> Option<(String, usize)> {
+    let mut lines: Vec<String> = Vec::new();
+    let mut start = from;
+    while start < chars.len() {
+        let end = (start..chars.len())
+            .find(|&at| chars[at] == '\n')
+            .unwrap_or(chars.len());
+        let line: String = chars[start..end].iter().collect();
+        if line.trim() == delimiter {
+            return Some((lines.join("\n"), (end + 1).min(chars.len())));
+        }
+        lines.push(line);
+        start = end + 1;
+    }
+    None
+}
+
 pub fn strip_heredocs(text: &str) -> (String, Vec<Heredoc>) {
-    let lines: Vec<&str> = text.split('\n').collect();
-    let mut kept: Vec<&str> = Vec::new();
+    let chars: Vec<char> = text.chars().collect();
+    let mut out = String::new();
     let mut bodies: Vec<Heredoc> = Vec::new();
+    let mut pending: Vec<(String, bool)> = Vec::new();
+    let mut levels = vec![Level::default()];
     let mut index = 0;
 
-    while index < lines.len() {
-        let line = lines[index];
-        kept.push(line);
-        index += 1;
+    while index < chars.len() {
+        let char = chars[index];
+        let next = chars.get(index + 1).copied();
+        let nested = levels.len() > 1;
+        let Some(level) = levels.last_mut() else {
+            break;
+        };
 
-        for captures in HEREDOC.captures_iter(line) {
-            let quoted = captures.get(1).or_else(|| captures.get(2));
-            let delimiter = [captures.get(1), captures.get(2), captures.get(3)]
-                .into_iter()
-                .flatten()
-                .map(|group| group.as_str())
-                .find(|group| !group.is_empty());
-            let Some(delimiter) = delimiter else {
-                continue;
-            };
-
-            let mut end = index;
-            while end < lines.len() && lines[end].trim() != delimiter {
-                end += 1;
+        if level.quote == Some('\'') {
+            if char == '\'' {
+                level.quote = None;
             }
-            if end >= lines.len() {
-                continue;
-            }
-            bodies.push(Heredoc {
-                body: lines[index..end].join("\n"),
-                expands: quoted.is_none(),
-            });
-            index = end + 1;
+            out.push(char);
+            index += 1;
+            continue;
         }
+
+        if char == '\\' {
+            out.push(char);
+            out.extend(next);
+            index += 2;
+            continue;
+        }
+
+        if char == '$' && next == Some('(') {
+            if chars.get(index + 2) == Some(&'(')
+                && let Some(end) = closing(&chars, index + 3, [')', ')'])
+            {
+                out.extend(&chars[index..end]);
+                index = end;
+                continue;
+            }
+            out.push_str("$(");
+            levels.push(Level::default());
+            index += 2;
+            continue;
+        }
+
+        if char == '`' {
+            if level.backticks {
+                levels.pop();
+            } else {
+                levels.push(Level {
+                    backticks: true,
+                    ..Level::default()
+                });
+            }
+            out.push(char);
+            index += 1;
+            continue;
+        }
+
+        if level.quote == Some('"') {
+            if char == '"' {
+                level.quote = None;
+            }
+            out.push(char);
+            index += 1;
+            continue;
+        }
+
+        let starts_word = out
+            .chars()
+            .last()
+            .is_none_or(|last| last.is_whitespace() || SEPARATORS.contains(&last));
+
+        match char {
+            '\'' | '"' => level.quote = Some(char),
+            '(' if next == Some('(') && starts_word => {
+                if let Some(end) = closing(&chars, index + 2, [')', ')']) {
+                    out.extend(&chars[index..end]);
+                    index = end;
+                    continue;
+                }
+            }
+            '(' if nested => level.parens += 1,
+            ')' if nested && !level.backticks => {
+                if level.parens == 0 {
+                    levels.pop();
+                } else {
+                    level.parens -= 1;
+                }
+            }
+            '#' if starts_word => {
+                while index < chars.len() && chars[index] != '\n' {
+                    out.push(chars[index]);
+                    index += 1;
+                }
+                continue;
+            }
+            '<' if next == Some('<') => {
+                if chars.get(index + 2) == Some(&'<') {
+                    out.push_str("<<<");
+                    index += 3;
+                    continue;
+                }
+                let line: String = chars[index..]
+                    .iter()
+                    .take_while(|char| **char != '\n')
+                    .collect();
+                if let Some(captures) = HEREDOC.captures(&line) {
+                    let quoted = captures.get(1).or_else(|| captures.get(2));
+                    let delimiter = quoted.or_else(|| captures.get(3));
+                    if let Some(delimiter) = delimiter.filter(|found| !found.as_str().is_empty()) {
+                        pending.push((delimiter.as_str().to_string(), quoted.is_none()));
+                    }
+                    let operator = &captures[0];
+                    out.push_str(operator);
+                    index += operator.chars().count();
+                    continue;
+                }
+            }
+            '\n' if !pending.is_empty() => {
+                out.push(char);
+                index += 1;
+                for (delimiter, expands) in pending.drain(..) {
+                    let Some((body, end)) = body(&chars, index, &delimiter) else {
+                        break;
+                    };
+                    bodies.push(Heredoc { body, expands });
+                    index = end;
+                }
+                continue;
+            }
+            _ => {}
+        }
+
+        out.push(char);
+        index += 1;
     }
 
-    (kept.join("\n"), bodies)
+    (out, bodies)
 }
 
 pub fn extract_substitutions(text: &str) -> (String, Vec<String>) {
@@ -159,9 +292,12 @@ pub fn extract_substitutions(text: &str) -> (String, Vec<String>) {
     (out, inners)
 }
 
-pub fn tokenize(text: &str, comments: bool) -> Result<Vec<Token>, Unanalyzable> {
+pub type Words = (Vec<Token>, Vec<String>);
+
+pub fn tokenize(text: &str, comments: bool) -> Result<Words, Unanalyzable> {
     let chars: Vec<char> = text.chars().collect();
     let mut tokens = Vec::new();
+    let mut targets = Vec::new();
     let mut index = 0;
 
     while index < chars.len() {
@@ -186,7 +322,7 @@ pub fn tokenize(text: &str, comments: bool) -> Result<Vec<Token>, Unanalyzable> 
             while index < chars.len() && BLANKS.contains(&chars[index]) {
                 index += 1;
             }
-            word(&chars, &mut index)?;
+            targets.push(word(&chars, &mut index)?.0);
             continue;
         }
 
@@ -223,7 +359,7 @@ pub fn tokenize(text: &str, comments: bool) -> Result<Vec<Token>, Unanalyzable> 
         }
     }
 
-    Ok(tokens)
+    Ok((tokens, targets))
 }
 
 fn joins_outputs(chars: &[char], index: usize) -> bool {

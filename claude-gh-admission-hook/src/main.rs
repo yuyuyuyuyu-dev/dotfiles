@@ -104,8 +104,11 @@ fn decide(verdicts: Vec<Verdict>, directory: Option<&str>) -> Option<(&'static s
         }
         for alias in aliases {
             match git::resolve(&alias, directory) {
-                Ok(Some(script)) => found.extend(analyze::check_command(&script, 0)),
-                Ok(None) => {}
+                Ok(scripts) => {
+                    for script in scripts {
+                        found.extend(analyze::check_command(&script, 0));
+                    }
+                }
                 Err(reason) => return Some(("deny", reason + DENY_NOTE)),
             }
         }
