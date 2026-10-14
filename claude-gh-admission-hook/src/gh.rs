@@ -1,4 +1,6 @@
-use crate::shell::{Token, Unanalyzable, has_expansion, splits_into_words};
+use crate::shell::{
+    SUBST_PLACEHOLDER, Shape, Token, Unanalyzable, has_expansion, literal, shape, shown,
+};
 use crate::{Verdict, exception};
 use regex::Regex;
 use std::sync::LazyLock;
@@ -34,40 +36,7 @@ const BOOL_FLAGS: [&str; 8] = [
 ];
 const FIELD_FLAGS: [&str; 4] = ["-f", "--raw-field", "-F", "--field"];
 
-const GH_VALUE_FLAGS: [&str; 32] = [
-    "-R",
-    "--repo",
-    "-e",
-    "--env",
-    "-o",
-    "--org",
-    "-u",
-    "--user",
-    "-a",
-    "--app",
-    "-b",
-    "--body",
-    "-f",
-    "--body-file",
-    "-c",
-    "--color",
-    "-d",
-    "--description",
-    "-n",
-    "--name",
-    "-t",
-    "--template",
-    "-q",
-    "--jq",
-    "-L",
-    "--limit",
-    "-s",
-    "--state",
-    "-H",
-    "--hostname",
-    "--json",
-    "--visibility",
-];
+const GH_FLAGS_WITHOUT_VALUE: [&str; 2] = ["--help", "--version"];
 
 const READ_GH_COMMANDS: &[&[&str]] = &[
     &["browse"],
@@ -142,7 +111,6 @@ const READ_GH_COMMANDS: &[&[&str]] = &[
     &["codespace", "list"],
     &["codespace", "view"],
     &["codespace", "logs"],
-    &["codespace", "ports"],
     &["discussion", "list"],
     &["discussion", "view"],
     &["skill", "list"],
@@ -152,33 +120,34 @@ const READ_GH_COMMANDS: &[&[&str]] = &[
     &["agent-task", "view"],
 ];
 
-const HELP_ONLY_GROUPS: [&str; 26] = [
-    "auth",
-    "pr",
-    "issue",
-    "repo",
-    "release",
-    "run",
-    "workflow",
-    "cache",
-    "label",
-    "ruleset",
-    "secret",
-    "variable",
-    "org",
-    "project",
-    "gist",
-    "search",
-    "attestation",
-    "gpg-key",
-    "ssh-key",
-    "config",
-    "alias",
-    "extension",
-    "codespace",
-    "discussion",
-    "skill",
-    "agent-task",
+const BARE_READ_GH_COMMANDS: &[&[&str]] = &[
+    &["auth"],
+    &["pr"],
+    &["issue"],
+    &["repo"],
+    &["release"],
+    &["run"],
+    &["workflow"],
+    &["cache"],
+    &["label"],
+    &["ruleset"],
+    &["secret"],
+    &["variable"],
+    &["org"],
+    &["project"],
+    &["gist"],
+    &["search"],
+    &["attestation"],
+    &["gpg-key"],
+    &["ssh-key"],
+    &["config"],
+    &["alias"],
+    &["extension"],
+    &["codespace"],
+    &["discussion"],
+    &["skill"],
+    &["agent-task"],
+    &["codespace", "ports"],
 ];
 
 const GH_ALIASES: [(&str, [&str; 2]); 1] = [("co", ["pr", "checkout"])];
@@ -193,54 +162,97 @@ fn listed(list: &[&[&str]], path: &[String]) -> bool {
         .any(|entry| entry.len() == path.len() && entry.iter().zip(path).all(|(a, b)| a == b))
 }
 
-pub fn check_subcommand(args: &[Token], terminator: Option<&Token>) -> Option<Verdict> {
+pub fn names_command(word: &str) -> bool {
+    word == "api"
+        || GH_ALIASES.iter().any(|(name, _)| *name == word)
+        || READ_GH_COMMANDS
+            .iter()
+            .chain(BARE_READ_GH_COMMANDS)
+            .any(|entry| entry[0] == word)
+}
+
+fn shows_token(flag: &str) -> bool {
+    match flag.strip_prefix("--") {
+        Some(name) => name.starts_with("show-token"),
+        None => flag.starts_with('-') && flag.contains('t'),
+    }
+}
+
+fn takes_next_word(flag: &str) -> bool {
+    if flag.contains('=') || GH_FLAGS_WITHOUT_VALUE.contains(&flag) {
+        return false;
+    }
+    match flag.strip_prefix("--") {
+        Some(name) => !name.is_empty(),
+        None => flag.starts_with('-') && flag.len() == 2,
+    }
+}
+
+fn undeterminable(token: &Token) -> Verdict {
+    Verdict::Deny(format!(
+        "{} comes before the end of the gh subcommand and contains a shell expansion or pattern, so which subcommand gh would run cannot be determined. Write the subcommand out literally, and put the flags after it.",
+        shown(token)
+    ))
+}
+
+pub fn check_subcommand(args: &[Token]) -> Option<Verdict> {
     let mut path: Vec<String> = Vec::new();
-    let mut skip_next = false;
-    for token in args {
-        if skip_next {
-            skip_next = false;
+    let mut rest = args.iter();
+
+    while let Some(token) = rest.next() {
+        if !literal(token) {
+            return Some(undeterminable(token));
+        }
+
+        let value = token.value.as_str();
+        if takes_next_word(value) {
+            if let Some(skipped) = rest.next()
+                && matches!(shape(&skipped.raw), Shape::Splitting)
+            {
+                return Some(undeterminable(skipped));
+            }
             continue;
         }
-        if GH_VALUE_FLAGS.contains(&token.value.as_str()) {
-            skip_next = true;
+        if value != "--" && (value.is_empty() || value.starts_with('-')) {
             continue;
         }
-        if token.value.starts_with('-') {
-            continue;
+
+        path.push(value.to_string());
+        if let Some((_, target)) = GH_ALIASES.iter().find(|(name, _)| path == [*name]) {
+            path = target.iter().map(|part| part.to_string()).collect();
         }
-        path.push(token.value.clone());
+
+        if let Some(command) = exception::command(&path) {
+            return Some(exception::check(command, args));
+        }
+        if path == ["auth", "status"] {
+            return rest
+                .find(|token| !literal(token) || shows_token(&token.value))
+                .map(|token| {
+                    Verdict::Deny(format!(
+                        "`gh auth status` was given {}, which could print the credential gh stored, and with that credential any write can be made past this hook. Run `gh auth status` without it.",
+                        shown(token)
+                    ))
+                });
+        }
+        if listed(READ_GH_COMMANDS, &path) {
+            return None;
+        }
         if path.len() == 3 {
             break;
         }
     }
 
-    if let Some((_, target)) = path
-        .first()
-        .and_then(|head| GH_ALIASES.iter().find(|(name, _)| name == head))
-    {
-        let mut expanded: Vec<String> = target.iter().map(|part| part.to_string()).collect();
-        expanded.extend_from_slice(&path[1..]);
-        expanded.truncate(3);
-        path = expanded;
-    }
-
-    if path.is_empty() {
+    if path.is_empty() || listed(BARE_READ_GH_COMMANDS, &path) {
         return None;
     }
 
-    if let Some(command) = exception::command(&path) {
-        return Some(exception::check(command, args, terminator));
-    }
-
-    if (1..=path.len()).any(|length| listed(READ_GH_COMMANDS, &path[..length])) {
-        return None;
-    }
-
-    if path.len() == 1 && HELP_ONLY_GROUPS.contains(&path[0].as_str()) {
-        return None;
-    }
-
-    let named = path[..path.len().min(2)].join(" ");
+    let group = path.len().min(2);
+    let named = if listed(BARE_READ_GH_COMMANDS, &path[..group]) {
+        path.join(" ")
+    } else {
+        path[..group].join(" ")
+    };
     Some(Verdict::Deny(format!(
         "`gh {named}` is not on this hook's allow-list of gh subcommands that only read from GitHub, so it cannot be shown to leave GitHub unchanged. Read the data with a gh command that is on the list, or ask the user to run this one. If `gh {named}` really only reads, the allow-list in claude-gh-admission-hook is what needs the entry."
     )))
@@ -253,10 +265,18 @@ struct Api {
     body_params: bool,
     queries: Vec<String>,
     opaque_query: bool,
+    expanded_query: bool,
+    flag_like: Option<String>,
 }
 
-fn collect(pair: &str, api: &mut Api) {
+fn collect(pair: &str, token: &Token, api: &mut Api) {
     let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
+    if !literal(token)
+        && (has_expansion(key) || key.contains(SUBST_PLACEHOLDER) || key.trim() == "query")
+    {
+        api.expanded_query = true;
+        return;
+    }
     if key.trim() != "query" {
         return;
     }
@@ -275,6 +295,8 @@ fn parse_api(args: &[Token]) -> Result<Api, Unanalyzable> {
         body_params: false,
         queries: Vec::new(),
         opaque_query: false,
+        expanded_query: false,
+        flag_like: None,
     };
 
     let mut index = 0;
@@ -299,7 +321,7 @@ fn parse_api(args: &[Token]) -> Result<Api, Unanalyzable> {
                 api.method_raw = Some(token.raw.clone());
             } else if FIELD_FLAGS.contains(&name) {
                 api.body_params = true;
-                collect(inline, &mut api);
+                collect(inline, token, &mut api);
             } else if name == "--input" {
                 api.body_params = true;
                 api.opaque_query = true;
@@ -319,8 +341,7 @@ fn parse_api(args: &[Token]) -> Result<Api, Unanalyzable> {
                 api.method_raw = Some(next.raw.clone());
             } else if FIELD_FLAGS.contains(&value) {
                 api.body_params = true;
-                let field = next.value.clone();
-                collect(&field, &mut api);
+                collect(&next.value, next, &mut api);
             } else if value == "--input" {
                 api.body_params = true;
                 api.opaque_query = true;
@@ -345,8 +366,7 @@ fn parse_api(args: &[Token]) -> Result<Api, Unanalyzable> {
 
         if value.len() > 2 && (value.starts_with("-f") || value.starts_with("-F")) {
             api.body_params = true;
-            let field = value[2..].to_string();
-            collect(&field, &mut api);
+            collect(&value[2..], token, &mut api);
             index += 1;
             continue;
         }
@@ -360,6 +380,12 @@ fn parse_api(args: &[Token]) -> Result<Api, Unanalyzable> {
             return Err(Unanalyzable(format!("unknown flag {value}")));
         }
 
+        if !literal(token)
+            && (has_expansion(value) || value.contains(SUBST_PLACEHOLDER))
+            && !value.starts_with(|first: char| first.is_ascii_alphanumeric() || first == '/')
+        {
+            api.flag_like.get_or_insert_with(|| shown(token));
+        }
         if api.endpoint.is_none() {
             api.endpoint = Some(value.to_string());
         }
@@ -380,15 +406,21 @@ fn normalize_endpoint(endpoint: &str) -> String {
 
 pub fn check_api(args: &[Token]) -> Result<Option<Verdict>, Unanalyzable> {
     for token in args {
-        if splits_into_words(&token.raw) {
+        if matches!(shape(&token.raw), Shape::Splitting) {
             return Ok(Some(Verdict::Deny(format!(
-                "An argument of `gh api` contains an unquoted shell expansion ({}), which can split into further arguments, so the request that would actually be sent cannot be determined. Quote the expansion, or write the request out with literal values.",
-                token.raw
+                "An argument of `gh api` contains an unquoted shell expansion or pattern ({}), which can turn into further arguments, so the request that would actually be sent cannot be determined. Quote it, or write the request out with literal values.",
+                shown(token)
             ))));
         }
     }
 
     let api = parse_api(args)?;
+
+    if let Some(word) = api.flag_like.as_deref() {
+        return Ok(Some(Verdict::Deny(format!(
+            "An argument of `gh api` ({word}) comes out of a shell expansion and is not the value of a flag, so it could turn out to be a flag that changes the request. Start it with literal text, or write it out literally."
+        ))));
+    }
 
     let Some(endpoint) = api.endpoint.as_deref() else {
         return Err(Unanalyzable("no endpoint".to_string()));
@@ -398,6 +430,12 @@ pub fn check_api(args: &[Token]) -> Result<Option<Verdict>, Unanalyzable> {
         if api.opaque_query {
             return Ok(Some(Verdict::Deny(
                 "The query body of `gh api graphql` is read from a file or stdin, so it cannot be shown to be free of mutations. Pass the query inline, as -f query='query { ... }', and it can be checked."
+                    .to_string(),
+            )));
+        }
+        if api.expanded_query {
+            return Ok(Some(Verdict::Deny(
+                "A field of `gh api graphql` comes out of a shell expansion and could be the query, so the query cannot be shown to be free of mutations. Write the query out literally, and pass what varies as a GraphQL variable with -F."
                     .to_string(),
             )));
         }

@@ -1,15 +1,12 @@
-use regex::Regex;
-use std::sync::LazyLock;
-
 pub const SUBST_PLACEHOLDER: &str = "__SUBST__";
 
-const PUNCTUATION: [char; 8] = ['(', ')', ';', '<', '>', '|', '&', '\n'];
-const WORD_GENERATORS: [char; 4] = ['*', '?', '[', '{'];
+const BLANKS: [char; 3] = [' ', '\t', '\r'];
+const SEPARATORS: [char; 6] = ['(', ')', ';', '|', '&', '\n'];
+const REDIRECTORS: [char; 2] = ['<', '>'];
+const REDIRECTION: [char; 5] = ['<', '>', '&', '|', '!'];
+const GLOBS: [char; 3] = ['*', '?', '['];
 
-static HEREDOC: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"<<-?\s*(?:'([^']*)'|"([^"]*)"|\\?([A-Za-z_][A-Za-z0-9_]*))"#).unwrap()
-});
-
+#[derive(Clone)]
 pub struct Token {
     pub value: String,
     pub raw: String,
@@ -24,43 +21,229 @@ impl std::fmt::Display for Unanalyzable {
     }
 }
 
-pub fn strip_heredocs(text: &str) -> (String, Vec<String>) {
-    let lines: Vec<&str> = text.split('\n').collect();
-    let mut kept: Vec<&str> = Vec::new();
-    let mut expanded: Vec<String> = Vec::new();
+pub struct Heredoc {
+    pub body: String,
+    pub expands: bool,
+}
+
+#[derive(Default)]
+struct Level {
+    quote: Option<char>,
+    parens: u32,
+    cases: u32,
+    backticks: bool,
+    start: usize,
+}
+
+const OPENERS: [&str; 6] = ["do", "then", "else", "elif", "{", "!"];
+
+fn keyword(chars: &[char], at: usize, name: &str) -> bool {
+    let length = name.chars().count();
+    chars.len() >= at + length
+        && chars[at..at + length].iter().copied().eq(name.chars())
+        && chars
+            .get(at + length)
+            .is_none_or(|after| after.is_whitespace() || [';', ')'].contains(after))
+}
+
+fn commands_next(out: &str, start: usize) -> bool {
+    let before = out
+        .get(start..)
+        .unwrap_or_default()
+        .trim_end_matches([' ', '\t']);
+    let Some(last) = before.chars().last() else {
+        return true;
+    };
+    SEPARATORS.contains(&last)
+        || before
+            .rsplit(char::is_whitespace)
+            .next()
+            .is_some_and(|word| OPENERS.contains(&word))
+}
+
+fn closing(chars: &[char], from: usize, pair: [char; 2]) -> Option<usize> {
+    (from..chars.len().saturating_sub(1))
+        .take_while(|&at| chars[at] != '\n')
+        .find(|&at| chars[at] == pair[0] && chars[at + 1] == pair[1])
+        .map(|at| at + 2)
+}
+
+fn body(chars: &[char], from: usize, delimiter: &str) -> Option<(String, usize)> {
+    let mut lines: Vec<String> = Vec::new();
+    let mut start = from;
+    while start < chars.len() {
+        let end = (start..chars.len())
+            .find(|&at| chars[at] == '\n')
+            .unwrap_or(chars.len());
+        let line: String = chars[start..end].iter().collect();
+        if line.trim() == delimiter {
+            return Some((lines.join("\n"), (end + 1).min(chars.len())));
+        }
+        lines.push(line);
+        start = end + 1;
+    }
+    None
+}
+
+pub fn strip_heredocs(text: &str) -> (String, Vec<Heredoc>) {
+    let chars: Vec<char> = text.chars().collect();
+    let mut out = String::new();
+    let mut bodies: Vec<Heredoc> = Vec::new();
+    let mut pending: Vec<(String, bool)> = Vec::new();
+    let mut levels = vec![Level::default()];
     let mut index = 0;
 
-    while index < lines.len() {
-        let line = lines[index];
-        kept.push(line);
-        index += 1;
+    while index < chars.len() {
+        let char = chars[index];
+        let next = chars.get(index + 1).copied();
+        let nested = levels.len() > 1;
+        let Some(level) = levels.last_mut() else {
+            break;
+        };
 
-        for captures in HEREDOC.captures_iter(line) {
-            let quoted = captures.get(1).or_else(|| captures.get(2));
-            let delimiter = [captures.get(1), captures.get(2), captures.get(3)]
-                .into_iter()
-                .flatten()
-                .map(|group| group.as_str())
-                .find(|group| !group.is_empty());
-            let Some(delimiter) = delimiter else {
-                continue;
-            };
-
-            let mut end = index;
-            while end < lines.len() && lines[end].trim() != delimiter {
-                end += 1;
+        if level.quote == Some('\'') {
+            if char == '\'' {
+                level.quote = None;
             }
-            if end >= lines.len() {
-                continue;
-            }
-            if quoted.is_none() {
-                expanded.push(lines[index..end].join("\n"));
-            }
-            index = end + 1;
+            out.push(char);
+            index += 1;
+            continue;
         }
+
+        if char == '\\' {
+            out.push(char);
+            out.extend(next);
+            index += 2;
+            continue;
+        }
+
+        if char == '$' && next == Some('(') {
+            if chars.get(index + 2) == Some(&'(')
+                && let Some(end) = closing(&chars, index + 3, [')', ')'])
+            {
+                out.extend(&chars[index..end]);
+                index = end;
+                continue;
+            }
+            out.push_str("$(");
+            levels.push(Level {
+                start: out.len(),
+                ..Level::default()
+            });
+            index += 2;
+            continue;
+        }
+
+        if char == '`' {
+            if level.backticks {
+                levels.pop();
+            } else {
+                levels.push(Level {
+                    backticks: true,
+                    start: out.len() + 1,
+                    ..Level::default()
+                });
+            }
+            out.push(char);
+            index += 1;
+            continue;
+        }
+
+        if level.quote == Some('"') {
+            if char == '"' {
+                level.quote = None;
+            }
+            out.push(char);
+            index += 1;
+            continue;
+        }
+
+        let starts_word = out
+            .chars()
+            .last()
+            .is_none_or(|last| last.is_whitespace() || SEPARATORS.contains(&last));
+
+        match char {
+            '\'' | '"' => level.quote = Some(char),
+            '(' if next == Some('(') && starts_word => {
+                if let Some(end) = closing(&chars, index + 2, [')', ')']) {
+                    out.extend(&chars[index..end]);
+                    index = end;
+                    continue;
+                }
+            }
+            'c' if starts_word
+                && keyword(&chars, index, "case")
+                && commands_next(&out, level.start) =>
+            {
+                level.cases += 1;
+            }
+            'e' if starts_word && keyword(&chars, index, "esac") => {
+                level.cases = level.cases.saturating_sub(1);
+            }
+            '(' if nested => level.parens += 1,
+            ')' if nested && !level.backticks => {
+                if level.parens > 0 {
+                    level.parens -= 1;
+                } else if level.cases == 0 {
+                    levels.pop();
+                }
+            }
+            '#' if starts_word => {
+                while index < chars.len() && chars[index] != '\n' {
+                    out.push(chars[index]);
+                    index += 1;
+                }
+                continue;
+            }
+            '<' if next == Some('<') => {
+                if chars.get(index + 2) == Some(&'<') {
+                    out.push_str("<<<");
+                    index += 3;
+                    continue;
+                }
+                let mut end = index + 2;
+                if chars.get(end) == Some(&'-') {
+                    end += 1;
+                }
+                while chars
+                    .get(end)
+                    .is_some_and(|char| *char == ' ' || *char == '\t')
+                {
+                    end += 1;
+                }
+                if let Ok((delimiter, raw)) = word(&chars, &mut end)
+                    && !delimiter.is_empty()
+                {
+                    pending.push((delimiter, !raw.contains(['\'', '"', '\\'])));
+                    out.extend(&chars[index..end]);
+                    index = end;
+                    continue;
+                }
+            }
+            '\n' if !pending.is_empty() => {
+                out.push(char);
+                index += 1;
+                for (delimiter, expands) in pending.drain(..) {
+                    let Some((body, end)) = body(&chars, index, &delimiter) else {
+                        break;
+                    };
+                    bodies.push(Heredoc { body, expands });
+                    index = end;
+                }
+                continue;
+            }
+            _ => {}
+        }
+
+        out.push(char);
+        index += 1;
     }
 
-    (kept.join("\n"), expanded)
+    if levels.len() != 1 || levels.iter().any(|level| level.quote.is_some()) {
+        return (text.to_string(), Vec::new());
+    }
+    (out, bodies)
 }
 
 pub fn extract_substitutions(text: &str) -> (String, Vec<String>) {
@@ -103,7 +286,8 @@ pub fn extract_substitutions(text: &str) -> (String, Vec<String>) {
             continue;
         }
 
-        if char == '$' && index + 1 < chars.len() && chars[index + 1] == '(' {
+        let substitutes = char == '$' || (quote.is_none() && REDIRECTORS.contains(&char));
+        if substitutes && index + 1 < chars.len() && chars[index + 1] == '(' {
             let mut depth = 0;
             let mut scan = index + 1;
             while scan < chars.len() {
@@ -148,22 +332,47 @@ pub fn extract_substitutions(text: &str) -> (String, Vec<String>) {
     (out, inners)
 }
 
-pub fn tokenize(text: &str) -> Result<Vec<Token>, Unanalyzable> {
+pub type Words = (Vec<Token>, Vec<String>);
+
+pub fn tokenize(text: &str, comments: bool) -> Result<Words, Unanalyzable> {
     let chars: Vec<char> = text.chars().collect();
     let mut tokens = Vec::new();
+    let mut targets = Vec::new();
     let mut index = 0;
 
     while index < chars.len() {
         let char = chars[index];
 
-        if char == ' ' || char == '\t' || char == '\r' {
+        if BLANKS.contains(&char) {
             index += 1;
             continue;
         }
 
-        if PUNCTUATION.contains(&char) {
+        if comments && char == '#' {
+            while index < chars.len() && chars[index] != '\n' {
+                index += 1;
+            }
+            continue;
+        }
+
+        if REDIRECTORS.contains(&char) || joins_outputs(&chars, index) {
+            while index < chars.len() && REDIRECTION.contains(&chars[index]) {
+                index += 1;
+            }
+            while index < chars.len() && BLANKS.contains(&chars[index]) {
+                index += 1;
+            }
+            targets.push(word(&chars, &mut index)?.0);
+            continue;
+        }
+
+        if SEPARATORS.contains(&char) {
             let start = index;
-            while index < chars.len() && PUNCTUATION.contains(&chars[index]) {
+            index += 1;
+            while index < chars.len()
+                && SEPARATORS.contains(&chars[index])
+                && (chars[index - 1] == '&' || !joins_outputs(&chars, index))
+            {
                 index += 1;
             }
             let run: String = chars[start..index].iter().collect();
@@ -175,103 +384,137 @@ pub fn tokenize(text: &str) -> Result<Vec<Token>, Unanalyzable> {
             continue;
         }
 
-        let mut value = String::new();
-        let mut raw = String::new();
-        while index < chars.len() {
-            let char = chars[index];
-            if char == ' ' || char == '\t' || char == '\r' || PUNCTUATION.contains(&char) {
-                break;
-            }
-
-            if char == '\'' {
-                raw.push(char);
-                index += 1;
-                loop {
-                    let Some(&inner) = chars.get(index) else {
-                        return Err(Unanalyzable("No closing quotation".to_string()));
-                    };
-                    raw.push(inner);
-                    index += 1;
-                    if inner == '\'' {
-                        break;
-                    }
-                    value.push(inner);
-                }
-                continue;
-            }
-
-            if char == '"' {
-                raw.push(char);
-                index += 1;
-                loop {
-                    let Some(&inner) = chars.get(index) else {
-                        return Err(Unanalyzable("No closing quotation".to_string()));
-                    };
-                    if inner == '"' {
-                        raw.push(inner);
-                        index += 1;
-                        break;
-                    }
-                    if inner == '\\'
-                        && let Some(&escaped) = chars.get(index + 1)
-                    {
-                        raw.push(inner);
-                        raw.push(escaped);
-                        if escaped != '"' && escaped != '\\' {
-                            value.push(inner);
-                        }
-                        value.push(escaped);
-                        index += 2;
-                        continue;
-                    }
-                    raw.push(inner);
-                    value.push(inner);
-                    index += 1;
-                }
-                continue;
-            }
-
-            if char == '\\' {
-                let Some(&escaped) = chars.get(index + 1) else {
-                    return Err(Unanalyzable("No escaped character".to_string()));
-                };
-                raw.push(char);
-                raw.push(escaped);
-                value.push(escaped);
-                index += 2;
-                continue;
-            }
-
-            value.push(char);
-            raw.push(char);
-            index += 1;
+        let (value, raw) = word(&chars, &mut index)?;
+        let descriptor = chars
+            .get(index)
+            .is_some_and(|next| REDIRECTORS.contains(next))
+            && !raw.is_empty()
+            && raw.chars().all(|char| char.is_ascii_digit());
+        if !descriptor {
+            tokens.push(Token {
+                value,
+                raw,
+                separator: false,
+            });
         }
-
-        tokens.push(Token {
-            value,
-            raw,
-            separator: false,
-        });
     }
 
-    Ok(tokens)
+    Ok((tokens, targets))
 }
 
-pub fn splits_into_words(raw: &str) -> bool {
-    let mut quote: Option<char> = None;
-    for char in raw.chars() {
-        match quote {
-            None if char == '\'' || char == '"' => quote = Some(char),
-            None if char == '$' || char == '`' => return true,
-            Some(open) if char == open => quote = None,
-            _ => {}
+fn joins_outputs(chars: &[char], index: usize) -> bool {
+    chars.get(index) == Some(&'&') && chars.get(index + 1) == Some(&'>')
+}
+
+fn word(chars: &[char], index: &mut usize) -> Result<(String, String), Unanalyzable> {
+    let mut value = String::new();
+    let mut raw = String::new();
+
+    while let Some(&char) = chars.get(*index) {
+        if BLANKS.contains(&char) || SEPARATORS.contains(&char) || REDIRECTORS.contains(&char) {
+            break;
         }
+
+        if char == '\'' {
+            raw.push(char);
+            *index += 1;
+            loop {
+                let Some(&inner) = chars.get(*index) else {
+                    return Err(Unanalyzable("No closing quotation".to_string()));
+                };
+                raw.push(inner);
+                *index += 1;
+                if inner == '\'' {
+                    break;
+                }
+                value.push(inner);
+            }
+            continue;
+        }
+
+        if char == '"' {
+            raw.push(char);
+            *index += 1;
+            loop {
+                let Some(&inner) = chars.get(*index) else {
+                    return Err(Unanalyzable("No closing quotation".to_string()));
+                };
+                if inner == '"' {
+                    raw.push(inner);
+                    *index += 1;
+                    break;
+                }
+                if inner == '\\'
+                    && let Some(&escaped) = chars.get(*index + 1)
+                {
+                    raw.push(inner);
+                    raw.push(escaped);
+                    if escaped != '"' && escaped != '\\' {
+                        value.push(inner);
+                    }
+                    value.push(escaped);
+                    *index += 2;
+                    continue;
+                }
+                raw.push(inner);
+                value.push(inner);
+                *index += 1;
+            }
+            continue;
+        }
+
+        if char == '\\' {
+            let Some(&escaped) = chars.get(*index + 1) else {
+                return Err(Unanalyzable("No escaped character".to_string()));
+            };
+            raw.push(char);
+            raw.push(escaped);
+            value.push(escaped);
+            *index += 2;
+            continue;
+        }
+
+        value.push(char);
+        raw.push(char);
+        *index += 1;
     }
-    false
+
+    Ok((value, raw))
 }
 
 pub fn has_expansion(raw: &str) -> bool {
     raw.contains('$') || raw.contains('`')
+}
+
+pub fn expands(text: &str) -> bool {
+    has_expansion(text) || text.contains(SUBST_PLACEHOLDER)
+}
+
+pub fn splits(token: &Token) -> bool {
+    matches!(shape(&token.raw), Shape::Splitting)
+}
+
+pub fn may_be_flag(token: &Token) -> bool {
+    if literal(token) {
+        return false;
+    }
+    let value = token.value.as_str();
+    if value.starts_with('-') {
+        return expands(value.split('=').next().unwrap_or(value));
+    }
+    value.starts_with(['$', '`']) || value.starts_with(SUBST_PLACEHOLDER)
+}
+
+pub fn literal(token: &Token) -> bool {
+    matches!(shape(&token.raw), Shape::Literal)
+}
+
+pub fn unseen() -> Token {
+    Token {
+        value: SUBST_PLACEHOLDER.to_string(),
+        raw: SUBST_PLACEHOLDER.to_string(),
+        separator: false,
+    }
 }
 
 pub enum Shape {
@@ -306,7 +549,9 @@ pub fn shape(raw: &str) -> Shape {
             Some(_) if char == '"' => quote = None,
             Some(_) => opaque |= expands,
             None if char == '\'' || char == '"' => quote = Some(char),
-            None if expands || WORD_GENERATORS.contains(&char) => return Shape::Splitting,
+            None if expands || GLOBS.contains(&char) || braces(&raw[offset..]) => {
+                return Shape::Splitting;
+            }
             None => {}
         }
     }
@@ -318,7 +563,15 @@ pub fn shape(raw: &str) -> Shape {
     }
 }
 
-pub fn segments(tokens: &[Token]) -> Vec<(&[Token], Option<&Token>)> {
+fn braces(rest: &str) -> bool {
+    rest.starts_with('{') && (rest.contains(',') || rest.contains(".."))
+}
+
+pub fn shown(token: &Token) -> String {
+    token.raw.replace(SUBST_PLACEHOLDER, "$(...)")
+}
+
+pub fn segments(tokens: &[Token]) -> Vec<&[Token]> {
     let mut found = Vec::new();
     let mut start = 0;
 
@@ -327,12 +580,12 @@ pub fn segments(tokens: &[Token]) -> Vec<(&[Token], Option<&Token>)> {
             continue;
         }
         if index > start {
-            found.push((&tokens[start..index], Some(token)));
+            found.push(&tokens[start..index]);
         }
         start = index + 1;
     }
     if start < tokens.len() {
-        found.push((&tokens[start..], None));
+        found.push(&tokens[start..]);
     }
 
     found

@@ -1,5 +1,5 @@
 use crate::Verdict;
-use crate::shell::{Token, has_expansion};
+use crate::shell::{Token, has_expansion, may_be_flag, shown, splits};
 use regex::Regex;
 use std::sync::LazyLock;
 
@@ -38,6 +38,205 @@ const BODY_FLAGS: [&str; 14] = [
 ];
 const UPLOAD_FLAGS: [&str; 2] = ["-T", "--upload-file"];
 
+const METHOD_FLAGS: [&str; 3] = ["-X", "--request", "--method"];
+const CURL_VALUE_FLAGS: [&str; 22] = [
+    "--header",
+    "--output",
+    "--user",
+    "--user-agent",
+    "--referer",
+    "--cookie",
+    "--cookie-jar",
+    "--write-out",
+    "--max-time",
+    "--connect-timeout",
+    "--retry",
+    "--retry-delay",
+    "--retry-max-time",
+    "--proxy",
+    "--url",
+    "--cacert",
+    "--cert",
+    "--key",
+    "--range",
+    "--resolve",
+    "--dump-header",
+    "--stderr",
+];
+const WGET_VALUE_FLAGS: [&str; 10] = [
+    "--header",
+    "--output-document",
+    "--user-agent",
+    "--user",
+    "--password",
+    "--tries",
+    "--timeout",
+    "--directory-prefix",
+    "--output-file",
+    "--wait",
+];
+const CURL_PLAIN_FLAGS: [&str; 27] = [
+    "--silent",
+    "--show-error",
+    "--location",
+    "--location-trusted",
+    "--fail",
+    "--fail-with-body",
+    "--include",
+    "--verbose",
+    "--insecure",
+    "--disable",
+    "--no-buffer",
+    "--remote-name",
+    "--remote-header-name",
+    "--remote-time",
+    "--globoff",
+    "--compressed",
+    "--head",
+    "--get",
+    "--http1.1",
+    "--http2",
+    "--no-progress-meter",
+    "--progress-bar",
+    "--ipv4",
+    "--ipv6",
+    "--netrc",
+    "--tlsv1.2",
+    "--tlsv1.3",
+];
+const WGET_PLAIN_FLAGS: [&str; 14] = [
+    "--quiet",
+    "--verbose",
+    "--no-verbose",
+    "--server-response",
+    "--continue",
+    "--timestamping",
+    "--no-check-certificate",
+    "--no-config",
+    "--spider",
+    "--content-on-error",
+    "--no-clobber",
+    "--inet4-only",
+    "--inet6-only",
+    "--debug",
+];
+const WGET_PLAIN_WORDS: [&str; 4] = ["-nv", "-nc", "-nd", "-nH"];
+const CURL_PLAIN_LETTERS: &str = "sSLfivkqNOJg46#IGnR";
+const WGET_PLAIN_LETTERS: &str = "qvSc46N";
+const CURL_VALUE_LETTERS: &str = "HouAebcwmxrDEyYzKCXdFT";
+const WGET_VALUE_LETTERS: &str = "OUtTPoawQADe";
+
+const CURL_WITHOUT_FILE: [&str; 2] = ["-q", "--disable"];
+const CURL_OPTION_FILES: [&str; 2] = ["--config", "-K"];
+const WGET_OPTION_FILES: [&str; 3] = ["--config", "--execute", "-e"];
+
+fn value_letter(name: &str, flag: &str) -> Option<(char, bool)> {
+    let letters = if name == "wget" {
+        WGET_VALUE_LETTERS
+    } else {
+        CURL_VALUE_LETTERS
+    };
+    let bundle = flag
+        .strip_prefix('-')
+        .filter(|rest| !rest.starts_with('-'))?;
+    bundle
+        .char_indices()
+        .find(|(_, letter)| letters.contains(*letter))
+        .map(|(offset, letter)| (letter, offset + letter.len_utf8() == bundle.len()))
+}
+
+fn takes_next_word(name: &str, flag: &str) -> bool {
+    let words: &[&str] = if name == "wget" {
+        &WGET_VALUE_FLAGS
+    } else {
+        &CURL_VALUE_FLAGS
+    };
+
+    if flag.starts_with("--") {
+        return words.contains(&flag)
+            || METHOD_FLAGS.contains(&flag)
+            || BODY_FLAGS.contains(&flag)
+            || UPLOAD_FLAGS.contains(&flag);
+    }
+    value_letter(name, flag).is_some_and(|(_, last)| last)
+}
+
+fn known(name: &str, flag: &str) -> bool {
+    let (values, plain, files): (&[&str], &[&str], &[&str]) = if name == "wget" {
+        (&WGET_VALUE_FLAGS, &WGET_PLAIN_FLAGS, &WGET_OPTION_FILES)
+    } else {
+        (&CURL_VALUE_FLAGS, &CURL_PLAIN_FLAGS, &CURL_OPTION_FILES)
+    };
+    let (value_letters, plain_letters) = if name == "wget" {
+        (WGET_VALUE_LETTERS, WGET_PLAIN_LETTERS)
+    } else {
+        (CURL_VALUE_LETTERS, CURL_PLAIN_LETTERS)
+    };
+
+    if flag == "-" || flag == "--" || (name == "wget" && WGET_PLAIN_WORDS.contains(&flag)) {
+        return true;
+    }
+    if flag.starts_with("--") {
+        let stem = flag.split('=').next().unwrap_or(flag);
+        return [
+            values,
+            plain,
+            files,
+            &METHOD_FLAGS,
+            &BODY_FLAGS,
+            &UPLOAD_FLAGS,
+        ]
+        .iter()
+        .any(|list| list.contains(&stem));
+    }
+    for letter in flag.chars().skip(1) {
+        if value_letters.contains(letter) {
+            return true;
+        }
+        if !plain_letters.contains(letter) {
+            return false;
+        }
+    }
+    true
+}
+
+fn reads_options(name: &str, flag: &str) -> bool {
+    let files: &[&str] = if name == "wget" {
+        &WGET_OPTION_FILES
+    } else {
+        &CURL_OPTION_FILES
+    };
+
+    if flag.starts_with("--") {
+        return files.contains(&flag.split('=').next().unwrap_or(flag));
+    }
+    value_letter(name, flag)
+        .is_some_and(|(letter, _)| files.contains(&format!("-{letter}").as_str()))
+}
+
+fn unseen_options(name: &str, args: &[Token]) -> Option<Verdict> {
+    if name == "wget" {
+        if args.iter().any(|token| token.raw == "--no-config") {
+            return None;
+        }
+        return Some(Verdict::Deny(
+            "`wget` reads further options from its wgetrc file unless --no-config is given, and those options could change the request sent to the GitHub API. Add --no-config."
+                .to_string(),
+        ));
+    }
+
+    if args
+        .first()
+        .is_some_and(|token| CURL_WITHOUT_FILE.contains(&token.raw.as_str()))
+    {
+        return None;
+    }
+    Some(Verdict::Deny(
+        "`curl` reads further options from its .curlrc file unless -q is its first argument, and those options could change the request sent to the GitHub API. Put -q first, as in `curl -q URL`."
+            .to_string(),
+    ))
+}
+
 pub fn github_variables(text: &str) -> Vec<String> {
     let mut names = Vec::new();
     for captures in ASSIGNMENT_VALUE.captures_iter(text) {
@@ -60,6 +259,10 @@ struct Request {
     force_get: bool,
     upload: bool,
     body: bool,
+    splitting: Option<String>,
+    flag_like: Option<String>,
+    options: Option<String>,
+    unknown: Option<String>,
 }
 
 fn read_short_bundle(value: &str, raw: &str, state: &mut Request) -> bool {
@@ -102,9 +305,23 @@ pub fn check(name: &str, args: &[Token], github_variables: &[String]) -> Option<
     let mut state = Request::default();
     let mut targets_github = false;
     let mut take_method_next = false;
+    let mut value_expected = false;
 
     for token in args {
         let value = token.value.as_str();
+
+        if splits(token) {
+            state.splitting.get_or_insert_with(|| shown(token));
+        } else if !value_expected && may_be_flag(token) {
+            state.flag_like.get_or_insert_with(|| shown(token));
+        }
+        if !value_expected && value.starts_with('-') && !known(name, value) {
+            state.unknown.get_or_insert_with(|| shown(token));
+        }
+        if !value_expected && reads_options(name, value) {
+            state.options.get_or_insert_with(|| shown(token));
+        }
+        value_expected = !value_expected && takes_next_word(name, value);
 
         if take_method_next {
             state.method = Some(value.to_string());
@@ -165,6 +382,22 @@ pub fn check(name: &str, args: &[Token], github_variables: &[String]) -> Option<
         return None;
     }
 
+    if let Some(word) = state.splitting.as_deref() {
+        return Some(Verdict::Deny(format!(
+            "An argument of `{name}` contains an unquoted shell expansion or pattern ({word}), which can turn into further arguments, so the request that would be sent to the GitHub API cannot be determined. Quote it, or write the request out with literal values."
+        )));
+    }
+    if let Some(word) = state.options.as_deref() {
+        return Some(Verdict::Deny(format!(
+            "`{name}` was given {word}, which makes it read further options from somewhere this hook cannot see, so the request that would be sent to the GitHub API cannot be determined. Write the options out on the command line."
+        )));
+    }
+    if let Some(word) = state.flag_like.as_deref() {
+        return Some(Verdict::Deny(format!(
+            "An argument of `{name}` ({word}) comes out of a shell expansion and is not the value of a flag this hook knows, so it could turn out to be a flag that changes the request sent to the GitHub API. Start it with literal text, or write it out literally."
+        )));
+    }
+
     if let Some(raw) = state.method_raw.as_deref()
         && has_expansion(raw)
     {
@@ -183,7 +416,12 @@ pub fn check(name: &str, args: &[Token], github_variables: &[String]) -> Option<
     };
 
     if READ_METHODS.contains(&effective.as_str()) {
-        return None;
+        if let Some(flag) = state.unknown.as_deref() {
+            return Some(Verdict::Deny(format!(
+                "`{name}` was given {flag}, a flag this hook does not know, so the request that would be sent to the GitHub API cannot be determined. If {flag} leaves the request a read, the flag table in claude-gh-admission-hook is what needs the entry."
+            )));
+        }
+        return unseen_options(name, args);
     }
 
     Some(Verdict::Deny(format!(
