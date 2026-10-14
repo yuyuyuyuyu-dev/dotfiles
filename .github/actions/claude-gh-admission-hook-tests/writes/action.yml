@@ -1486,3 +1486,72 @@ runs:
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
         echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a write after a here-document whose delimiter is partly quoted
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"cat <<E''OF''\nEOF\ngh pr merge 5\nE"}}'
+        SENTENCE: >-
+          `gh pr merge` is not on this hook's allow-list of gh subcommands that
+          only read from GitHub, so it cannot be shown to leave GitHub unchanged.
+          Read the data with a gh command that is on the list, or ask the user to
+          run this one. If `gh pr merge` really only reads, the allow-list in
+          claude-gh-admission-hook is what needs the entry.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a write after a here-document whose delimiter is more than a name
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"cat <<A-B\nA-B\ngh pr merge 5\nA"}}'
+        SENTENCE: >-
+          `gh pr merge` is not on this hook's allow-list of gh subcommands that
+          only read from GitHub, so it cannot be shown to leave GitHub unchanged.
+          Read the data with a gh command that is on the list, or ask the user to
+          run this one. If `gh pr merge` really only reads, the allow-list in
+          claude-gh-admission-hook is what needs the entry.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a write after a case pattern inside a substitution
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"echo \"$(case a in a) echo \"<<EOF\";; esac)\"\ngh pr merge 5\nEOF"}}'
+        SENTENCE: >-
+          `gh pr merge` is not on this hook's allow-list of gh subcommands that
+          only read from GitHub, so it cannot be shown to leave GitHub unchanged.
+          Read the data with a gh command that is on the list, or ask the user to
+          run this one. If `gh pr merge` really only reads, the allow-list in
+          claude-gh-admission-hook is what needs the entry.
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"
+
+    - name: should deny a git alias whose name has a dot in it
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git dotted.name"}}'
+        SENTENCE: >-
+          `gh pr merge` is not on this hook's allow-list of gh subcommands that
+          only read from GitHub, so it cannot be shown to leave GitHub unchanged.
+          Read the data with a gh command that is on the list, or ask the user to
+          run this one. If `gh pr merge` really only reads, the allow-list in
+          claude-gh-admission-hook is what needs the entry.
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet
+        git config alias.dotted.name.command '!gh pr merge 5'
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        echo "$decision" | grep '"permissionDecision":"deny"'
+        echo "$decision" | grep -F -- "$SENTENCE"

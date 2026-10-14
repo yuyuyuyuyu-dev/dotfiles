@@ -392,9 +392,8 @@ fn writes_remote(args: &[Token]) -> bool {
 fn could_be_alias(name: &str) -> bool {
     !SHIPPED_COMMANDS.contains(&name)
         && !name.is_empty()
-        && name
-            .chars()
-            .all(|char| char.is_ascii_alphanumeric() || char == '-')
+        && !name.starts_with('-')
+        && !name.contains(char::is_whitespace)
 }
 
 fn makes_a_tag(refspec: &str) -> bool {

@@ -1,6 +1,3 @@
-use regex::Regex;
-use std::sync::LazyLock;
-
 pub const SUBST_PLACEHOLDER: &str = "__SUBST__";
 
 const BLANKS: [char; 3] = [' ', '\t', '\r'];
@@ -8,10 +5,6 @@ const SEPARATORS: [char; 6] = ['(', ')', ';', '|', '&', '\n'];
 const REDIRECTORS: [char; 2] = ['<', '>'];
 const REDIRECTION: [char; 5] = ['<', '>', '&', '|', '!'];
 const GLOBS: [char; 3] = ['*', '?', '['];
-
-static HEREDOC: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"^<<-?[ \t]*(?:'([^']*)'|"([^"]*)"|\\?([A-Za-z_][A-Za-z0-9_]*))"#).unwrap()
-});
 
 #[derive(Clone)]
 pub struct Token {
@@ -37,7 +30,35 @@ pub struct Heredoc {
 struct Level {
     quote: Option<char>,
     parens: u32,
+    cases: u32,
     backticks: bool,
+    start: usize,
+}
+
+const OPENERS: [&str; 6] = ["do", "then", "else", "elif", "{", "!"];
+
+fn keyword(chars: &[char], at: usize, name: &str) -> bool {
+    let length = name.chars().count();
+    chars.len() >= at + length
+        && chars[at..at + length].iter().copied().eq(name.chars())
+        && chars
+            .get(at + length)
+            .is_none_or(|after| after.is_whitespace() || [';', ')'].contains(after))
+}
+
+fn commands_next(out: &str, start: usize) -> bool {
+    let before = out
+        .get(start..)
+        .unwrap_or_default()
+        .trim_end_matches([' ', '\t']);
+    let Some(last) = before.chars().last() else {
+        return true;
+    };
+    SEPARATORS.contains(&last)
+        || before
+            .rsplit(char::is_whitespace)
+            .next()
+            .is_some_and(|word| OPENERS.contains(&word))
 }
 
 fn closing(chars: &[char], from: usize, pair: [char; 2]) -> Option<usize> {
@@ -105,7 +126,10 @@ pub fn strip_heredocs(text: &str) -> (String, Vec<Heredoc>) {
                 continue;
             }
             out.push_str("$(");
-            levels.push(Level::default());
+            levels.push(Level {
+                start: out.len(),
+                ..Level::default()
+            });
             index += 2;
             continue;
         }
@@ -116,6 +140,7 @@ pub fn strip_heredocs(text: &str) -> (String, Vec<Heredoc>) {
             } else {
                 levels.push(Level {
                     backticks: true,
+                    start: out.len() + 1,
                     ..Level::default()
                 });
             }
@@ -147,12 +172,21 @@ pub fn strip_heredocs(text: &str) -> (String, Vec<Heredoc>) {
                     continue;
                 }
             }
+            'c' if starts_word
+                && keyword(&chars, index, "case")
+                && commands_next(&out, level.start) =>
+            {
+                level.cases += 1;
+            }
+            'e' if starts_word && keyword(&chars, index, "esac") => {
+                level.cases = level.cases.saturating_sub(1);
+            }
             '(' if nested => level.parens += 1,
             ')' if nested && !level.backticks => {
-                if level.parens == 0 {
-                    levels.pop();
-                } else {
+                if level.parens > 0 {
                     level.parens -= 1;
+                } else if level.cases == 0 {
+                    levels.pop();
                 }
             }
             '#' if starts_word => {
@@ -168,19 +202,22 @@ pub fn strip_heredocs(text: &str) -> (String, Vec<Heredoc>) {
                     index += 3;
                     continue;
                 }
-                let line: String = chars[index..]
-                    .iter()
-                    .take_while(|char| **char != '\n')
-                    .collect();
-                if let Some(captures) = HEREDOC.captures(&line) {
-                    let quoted = captures.get(1).or_else(|| captures.get(2));
-                    let delimiter = quoted.or_else(|| captures.get(3));
-                    if let Some(delimiter) = delimiter.filter(|found| !found.as_str().is_empty()) {
-                        pending.push((delimiter.as_str().to_string(), quoted.is_none()));
-                    }
-                    let operator = &captures[0];
-                    out.push_str(operator);
-                    index += operator.chars().count();
+                let mut end = index + 2;
+                if chars.get(end) == Some(&'-') {
+                    end += 1;
+                }
+                while chars
+                    .get(end)
+                    .is_some_and(|char| *char == ' ' || *char == '\t')
+                {
+                    end += 1;
+                }
+                if let Ok((delimiter, raw)) = word(&chars, &mut end)
+                    && !delimiter.is_empty()
+                {
+                    pending.push((delimiter, !raw.contains(['\'', '"', '\\'])));
+                    out.extend(&chars[index..end]);
+                    index = end;
                     continue;
                 }
             }
@@ -203,6 +240,9 @@ pub fn strip_heredocs(text: &str) -> (String, Vec<Heredoc>) {
         index += 1;
     }
 
+    if levels.len() != 1 || levels.iter().any(|level| level.quote.is_some()) {
+        return (text.to_string(), Vec::new());
+    }
     (out, bodies)
 }
 

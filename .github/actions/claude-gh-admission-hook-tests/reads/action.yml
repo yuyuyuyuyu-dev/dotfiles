@@ -390,3 +390,21 @@ runs:
         git init --quiet
         decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a here-document with tabs stripped be written to a file
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"cat <<-EOF > notes.md\n\tgh pr merge 5\n\tEOF"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a here-document follow a case inside a substitution
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"result=$(case x in x) echo y;; esac); cat <<EOF\ngh pr merge 5\nEOF"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
