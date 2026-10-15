@@ -55,4 +55,4 @@ def _report_registration():
 
     print(f"[TODO] {settings_path} does not mention {CRATE} yet, so the hook is idle.")
     print("       Ask Claude Code to register it, for example:")
-    print(f'       "Register ~/.cargo/bin/{CRATE} as a PreToolUse hook for Bash"')
+    print(f'       "Register ~/.cargo/bin/{CRATE} as a PreToolUse hook for every tool"')

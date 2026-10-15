@@ -8,6 +8,7 @@ mod lookup;
 mod pull_request;
 mod release;
 mod shell;
+mod tool;
 
 use std::io::Read;
 
@@ -34,18 +35,27 @@ fn main() {
         return;
     };
 
+    let name = parsed
+        .get("tool_name")
+        .and_then(|name| name.as_str())
+        .unwrap_or_default();
     let command = parsed
         .get("tool_input")
         .and_then(|input| input.get("command"))
         .and_then(|command| command.as_str())
         .unwrap_or_default();
-    if command.trim().is_empty() {
+
+    let verdicts = if let Some(verdict) = tool::check(name) {
+        vec![verdict]
+    } else if command.trim().is_empty() {
         return;
-    }
+    } else {
+        analyze::check_command(command, 0)
+    };
 
     let directory = parsed.get("cwd").and_then(|directory| directory.as_str());
 
-    let Some((decision, reason)) = decide(analyze::check_command(command, 0), directory) else {
+    let Some((decision, reason)) = decide(verdicts, directory) else {
         return;
     };
 
