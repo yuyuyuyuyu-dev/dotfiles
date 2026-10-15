@@ -408,3 +408,30 @@ runs:
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a tool without a command through
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Read","tool_input":{"file_path":"/tmp/x"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let the other pull request tools of the desktop app through
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"mcp__ccd_pr__get_status","tool_input":{}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let a read that a tool other than Bash runs through
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Monitor","tool_input":{"command":"gh pr checks 5","description":"x","timeout_ms":1000}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
