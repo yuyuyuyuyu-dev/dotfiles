@@ -22,8 +22,11 @@ runs:
         HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"mcp__ccd_pr__set_auto_merge","tool_input":{"url":"https://github.com/o/r/pull/5","enabled":true,"merge_method":"squash"}}'
         SENTENCE: >-
-          `mcp__ccd_pr__set_auto_merge` turns auto-merge on or off for a pull
-          request on GitHub, and either way that changes GitHub state.
+          `mcp__ccd_pr__set_auto_merge` is not on this hook's allow-list of the
+          pull request tools of the Claude desktop app that leave GitHub
+          unchanged, so it cannot be shown to leave GitHub unchanged. If
+          `mcp__ccd_pr__set_auto_merge` really leaves GitHub unchanged, the
+          allow-list in claude-gh-admission-hook is what needs the entry.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -34,6 +37,13 @@ runs:
       env:
         HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"mcp__ccd_pr__set_auto_merge","tool_input":{"url":"https://github.com/o/r/pull/5","enabled":false}}'
+      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should deny a pull request tool of the desktop app that the app has not shipped yet
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"mcp__ccd_pr__some_future_write","tool_input":{"url":"https://github.com/o/r/pull/5"}}'
       run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"deny"'
 
     - name: should deny a write that a tool other than Bash runs

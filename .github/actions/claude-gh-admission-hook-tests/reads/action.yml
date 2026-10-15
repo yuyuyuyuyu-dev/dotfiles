@@ -418,11 +418,38 @@ runs:
         decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
 
-    - name: should let the other pull request tools of the desktop app through
+    - name: should let the desktop app read the pull request bound to a session
       shell: bash
       env:
         HOOK: ${{ inputs.hook }}
         PAYLOAD: '{"tool_name":"mcp__ccd_pr__get_status","tool_input":{}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let the desktop app bind a pull request to a session
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"mcp__ccd_pr__bind_pr","tool_input":{"url":"https://github.com/o/r/pull/5"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let the desktop app unbind a pull request from a session
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"mcp__ccd_pr__unbind_pr","tool_input":{"url":"https://github.com/o/r/pull/5"}}'
+      run: |
+        decision=$(echo "$PAYLOAD" | "$HOOK")
+        test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
+
+    - name: should let the desktop app switch how it watches the CI of a pull request
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"mcp__ccd_pr__set_monitor","tool_input":{"url":"https://github.com/o/r/pull/5","auto_fix":true}}'
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
