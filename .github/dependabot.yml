@@ -21,7 +21,7 @@ updates:
         patterns: ["*"]
         update-types: [minor, patch]
 
-  - package-ecosystem: cargo
+  - package-ecosystem: gradle
     directory: /claude-gh-admission-hook
     schedule:
       interval: daily

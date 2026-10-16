@@ -15,4 +15,6 @@
 .docker/*
 !.docker/config.json
 __pycache__/
-claude-gh-admission-hook/target/
+claude-gh-admission-hook/.gradle/
+claude-gh-admission-hook/.kotlin/
+claude-gh-admission-hook/build/

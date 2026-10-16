@@ -18,24 +18,42 @@ jobs:
     name: should be installable
     runs-on: macos-latest
     steps:
+      # Arrange
+      - &check-out
+        uses: actions/checkout@v7
+
+      - &set-up-java
+        uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - &set-up-gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - run: curl -fsSL https://raw.githubusercontent.com/yuyuyuyuyu-dev/kotlinstall/main/install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin
+
       # Act
-      - run: cargo install --git "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" --rev "$GITHUB_SHA" --locked claude-gh-admission-hook
+      - run: ~/.kotlinstall/bin/kotlinstall install "file://$GITHUB_WORKSPACE" --subdirectory=claude-gh-admission-hook
 
       # Assert
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh issue create --title x"}}'
-        run: echo "$PAYLOAD" | "$HOME/.cargo/bin/claude-gh-admission-hook" | grep '"permissionDecision":"deny"'
+        run: echo "$PAYLOAD" | ~/.kotlinstall/bin/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
 
   read-only:
     name: should restrict GitHub access to read-only permission
     runs-on: macos-latest
     steps:
       # Arrange
-      - &check-out
-        uses: actions/checkout@v7
+      - *check-out
+
+      - *set-up-java
+
+      - *set-up-gradle
 
       - &build
-        run: cargo build --release --locked
+        run: ./gradlew linkReleaseExecutableHost
         working-directory: claude-gh-admission-hook
 
       # Act & Assert
@@ -48,16 +66,20 @@ jobs:
       # Arrange
       - *check-out
 
+      - *set-up-java
+
+      - *set-up-gradle
+
       - *build
 
       # Act
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -u origin HEAD"}}'
-        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook > "$RUNNER_TEMP/push-decision"
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/push-decision"
 
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x --body y"}}'
-        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook > "$RUNNER_TEMP/decision"
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
 
       # Assert
       - run: test ! -s "$RUNNER_TEMP/push-decision"
@@ -70,6 +92,10 @@ jobs:
     steps:
       # Arrange
       - *check-out
+
+      - *set-up-java
+
+      - *set-up-gradle
 
       - *build
 
@@ -86,7 +112,7 @@ jobs:
       # Act
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body z"}}'
-        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook > "$RUNNER_TEMP/decision"
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
 
       # Assert
       - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
@@ -98,12 +124,16 @@ jobs:
       # Arrange
       - *check-out
 
+      - *set-up-java
+
+      - *set-up-gradle
+
       - *build
 
       # Act
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 --draft --title x --notes y"}}'
-        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook > "$RUNNER_TEMP/decision"
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
 
       # Assert
       - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
@@ -114,6 +144,10 @@ jobs:
     steps:
       # Arrange
       - *check-out
+
+      - *set-up-java
+
+      - *set-up-gradle
 
       - *build
 
@@ -133,7 +167,7 @@ jobs:
       # Act
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 -R github.com/owner/repo --notes x"}}'
-        run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook > "$RUNNER_TEMP/decision"
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
 
       # Assert
       - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
@@ -144,6 +178,10 @@ jobs:
     steps:
       # Arrange
       - *check-out
+
+      - *set-up-java
+
+      - *set-up-gradle
 
       - *build
 
@@ -160,10 +198,12 @@ jobs:
       # Act & Assert
       - uses: yuyuyuyuyu-dev/assert-no-unexpected-changes@v1
         with:
-          image: rust
-          arrange: cargo build --release --locked --manifest-path claude-gh-admission-hook/Cargo.toml
+          arrange: |
+            apt-get update
+            apt-get install --yes --no-install-recommends ca-certificates openjdk-25-jdk-headless
+            claude-gh-admission-hook/gradlew --project-dir claude-gh-admission-hook linkReleaseExecutableHost
           act: |
-            hook=claude-gh-admission-hook/target/release/claude-gh-admission-hook
+            hook=claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe
             echo '{"tool_name":"Bash","tool_input":{"command":"gh pr list"}}' | "$hook"
             echo '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}' | "$hook"
             echo '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x"}}' | "$hook"

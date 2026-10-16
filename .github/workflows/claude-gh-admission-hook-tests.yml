@@ -16,12 +16,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - run: cargo build --release --locked
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableHost
         working-directory: claude-gh-admission-hook
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/reads
         with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe
 
   writes:
     name: should deny the writes that are not exceptions
@@ -29,12 +36,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - run: cargo build --release --locked
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableHost
         working-directory: claude-gh-admission-hook
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/writes
         with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe
 
   pull-request-create:
     name: should ask about a new pull request only when it is surely a draft
@@ -42,12 +56,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - run: cargo build --release --locked
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableHost
         working-directory: claude-gh-admission-hook
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/pull-request-create
         with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe
 
   pull-request-edit:
     name: should ask about a pull request edit only when it surely reaches an open draft
@@ -55,12 +76,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - run: cargo build --release --locked
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableHost
         working-directory: claude-gh-admission-hook
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/pull-request-edit
         with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe
 
   release-create:
     name: should ask about a new release only when it is surely a draft
@@ -68,12 +96,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - run: cargo build --release --locked
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableHost
         working-directory: claude-gh-admission-hook
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/release-create
         with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe
 
   release-edit:
     name: should ask about a release edit only when it surely reaches a draft
@@ -81,12 +116,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - run: cargo build --release --locked
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableHost
         working-directory: claude-gh-admission-hook
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/release-edit
         with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe
 
   actionable-denial:
     name: should say in a denial what was rejected and what to do instead
@@ -94,9 +136,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - run: cargo build --release --locked
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableHost
         working-directory: claude-gh-admission-hook
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/actionable-denial
         with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe

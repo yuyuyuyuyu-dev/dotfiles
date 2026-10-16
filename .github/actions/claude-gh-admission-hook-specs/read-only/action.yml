@@ -10,7 +10,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title x --body y"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny pushing tags
       shell: bash
@@ -18,7 +18,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --tags"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny creating a tag
       shell: bash
@@ -26,7 +26,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git tag v1.0.0"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny creating a release
       shell: bash
@@ -34,7 +34,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny a POST sent with gh api
       shell: bash
@@ -42,7 +42,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X POST /repos/o/r/issues"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny a PUT sent with gh api
       shell: bash
@@ -50,7 +50,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X PUT /repos/o/r/topics"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny a PATCH sent with gh api
       shell: bash
@@ -58,7 +58,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X PATCH /repos/o/r"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny a DELETE sent with gh api
       shell: bash
@@ -66,7 +66,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh api -X DELETE /repos/o/r"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny a POST sent with curl
       shell: bash
@@ -74,7 +74,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X POST https://api.github.com/repos/o/r/issues"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny a PUT sent with curl
       shell: bash
@@ -82,7 +82,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X PUT https://api.github.com/repos/o/r/topics"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny a PATCH sent with curl
       shell: bash
@@ -90,7 +90,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X PATCH https://api.github.com/repos/o/r"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny a DELETE sent with curl
       shell: bash
@@ -98,7 +98,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"curl -X DELETE https://api.github.com/repos/o/r"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny a POST sent with wget
       shell: bash
@@ -106,7 +106,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"wget --method=POST https://api.github.com/repos/o/r/issues"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny a PUT sent with wget
       shell: bash
@@ -114,7 +114,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"wget --method=PUT https://api.github.com/repos/o/r/topics"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny a PATCH sent with wget
       shell: bash
@@ -122,7 +122,7 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"wget --method=PATCH https://api.github.com/repos/o/r"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'
 
     - name: should deny a DELETE sent with wget
       shell: bash
@@ -130,4 +130,4 @@ runs:
       env:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"wget --method=DELETE https://api.github.com/repos/o/r"}}'
       # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/target/release/claude-gh-admission-hook | grep '"permissionDecision":"deny"'
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe | grep '"permissionDecision":"deny"'

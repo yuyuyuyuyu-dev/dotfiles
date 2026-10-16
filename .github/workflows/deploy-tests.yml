@@ -37,10 +37,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - run: |
+          curl -fsSL https://raw.githubusercontent.com/yuyuyuyuyu-dev/kotlinstall/main/install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin
+          echo "${HOME}/.kotlinstall/bin" >> "${GITHUB_PATH}"
+
       - run: |
           mkdir -p "${RUNNER_TEMP}/home"
-          RUSTUP_HOME="${HOME}/.rustup" HOME="${RUNNER_TEMP}/home" \
-            python3 -m deploy ${{ matrix.platform }} < /dev/null
+          HOME="${RUNNER_TEMP}/home" python3 -m deploy ${{ matrix.platform }} < /dev/null
 
       - name: assert every configuration file resolves to the one in this checkout
         run: |
@@ -68,5 +76,5 @@ jobs:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh issue create --title \"Checking that claude-gh-admission-hook was installed correctly\""}}'
         run: |
           echo "$PAYLOAD" \
-            | "${RUNNER_TEMP}/home/.cargo/bin/claude-gh-admission-hook" \
+            | "${RUNNER_TEMP}/home/.kotlinstall/bin/claude-gh-admission-hook" \
             | grep '"permissionDecision":"deny"'
