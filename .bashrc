@@ -18,8 +18,6 @@ if [[ -e "$HOME/.cargo/env" ]]; then
 	. "$HOME/.cargo/env"
 fi
 
-export PATH="$HOME/.kotlinstall/bin:$PATH"
-
 arisu() {
 	echo '🍓 橘です。'
 }
