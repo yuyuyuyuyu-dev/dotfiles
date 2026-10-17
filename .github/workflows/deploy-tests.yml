@@ -1,0 +1,158 @@
+name: deploy tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  redeploy:
+    name: should deploy to ${{ matrix.name }} again without asking anything
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: mac
+            name: macOS
+            runner: macos-latest
+          - platform: linux
+            name: Linux
+            runner: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      - run: |
+          mkdir "${RUNNER_TEMP}/home"
+          HOME="${RUNNER_TEMP}/home" python3 -m deploy ${{ matrix.platform }} < /dev/null
+
+      # Act & Assert
+      - run: HOME="${RUNNER_TEMP}/home" python3 -m deploy ${{ matrix.platform }} < /dev/null
+
+  agreed-replacement:
+    name: should replace ${{ matrix.kind }} already in place once the user agrees
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kind: a file
+            path: .vimrc
+            content: .vimrc
+          - kind: a directory
+            path: .config
+            content: .config/mine
+    runs-on: ubuntu-latest
+    env:
+      DEPLOYED: ${{ matrix.path }}
+      CONTENT: ${{ matrix.content }}
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      - run: |
+          mkdir -p "$(dirname "${RUNNER_TEMP}/home/${CONTENT}")"
+          echo mine > "${RUNNER_TEMP}/home/${CONTENT}"
+
+      # Act
+      - run: echo y | HOME="${RUNNER_TEMP}/home" python3 -m deploy linux
+
+      # Assert
+      - run: test "$(readlink -f "${RUNNER_TEMP}/home/${DEPLOYED}")" = "$(readlink -f "${GITHUB_WORKSPACE}/${DEPLOYED}")"
+
+  declined-replacement:
+    name: should keep ${{ matrix.kind }} already in place when the user declines, and deploy the rest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kind: a file
+            path: .vimrc
+            content: .vimrc
+          - kind: a directory
+            path: .config
+            content: .config/mine
+    runs-on: ubuntu-latest
+    env:
+      KEPT: ${{ matrix.path }}
+      CONTENT: ${{ matrix.content }}
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      - run: |
+          mkdir -p "$(dirname "${RUNNER_TEMP}/home/${CONTENT}")"
+          echo mine > "${RUNNER_TEMP}/home/${CONTENT}"
+
+      # Act
+      - run: echo n | HOME="${RUNNER_TEMP}/home" python3 -m deploy linux
+
+      # Assert
+      - run: test ! -L "${RUNNER_TEMP}/home/${KEPT}"
+
+      - run: test "$(cat "${RUNNER_TEMP}/home/${CONTENT}")" = mine
+
+      - run: test "$(readlink -f "${RUNNER_TEMP}/home/.bashrc")" = "$(readlink -f "${GITHUB_WORKSPACE}/.bashrc")"
+
+  foreign-link:
+    name: should point a link that leads elsewhere back to this checkout without asking
+    runs-on: ubuntu-latest
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      - run: |
+          mkdir "${RUNNER_TEMP}/home" "${RUNNER_TEMP}/elsewhere"
+          touch "${RUNNER_TEMP}/elsewhere/.vimrc"
+          ln -s "${RUNNER_TEMP}/elsewhere/.vimrc" "${RUNNER_TEMP}/home/.vimrc"
+
+      # Act
+      - run: HOME="${RUNNER_TEMP}/home" python3 -m deploy linux < /dev/null
+
+      # Assert
+      - run: test "$(readlink -f "${RUNNER_TEMP}/home/.vimrc")" = "$(readlink -f "${GITHUB_WORKSPACE}/.vimrc")"
+
+  without-kotlinstall:
+    name: should deploy everything else when kotlinstall is missing
+    runs-on: ubuntu-latest
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      - run: |
+          test -z "$(command -v kotlinstall)"
+          mkdir "${RUNNER_TEMP}/home"
+
+      # Act
+      - run: HOME="${RUNNER_TEMP}/home" python3 -m deploy linux < /dev/null
+
+      # Assert
+      - run: |
+          for link in .bash_profile .bashrc .zshrc .zprofile .zshenv .zlogout .vimrc .config; do
+            test "$(readlink -f "${RUNNER_TEMP}/home/$link")" = "$(readlink -f "${GITHUB_WORKSPACE}/$link")"
+          done
+
+  existing-git-settings:
+    name: should add its git settings while keeping the ones already in ~/.gitconfig
+    runs-on: ubuntu-latest
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      - run: |
+          mkdir "${RUNNER_TEMP}/home"
+          git config --file "${RUNNER_TEMP}/home/.gitconfig" user.name Someone
+
+      # Act
+      - run: HOME="${RUNNER_TEMP}/home" python3 -m deploy linux < /dev/null
+
+      # Assert
+      - run: test "$(git config --file "${RUNNER_TEMP}/home/.gitconfig" user.name)" = Someone
+
+      - run: test "$(git config --file "${RUNNER_TEMP}/home/.gitconfig" core.autocrlf)" = input
+
+      - run: test "$(git config --file "${RUNNER_TEMP}/home/.gitconfig" core.pager)" = "LESSCHARSET=utf-8 less -cmN"
