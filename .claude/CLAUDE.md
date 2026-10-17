@@ -38,11 +38,16 @@ Before a branch is created, the latest changes on the remote default branch MUST
 Changes MAY be committed and pushed to a topic branch without asking.
 A pull request MUST NOT be opened until the user asks for one.
 
+### Structure
+
+Anything written, whether code, a document, a commit message, a pull request, or a reply, SHOULD follow The Newspaper Metaphor: the top gives the whole, and each step down goes into more detail.
+Where a language or the project's own conventions call for another order, that order wins.
+
 ### Replies
 
 Replies to the user MUST be written in Japanese.
 Replies to the user MUST be understandable to someone who has not read the source code.
-A report or explanation MUST start with an overview of the whole, then go into detail one step at a time.
+Replies to the user MUST follow The Newspaper Metaphor.
 
 ## When in Doubt
 
