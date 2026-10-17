@@ -1,0 +1,43 @@
+name: gradle
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: claude-gh-admission-hook
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew detekt
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew ktlintCheck

@@ -16,12 +16,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - run: cargo build --release --locked
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableLinuxX64
         working-directory: claude-gh-admission-hook
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/reads
         with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/linuxX64/releaseExecutable/claude-gh-admission-hook.kexe
 
   writes:
     name: should deny the writes that are not exceptions
@@ -29,12 +36,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - run: cargo build --release --locked
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableLinuxX64
         working-directory: claude-gh-admission-hook
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/writes
         with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/linuxX64/releaseExecutable/claude-gh-admission-hook.kexe
 
   pull-request-create:
     name: should ask about a new pull request only when it is surely a draft
@@ -42,12 +56,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - run: cargo build --release --locked
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableLinuxX64
         working-directory: claude-gh-admission-hook
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/pull-request-create
         with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/linuxX64/releaseExecutable/claude-gh-admission-hook.kexe
 
   pull-request-edit:
     name: should ask about a pull request edit only when it surely reaches an open draft
@@ -55,12 +76,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - run: cargo build --release --locked
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableLinuxX64
         working-directory: claude-gh-admission-hook
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/pull-request-edit
         with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/linuxX64/releaseExecutable/claude-gh-admission-hook.kexe
 
   release-create:
     name: should ask about a new release only when it is surely a draft
@@ -68,12 +96,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - run: cargo build --release --locked
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableLinuxX64
         working-directory: claude-gh-admission-hook
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/release-create
         with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/linuxX64/releaseExecutable/claude-gh-admission-hook.kexe
 
   release-edit:
     name: should ask about a release edit only when it surely reaches a draft
@@ -81,12 +116,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - run: cargo build --release --locked
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableLinuxX64
         working-directory: claude-gh-admission-hook
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/release-edit
         with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/linuxX64/releaseExecutable/claude-gh-admission-hook.kexe
 
   actionable-denial:
     name: should say in a denial what was rejected and what to do instead
@@ -94,9 +136,141 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - run: cargo build --release --locked
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableLinuxX64
         working-directory: claude-gh-admission-hook
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/actionable-denial
         with:
-          hook: ${{ github.workspace }}/claude-gh-admission-hook/target/release/claude-gh-admission-hook
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/linuxX64/releaseExecutable/claude-gh-admission-hook.kexe
+
+  macos:
+    name: should pass the tests on ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macOS on Apple silicon
+            runner: macos-latest
+            target: macosArm64
+            task: linkReleaseExecutableMacosArm64
+          - platform: macOS on Intel
+            runner: macos-26-intel
+            target: macosX64
+            task: linkReleaseExecutableMacosX64
+    runs-on: ${{ matrix.runner }}
+    env:
+      HOOK: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/${{ matrix.target }}/releaseExecutable/claude-gh-admission-hook.kexe
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew "$TASK"
+        working-directory: claude-gh-admission-hook
+        env:
+          TASK: ${{ matrix.task }}
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/reads
+        with:
+          hook: ${{ env.HOOK }}
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/writes
+        with:
+          hook: ${{ env.HOOK }}
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/pull-request-create
+        with:
+          hook: ${{ env.HOOK }}
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/pull-request-edit
+        with:
+          hook: ${{ env.HOOK }}
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/release-create
+        with:
+          hook: ${{ env.HOOK }}
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/release-edit
+        with:
+          hook: ${{ env.HOOK }}
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/actionable-denial
+        with:
+          hook: ${{ env.HOOK }}
+
+  linux-on-arm-build:
+    name: build for Linux on Arm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: ./gradlew linkReleaseExecutableLinuxArm64
+        working-directory: claude-gh-admission-hook
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: claude-gh-admission-hook-linux-arm64
+          path: claude-gh-admission-hook/build/bin/linuxArm64/releaseExecutable/claude-gh-admission-hook.kexe
+
+  linux-on-arm:
+    name: should pass the tests on Linux on Arm
+    needs: linux-on-arm-build
+    runs-on: ubuntu-24.04-arm
+    env:
+      HOOK: ${{ github.workspace }}/hook/claude-gh-admission-hook.kexe
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: claude-gh-admission-hook-linux-arm64
+          path: hook
+
+      - run: chmod +x "$HOOK"
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/reads
+        with:
+          hook: ${{ env.HOOK }}
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/writes
+        with:
+          hook: ${{ env.HOOK }}
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/pull-request-create
+        with:
+          hook: ${{ env.HOOK }}
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/pull-request-edit
+        with:
+          hook: ${{ env.HOOK }}
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/release-create
+        with:
+          hook: ${{ env.HOOK }}
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/release-edit
+        with:
+          hook: ${{ env.HOOK }}
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/actionable-denial
+        with:
+          hook: ${{ env.HOOK }}

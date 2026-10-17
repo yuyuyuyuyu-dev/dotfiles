@@ -26,6 +26,10 @@ if [ -d {$HOME}/.cargo/bin ]
   set -x PATH {$HOME}/.cargo/bin {$PATH}
 end
 
+if [ -d {$HOME}/.kotlinstall/bin ]
+  set -x PATH {$HOME}/.kotlinstall/bin {$PATH}
+end
+
 if [ -d {$HOME}/.nimble/bin ]
   set -x PATH {$HOME}/.nimble/bin {$PATH}
 end
