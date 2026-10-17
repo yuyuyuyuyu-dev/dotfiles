@@ -1,4 +1,4 @@
-name: Deploy tests
+name: deploy specs
 
 on:
   push:
@@ -78,3 +78,25 @@ jobs:
           echo "$PAYLOAD" \
             | "${RUNNER_TEMP}/home/.kotlinstall/bin/claude-gh-admission-hook" \
             | grep '"permissionDecision":"deny"'
+
+  unnecessary-changes:
+    name: should change nothing but the files it deploys
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: assert the deployment created nothing else
+        uses: yuyuyuyuyu-dev/assert-no-unexpected-changes@v1
+        with:
+          arrange: apt-get update && apt-get install --yes --no-install-recommends python3 git
+          act: mkdir /home/fresh && HOME=/home/fresh python3 -m deploy linux
+          allowlist: |
+            /home/fresh/.bash_profile
+            /home/fresh/.bashrc
+            /home/fresh/.zshrc
+            /home/fresh/.zprofile
+            /home/fresh/.zshenv
+            /home/fresh/.zlogout
+            /home/fresh/.vimrc
+            /home/fresh/.config
+            /home/fresh/.gitconfig
