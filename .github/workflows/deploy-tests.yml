@@ -213,4 +213,5 @@ jobs:
             /home/fresh/.bashrc
             /home/fresh/.vimrc
             /home/fresh/.gemini
+            /home/fresh/.gemini/GEMINI.md
             /home/fresh/.gitconfig
