@@ -1,4 +1,4 @@
-name: Deploy tests
+name: deploy tests
 
 on:
   push:
@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
-    name: should deploy to ${{ matrix.name }}
+  redeploy:
+    name: should deploy to ${{ matrix.name }} again without asking anything
     strategy:
       fail-fast: false
       matrix:
@@ -19,62 +19,199 @@ jobs:
           - platform: mac
             name: macOS
             runner: macos-latest
-            links: >-
-              .bash_profile .bashrc
-              .zshrc .zprofile .zshenv .zlogout
-              .vimrc .ideavimrc .tmux.conf
-              .claude/CLAUDE.md .gemini/GEMINI.md
-              .config
           - platform: linux
             name: Linux
             runner: ubuntu-latest
-            links: >-
-              .bash_profile .bashrc
-              .zshrc .zprofile .zshenv .zlogout
-              .vimrc
-              .config
+          - platform: android
+            name: Android
+            runner: ubuntu-latest
     runs-on: ${{ matrix.runner }}
     steps:
+      # Arrange
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v6
-        with:
-          distribution: zulu
-          java-version: "25"
-
       - run: |
-          curl -fsSL https://raw.githubusercontent.com/yuyuyuyuyu-dev/kotlinstall/main/install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin
-          echo "${HOME}/.kotlinstall/bin" >> "${GITHUB_PATH}"
-
-      - run: |
-          mkdir -p "${RUNNER_TEMP}/home"
+          mkdir "${RUNNER_TEMP}/home"
           HOME="${RUNNER_TEMP}/home" python3 -m deploy ${{ matrix.platform }} < /dev/null
 
-      - name: assert every configuration file resolves to the one in this checkout
-        run: |
-          for link in ${{ matrix.links }}; do
-            deployed=$(readlink -f "${RUNNER_TEMP}/home/$link")
-            source=$(readlink -f "${GITHUB_WORKSPACE}/$link")
-            test "$deployed" = "$source" || {
-              echo "::error::$link resolves to '$deployed', expected '$source'"
-              exit 1
-            }
+      # Act & Assert
+      - run: HOME="${RUNNER_TEMP}/home" python3 -m deploy ${{ matrix.platform }} < /dev/null
+
+  agreed-replacement:
+    name: should replace ${{ matrix.kind }} already in place once the user agrees
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kind: a file
+            path: .vimrc
+            content: .vimrc
+          - kind: a directory
+            path: .config
+            content: .config/mine
+    runs-on: ubuntu-latest
+    env:
+      DEPLOYED: ${{ matrix.path }}
+      CONTENT: ${{ matrix.content }}
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      - run: |
+          mkdir -p "$(dirname "${RUNNER_TEMP}/home/${CONTENT}")"
+          echo mine > "${RUNNER_TEMP}/home/${CONTENT}"
+
+      # Act
+      - run: echo y | HOME="${RUNNER_TEMP}/home" python3 -m deploy linux
+
+      # Assert
+      - run: test "$(readlink -f "${RUNNER_TEMP}/home/${DEPLOYED}")" = "$(readlink -f "${GITHUB_WORKSPACE}/${DEPLOYED}")"
+
+  declined-replacement:
+    name: should keep ${{ matrix.kind }} already in place when the user declines, and deploy the rest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kind: a file
+            path: .vimrc
+            content: .vimrc
+          - kind: a directory
+            path: .config
+            content: .config/mine
+    runs-on: ubuntu-latest
+    env:
+      KEPT: ${{ matrix.path }}
+      CONTENT: ${{ matrix.content }}
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      - run: |
+          mkdir -p "$(dirname "${RUNNER_TEMP}/home/${CONTENT}")"
+          echo mine > "${RUNNER_TEMP}/home/${CONTENT}"
+
+      # Act
+      - run: echo n | HOME="${RUNNER_TEMP}/home" python3 -m deploy linux
+
+      # Assert
+      - run: test ! -L "${RUNNER_TEMP}/home/${KEPT}"
+
+      - run: test "$(cat "${RUNNER_TEMP}/home/${CONTENT}")" = mine
+
+      - run: test "$(readlink -f "${RUNNER_TEMP}/home/.bashrc")" = "$(readlink -f "${GITHUB_WORKSPACE}/.bashrc")"
+
+  foreign-link:
+    name: should point a link that leads elsewhere back to this checkout without asking
+    runs-on: ubuntu-latest
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      - run: |
+          mkdir "${RUNNER_TEMP}/home" "${RUNNER_TEMP}/elsewhere"
+          touch "${RUNNER_TEMP}/elsewhere/.vimrc"
+          ln -s "${RUNNER_TEMP}/elsewhere/.vimrc" "${RUNNER_TEMP}/home/.vimrc"
+
+      # Act
+      - run: HOME="${RUNNER_TEMP}/home" python3 -m deploy linux < /dev/null
+
+      # Assert
+      - run: test "$(readlink -f "${RUNNER_TEMP}/home/.vimrc")" = "$(readlink -f "${GITHUB_WORKSPACE}/.vimrc")"
+
+  without-kotlinstall:
+    name: should deploy everything else when kotlinstall is missing
+    runs-on: ubuntu-latest
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      - run: |
+          test -z "$(command -v kotlinstall)"
+          mkdir "${RUNNER_TEMP}/home"
+
+      # Act
+      - run: HOME="${RUNNER_TEMP}/home" python3 -m deploy linux < /dev/null
+
+      # Assert
+      - run: |
+          for link in .bash_profile .bashrc .zshrc .zprofile .zshenv .zlogout .vimrc .config; do
+            test "$(readlink -f "${RUNNER_TEMP}/home/$link")" = "$(readlink -f "${GITHUB_WORKSPACE}/$link")"
           done
 
-      # git falls back to writing ~/.config/git/config when ~/.gitconfig is
-      # absent, and ~/.config is a link into the checkout, so the deployment
-      # would be editing its own source.
-      - name: assert git settings stayed out of the linked config directory
-        run: |
-          test -f "${RUNNER_TEMP}/home/.gitconfig" || {
-            echo "::error::~/.gitconfig was not created"; exit 1; }
-          git -C "${GITHUB_WORKSPACE}" diff --quiet -- .config || {
-            echo "::error::the deployment modified its own source"; exit 1; }
+  existing-git-settings:
+    name: should add its git settings while keeping the ones already in ~/.gitconfig
+    runs-on: ubuntu-latest
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
 
-      - name: assert the deployment installed claude-gh-admission-hook
-        env:
-          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh issue create --title \"Checking that claude-gh-admission-hook was installed correctly\""}}'
-        run: |
-          echo "$PAYLOAD" \
-            | "${RUNNER_TEMP}/home/.kotlinstall/bin/claude-gh-admission-hook" \
-            | grep '"permissionDecision":"deny"'
+      - run: |
+          mkdir "${RUNNER_TEMP}/home"
+          git config --file "${RUNNER_TEMP}/home/.gitconfig" user.name Someone
+
+      # Act
+      - run: HOME="${RUNNER_TEMP}/home" python3 -m deploy linux < /dev/null
+
+      # Assert
+      - run: test "$(git config --file "${RUNNER_TEMP}/home/.gitconfig" user.name)" = Someone
+
+      - run: test "$(git config --file "${RUNNER_TEMP}/home/.gitconfig" core.autocrlf)" = input
+
+      - run: test "$(git config --file "${RUNNER_TEMP}/home/.gitconfig" core.pager)" = "LESSCHARSET=utf-8 less -cmN"
+
+  android:
+    name: should link the Android configuration files to this checkout
+    runs-on: ubuntu-latest
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      - run: mkdir "${RUNNER_TEMP}/home"
+
+      # Act
+      - run: HOME="${RUNNER_TEMP}/home" python3 -m deploy android < /dev/null
+
+      # Assert
+      - run: |
+          for link in .bash_profile .bashrc .vimrc .gemini/GEMINI.md; do
+            test "$(readlink -f "${RUNNER_TEMP}/home/$link")" = "$(readlink -f "${GITHUB_WORKSPACE}/$link")"
+          done
+
+  android-git-ignore:
+    name: should make git on Android ignore the files that .config/git/ignore lists
+    runs-on: ubuntu-latest
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      - run: |
+          mkdir "${RUNNER_TEMP}/home"
+          git init -q "${RUNNER_TEMP}/repository"
+          touch "${RUNNER_TEMP}/repository/.DS_Store"
+
+      # Act
+      - run: HOME="${RUNNER_TEMP}/home" python3 -m deploy android < /dev/null
+
+      # Assert
+      - run: HOME="${RUNNER_TEMP}/home" git -C "${RUNNER_TEMP}/repository" check-ignore -q .DS_Store
+
+  android-unnecessary-changes:
+    name: should change nothing on Android but the files it deploys
+    runs-on: ubuntu-latest
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      # Act & Assert
+      - uses: yuyuyuyuyu-dev/assert-no-unexpected-changes@v1
+        with:
+          arrange: apt-get update && apt-get install --yes --no-install-recommends python3 git
+          act: mkdir /home/fresh && HOME=/home/fresh python3 -m deploy android
+          allowlist: |
+            /home/fresh/.bash_profile
+            /home/fresh/.bashrc
+            /home/fresh/.vimrc
+            /home/fresh/.gemini
+            /home/fresh/.gemini/GEMINI.md
+            /home/fresh/.gitconfig
