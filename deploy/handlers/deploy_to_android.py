@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from deploy.shared.paths import HOME_DIR
+from deploy.shared.paths import DOTFILES_ROOT, HOME_DIR
 from deploy.shared.setup_bash import setup_bash
 from deploy.shared.setup_gemini import setup_gemini
 from deploy.shared.setup_git import setup_git
@@ -51,7 +51,7 @@ def _setup_git_for_platform():
             "config",
             "--global",
             "core.excludesFile",
-            os.path.join(HOME_DIR, ".config/git/ignore"),
+            os.path.join(DOTFILES_ROOT, ".config/git/ignore"),
         ],
         check=True,
     )
