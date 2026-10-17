@@ -22,6 +22,9 @@ jobs:
           - platform: linux
             name: Linux
             runner: ubuntu-latest
+          - platform: android
+            name: Android
+            runner: ubuntu-latest
     runs-on: ${{ matrix.runner }}
     steps:
       # Arrange
@@ -156,3 +159,58 @@ jobs:
       - run: test "$(git config --file "${RUNNER_TEMP}/home/.gitconfig" core.autocrlf)" = input
 
       - run: test "$(git config --file "${RUNNER_TEMP}/home/.gitconfig" core.pager)" = "LESSCHARSET=utf-8 less -cmN"
+
+  android:
+    name: should link the Android configuration files to this checkout
+    runs-on: ubuntu-latest
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      - run: mkdir "${RUNNER_TEMP}/home"
+
+      # Act
+      - run: HOME="${RUNNER_TEMP}/home" python3 -m deploy android < /dev/null
+
+      # Assert
+      - run: |
+          for link in .bash_profile .bashrc .vimrc .gemini/GEMINI.md; do
+            test "$(readlink -f "${RUNNER_TEMP}/home/$link")" = "$(readlink -f "${GITHUB_WORKSPACE}/$link")"
+          done
+
+  android-git-ignore:
+    name: should make git on Android ignore the files that .config/git/ignore lists
+    runs-on: ubuntu-latest
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      - run: |
+          mkdir "${RUNNER_TEMP}/home"
+          git init -q "${RUNNER_TEMP}/repository"
+          touch "${RUNNER_TEMP}/repository/.DS_Store"
+
+      # Act
+      - run: HOME="${RUNNER_TEMP}/home" python3 -m deploy android < /dev/null
+
+      # Assert
+      - run: HOME="${RUNNER_TEMP}/home" git -C "${RUNNER_TEMP}/repository" check-ignore -q .DS_Store
+
+  android-unnecessary-changes:
+    name: should change nothing on Android but the files it deploys
+    runs-on: ubuntu-latest
+    steps:
+      # Arrange
+      - uses: actions/checkout@v7
+
+      # Act & Assert
+      - uses: yuyuyuyuyu-dev/assert-no-unexpected-changes@v1
+        with:
+          arrange: apt-get update && apt-get install --yes --no-install-recommends python3 git
+          act: mkdir /home/fresh && HOME=/home/fresh python3 -m deploy android
+          allowlist: |
+            /home/fresh/.bash_profile
+            /home/fresh/.bashrc
+            /home/fresh/.vimrc
+            /home/fresh/.gemini
+            /home/fresh/.gitconfig
