@@ -53,7 +53,7 @@ jobs:
       - *set-up-gradle
 
       - &build
-        run: ./gradlew linkReleaseExecutableHost
+        run: ./gradlew linkReleaseExecutableMacosArm64
         working-directory: claude-gh-admission-hook
 
       # Act & Assert
@@ -75,11 +75,11 @@ jobs:
       # Act
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -u origin HEAD"}}'
-        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/push-decision"
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/push-decision"
 
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x --body y"}}'
-        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
 
       # Assert
       - run: test ! -s "$RUNNER_TEMP/push-decision"
@@ -112,7 +112,7 @@ jobs:
       # Act
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/owner/repo --body z"}}'
-        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
 
       # Assert
       - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
@@ -133,7 +133,7 @@ jobs:
       # Act
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release create v1.0.0 --draft --title x --notes y"}}'
-        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
 
       # Assert
       - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
@@ -167,7 +167,7 @@ jobs:
       # Act
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 -R github.com/owner/repo --notes x"}}'
-        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
 
       # Assert
       - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
@@ -201,9 +201,9 @@ jobs:
           arrange: |
             apt-get update
             apt-get install --yes --no-install-recommends ca-certificates openjdk-25-jdk-headless
-            claude-gh-admission-hook/gradlew --project-dir claude-gh-admission-hook linkReleaseExecutableHost
+            claude-gh-admission-hook/gradlew --project-dir claude-gh-admission-hook linkReleaseExecutableLinuxX64
           act: |
-            hook=claude-gh-admission-hook/build/bin/host/releaseExecutable/claude-gh-admission-hook.kexe
+            hook=claude-gh-admission-hook/build/bin/linuxX64/releaseExecutable/claude-gh-admission-hook.kexe
             echo '{"tool_name":"Bash","tool_input":{"command":"gh pr list"}}' | "$hook"
             echo '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}' | "$hook"
             echo '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x"}}' | "$hook"
