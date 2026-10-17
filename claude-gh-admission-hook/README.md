@@ -4,20 +4,20 @@
 
 A hook that restricts how Claude Code reaches GitHub.
 
-**Table of Contents**
+## Table of contents
 
-- [Why](#why)
-- [What](#what)
-- [How](#how)
+- [Why it was made](#why-it-was-made)
+- [What it does](#what-it-does)
+- [How to use](#how-to-use)
 - [License](#license)
 
-## Why
+## Why it was made
 
 Claude Code now starts in auto mode by default, and I no longer expect to prevent every unintended change to my local files. So I decided to accept that risk locally, and to defend the remote side properly instead.
 
 Online storage is not reachable from my command line, so it was never a problem for me. The only problem left was GitHub access through the `gh` command. That is why I wrote this hook.
 
-## What
+## What it does
 
 This is a hook you register in `~/.claude/settings.json`. It keeps GitHub access through the `gh` command read-only, and asks you before the few writes it allows: creating a draft pull request, editing a draft pull request, creating a draft release, and editing a draft release. Pushing to a topic branch is allowed, because a pull request needs one.
 
@@ -25,11 +25,19 @@ Creating a tag is denied as well, because a tag can start a release workflow wit
 
 It also denies writes sent straight to the GitHub API with `curl` or `wget`, including the ones that carry a token taken from `gh`.
 
-## How
+## How to use
+
+### Requirements
+
+- [kotlinstall](https://github.com/yuyuyuyuyu-dev/kotlinstall)
+
+### Install the hook
 
 ```bash
 kotlinstall install https://github.com/yuyuyuyuyu-dev/dotfiles.git --subdirectory=claude-gh-admission-hook
 ```
+
+### Register the hook
 
 After installing it, register it in `~/.claude/settings.json` as a `PreToolUse` hook. Asking Claude Code to do that is probably the easiest way, since it appears to carry documentation on the current structure of the file.
 
