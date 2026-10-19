@@ -9,6 +9,7 @@ inputs:
 runs:
   using: composite
   steps:
+
     - name: should ask when the edit changes the title
       shell: bash
       env:
@@ -100,6 +101,26 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit -R github.com/owner/repo --body z"}}'
       run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
 
+    - name: should ask about the edit a denial gives when the pull request is named by its URL
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit https://github.com/owner/repo/pull/5 --body x"}}'
+      run: |
+        command=$(echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | sed -n 's/.*Here that is `\([^`]*\)`.*/\1/p')
+        echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"$command --body x\"}}" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"ask"'
+
+    - name: should ask about the edit a denial gives when the number of the pull request follows a hash
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit \"#5\" -R github.com/owner/repo --body x"}}'
+      run: |
+        command=$(echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | sed -n 's/.*Here that is `\([^`]*\)`.*/\1/p')
+        echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"$command --body x\"}}" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"ask"'
+
     - name: should deny when the repository is not named
       shell: bash
       env:
@@ -115,6 +136,15 @@ runs:
         STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R owner/repo --body z"}}'
       run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should say how to name in full a repository named without its host
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-pull-request
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R owner/repo --body x"}}'
+        SENTENCE: If the repository is on github.com, that is -R github.com/owner/repo.
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep -F -- "$SENTENCE"
 
     - name: should deny when a flag ahead of the subcommand would make gh run another one
       shell: bash
