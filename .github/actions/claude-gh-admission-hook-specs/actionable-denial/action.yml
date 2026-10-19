@@ -17,6 +17,20 @@ runs:
       # Act & Assert
       run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe | grep -F -- "$SENTENCE"
 
+    - name: should show the commands that are put to the user as exceptions
+      shell: bash
+      # Arrange
+      env:
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
+        SENTENCE: >-
+          As commands, they are `gh pr create --draft --title TITLE`, `gh pr
+          edit NUMBER -R HOST/OWNER/REPO --body BODY` where NUMBER is an open
+          draft pull request, `gh release create TAG --draft --title TITLE`, and
+          `gh release edit TAG -R HOST/OWNER/REPO --notes NOTES` where TAG is
+          the tag the draft release was created with.
+      # Act & Assert
+      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe | grep -F -- "$SENTENCE"
+
     - name: should tell Claude to report a denial that looks like a fault
       shell: bash
       # Arrange
