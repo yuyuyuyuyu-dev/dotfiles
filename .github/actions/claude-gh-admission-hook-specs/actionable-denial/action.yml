@@ -4,7 +4,7 @@ description: A spec of claude-gh-admission-hook.
 runs:
   using: composite
   steps:
-    - name: should state the rule the denial comes from
+    - name: should state the rule the denial comes from and give example commands for its exceptions
       shell: bash
       # Arrange
       env:
