@@ -6,9 +6,10 @@ private const val DENY_NOTE =
         "creating a draft pull request, editing a draft pull request, creating a draft release and editing " +
         "a draft release, which are put to the user for approval instead. This is a permanent PreToolUse " +
         "hook, not a transient failure: retrying the command, or rewording or wrapping it to do the same " +
-        "thing, will not change the answer. Ask the user to run it themselves if the write is genuinely " +
-        "needed. If the command only reads and this denial looks like a fault in the hook, report that to " +
-        "the user instead of working around it."
+        "thing, will not change the answer. Running the command the way this reason says to, where it says " +
+        "so, is not such a rewording but what this hook asks for. Ask the user to run it themselves if the " +
+        "write is genuinely needed. If the command only reads and this denial looks like a fault in the " +
+        "hook, report that to the user instead of working around it."
 
 private class Denied(
     val reason: String,

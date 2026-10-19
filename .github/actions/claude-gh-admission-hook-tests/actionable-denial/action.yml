@@ -9,6 +9,7 @@ inputs:
 runs:
   using: composite
   steps:
+
     - name: should return a reason alongside a denial
       shell: bash
       env:
@@ -65,6 +66,16 @@ runs:
           This is a permanent PreToolUse hook, not a transient failure: retrying
           the command, or rewording or wrapping it to do the same thing, will
           not change the answer.
+      run: echo "$PAYLOAD" | "$HOOK" | grep -F -- "$SENTENCE"
+
+    - name: should say that running a command the way a denial says to is not a workaround
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title x"}}'
+        SENTENCE: >-
+          Running the command the way this reason says to, where it says so, is
+          not such a rewording but what this hook asks for.
       run: echo "$PAYLOAD" | "$HOOK" | grep -F -- "$SENTENCE"
 
     - name: should say that a pull request can be created as a draft instead

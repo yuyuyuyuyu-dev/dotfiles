@@ -1,5 +1,7 @@
 package dev.yuyuyuyuyu.claudeghadmissionhook
 
+private val UNTAGGED = Regex("""^untagged-[0-9a-f]+\z""")
+
 class Release(
     val repository: Repository,
     val tag: String,
@@ -15,7 +17,7 @@ fun judge(release: Release): Verdict {
             } else {
                 Verdict.Deny(
                     "Release $tag in $repository is published, and only a draft release may be edited. " +
-                        "Changing a published release is for the user to do.",
+                        "Changing a published release is for the user to do." + draftsSharing(release),
                 )
             }
         } catch (unanswered: Unanswered) {
@@ -35,8 +37,10 @@ private fun judgeTwin(release: Release): Verdict {
         if (hasPublishedTwin(release)) {
             Verdict.Deny(
                 "$repository holds a draft release with the tag $tag and a published release with the same " +
-                    "tag, and `gh release edit` could pick either of them. As long as both exist, editing the " +
-                    "draft is for the user to do.",
+                    "tag, and `gh release edit $tag` could pick either of them." +
+                    draftsSharing(release).ifEmpty {
+                        " As long as both exist, editing the draft is for the user to do."
+                    },
             )
         } else {
             Verdict.Ask(
@@ -51,6 +55,44 @@ private fun judgeTwin(release: Release): Verdict {
                 "be found out: `gh api` ${unanswered.failure}. If one does, `gh release edit` could pick it " +
                 "instead, so the edit is not let through.",
         )
+    }
+}
+
+private fun draftsSharing(release: Release): String {
+    val repository = release.repository
+    val names =
+        try {
+            ask(
+                listOf(
+                    "api",
+                    "--hostname",
+                    repository.host,
+                    "--paginate",
+                    "--jq",
+                    ".[] | select(.draft and .tag_name == \"${release.tag}\") | .html_url",
+                    "repos/${repository.owner}/${repository.name}/releases",
+                ),
+            ).takeIf { it.status == 0 }
+                ?.stdout
+                ?.split('\n')
+                ?.map { it.trimWhiteSpace().substringAfterLast('/') }
+                ?.filter { UNTAGGED.containsMatchIn(it) }
+                .orEmpty()
+        } catch (_: Unanswered) {
+            emptyList()
+        }
+    return when (names.size) {
+        0 -> ""
+        1 ->
+            " While a release is a draft, GitHub also knows it by a name of its own, and the draft with " +
+                "the tag ${release.tag} goes by ${names[0]}. To edit that draft, " +
+                "name it that way: here that is `gh release edit ${names[0]} -R $repository`, with the other " +
+                "arguments as they are."
+        else ->
+            " While a release is a draft, GitHub also knows it by a name of its own, and the drafts with " +
+                "the tag ${release.tag} go by ${names.joinToString(", ")}. " +
+                "To edit one of those drafts, name it that way, as in " +
+                "`gh release edit ${names[0]} -R $repository`, with the other arguments as they are."
     }
 }
 

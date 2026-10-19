@@ -7,6 +7,10 @@ private val TRUE_VALUES = listOf("1", "t", "T", "true", "TRUE", "True")
 private val REPOSITORY = Regex("""^([A-Za-z0-9.-]+)/([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+)\z""")
 private val TAG = Regex("""^[A-Za-z0-9._/+@-]+\z""")
 private val NUMBER = Regex("""^[1-9][0-9]{0,8}\z""")
+private val HASH_NUMBER = Regex("""^#([1-9][0-9]{0,8})\z""")
+private val OWNER_AND_NAME = Regex("""^([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+)\z""")
+private val REPOSITORY_URL = Regex("""^https?://([A-Za-z0-9.-]+)/([A-Za-z0-9._-]+)/([A-Za-z0-9._-]+?)(?:\.git)?/?\z""")
+private val PULL_REQUEST_URL = Regex("""^(https?://[^/]+/[^/]+/[^/]+)/pull/([1-9][0-9]{0,8})(?:[/?#].*)?\z""")
 
 class ExceptionalCommand(
     val path: List<String>,
@@ -195,6 +199,17 @@ class Arguments {
         val (host, owner, name) = located.destructured
         return Repository(host, owner, name)
     }
+
+    fun repositoryInFull(): String {
+        val given = repository?.takeIf { it.literal }?.text.orEmpty()
+        val url = inFull(given)
+        val short = OWNER_AND_NAME.find(given)?.value
+        return when {
+            url != null -> " Here that is -R $url."
+            short != null -> " If the repository is on github.com, that is -R github.com/$short."
+            else -> ""
+        }
+    }
 }
 
 private class Unreadable(
@@ -380,7 +395,8 @@ private fun createdPullRequest(arguments: Arguments) =
     }
 
 private fun editedPullRequest(arguments: Arguments): Verdict {
-    val number = arguments.words.getOrNull(2)?.takeIf { NUMBER.containsMatchIn(it) }
+    val selector = arguments.words.getOrNull(2)
+    val number = selector?.takeIf { NUMBER.containsMatchIn(it) }
     val repository = arguments.namedRepository()
     return when {
         number == null ->
@@ -388,17 +404,36 @@ private fun editedPullRequest(arguments: Arguments): Verdict {
                 "`gh pr edit` is only allowed for a draft pull request, and this hook can only look one up by its " +
                     "number: with no number, or with a branch or a URL in its place, it cannot be sure which pull " +
                     "request the command would edit. Name the pull request by its number, as in " +
-                    "`gh pr edit 123 -R github.com/OWNER/REPO`.",
+                    "`gh pr edit 123 -R github.com/OWNER/REPO`." + numbered(selector.orEmpty(), repository),
             )
         repository == null ->
             Verdict.Deny(
                 "`gh pr edit` is only allowed for a draft pull request, and this hook has to look the pull request " +
                     "up in the very repository the command would edit, which it can only be sure of when the " +
                     "command names it in full. Name that repository in full: pass -R HOST/OWNER/REPO, for example " +
-                    "-R github.com/OWNER/REPO.",
+                    "-R github.com/OWNER/REPO." + arguments.repositoryInFull(),
             )
         else -> Verdict.AskIfDraftPullRequest(PullRequest(repository, number))
     }
+}
+
+private fun numbered(
+    selector: String,
+    repository: Repository?,
+): String {
+    val url = PULL_REQUEST_URL.find(selector)?.destructured
+    val number = url?.component2() ?: HASH_NUMBER.find(selector)?.destructured?.component1()
+    val named = url?.let { inFull(it.component1()) } ?: repository?.toString()
+    return when {
+        number == null -> ""
+        named == null -> " Here the number is $number."
+        else -> " Here that is `gh pr edit $number -R $named`, with the other arguments as they are."
+    }
+}
+
+private fun inFull(url: String): String? {
+    val (host, owner, name) = REPOSITORY_URL.find(url)?.destructured ?: return null
+    return "$host/$owner/$name"
 }
 
 private fun createdRelease(arguments: Arguments) =
@@ -427,7 +462,7 @@ private fun editedRelease(arguments: Arguments): Verdict {
         tag == null ->
             Verdict.Deny(
                 "`gh release edit` names no release, so there is nothing this hook can show to be a draft. Give " +
-                    "the tag of the draft release to edit.",
+                    "the tag of the draft release to edit, as in `gh release edit TAG -R HOST/OWNER/REPO`.",
             )
         !TAG.containsMatchIn(tag) ->
             Verdict.Deny(
@@ -440,7 +475,7 @@ private fun editedRelease(arguments: Arguments): Verdict {
                 "`gh release edit` is only allowed for a draft release, and this hook has to look the release up " +
                     "in the very repository the command would edit, which it can only be sure of when the command " +
                     "names it in full. Name that repository in full: pass -R HOST/OWNER/REPO, for example " +
-                    "-R github.com/OWNER/REPO.",
+                    "-R github.com/OWNER/REPO." + arguments.repositoryInFull(),
             )
         else -> Verdict.AskIfDraftRelease(Release(repository, tag))
     }

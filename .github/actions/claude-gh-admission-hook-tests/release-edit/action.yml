@@ -9,6 +9,7 @@ inputs:
 runs:
   using: composite
   steps:
+
     - name: should ask when the edit is hidden in a nested shell
       shell: bash
       env:
@@ -53,6 +54,16 @@ runs:
         echo "$decision" | grep '"permissionDecision":"deny"'
         echo "$decision" | grep -F -- "$SENTENCE"
 
+    - name: should say how to edit a draft that shares the tag of a published release
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-published-release-and-a-draft-under-its-tag
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 -R github.com/owner/repo --notes x"}}'
+      run: |
+        command=$(echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | sed -n 's/.*here that is `\([^`]*\)`.*/\1/p')
+        echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"$command --notes x\"}}" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"ask"'
+
     - name: should deny editing a release it cannot find
       shell: bash
       env:
@@ -74,6 +85,28 @@ runs:
         STAND_IN: ${{ github.action_path }}/github-with-a-draft-and-a-published-release-under-one-tag
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 -R github.com/owner/repo --notes x"}}'
       run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should name the draft by the name GitHub gives it when a published release shares its tag
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-and-a-published-release-under-one-tag
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 -R github.com/owner/repo --notes x"}}'
+        SENTENCE: >-
+          To edit that draft, name it that way: here that is `gh release edit
+          untagged-0123456789abcdef0123 -R github.com/owner/repo`, with the
+          other arguments as they are.
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep -F -- "$SENTENCE"
+
+    - name: should ask about the edit a denial gives when a published release shares the tag of the draft
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft-and-a-published-release-under-one-tag
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 -R github.com/owner/repo --notes x"}}'
+      run: |
+        command=$(echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | sed -n 's/.*here that is `\([^`]*\)`.*/\1/p')
+        echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"$command --notes x\"}}" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"ask"'
 
     - name: should deny rather than wait when GitHub does not answer
       shell: bash
@@ -106,6 +139,15 @@ runs:
         STAND_IN: ${{ github.action_path }}/github-with-a-draft
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 -R owner/repo --notes x"}}'
       run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep '"permissionDecision":"deny"'
+
+    - name: should say how to name in full a repository given by its URL
+      shell: bash
+      env:
+        HOOK: ${{ inputs.hook }}
+        STAND_IN: ${{ github.action_path }}/github-with-a-draft
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh release edit v1.0.0 -R https://github.com/owner/repo.git --notes x"}}'
+        SENTENCE: Here that is -R github.com/owner/repo.
+      run: echo "$PAYLOAD" | PATH="$STAND_IN:$PATH" "$HOOK" | grep -F -- "$SENTENCE"
 
     - name: should deny when the tag comes out of an expansion
       shell: bash

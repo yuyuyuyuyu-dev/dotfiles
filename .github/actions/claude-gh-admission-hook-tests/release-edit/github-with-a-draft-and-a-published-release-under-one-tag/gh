@@ -1,7 +1,10 @@
 #!/bin/sh
 case "$*" in
   "release view "*github.com/owner/repo*v1.0.0*) echo true ;;
+  "release view "*github.com/owner/repo*untagged-0123456789abcdef0123*) echo true ;;
   "api "*github.com*repos/owner/repo/releases/tags/v1.0.0*) printf 'HTTP/2.0 200 OK\n\nfalse\n' ;;
+  "api "*github.com*repos/owner/repo/releases/tags/untagged-0123456789abcdef0123*) printf 'HTTP/2.0 200 OK\n\ntrue\n' ;;
+  "api "*github.com*"repos/owner/repo/releases") echo https://github.com/owner/repo/releases/tag/untagged-0123456789abcdef0123 ;;
   "api "*) echo "HTTP/2.0 404 Not Found"; exit 1 ;;
   *) echo "release not found" >&2; exit 1 ;;
 esac
