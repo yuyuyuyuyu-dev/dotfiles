@@ -13,21 +13,12 @@ runs:
           GitHub access is read-only under this hook: every write is denied, and
           the only exceptions are creating a draft pull request, editing a draft
           pull request, creating a draft release and editing a draft release,
-          which are put to the user for approval instead.
-      # Act & Assert
-      run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe | grep -F -- "$SENTENCE"
-
-    - name: should show the commands that are put to the user as exceptions
-      shell: bash
-      # Arrange
-      env:
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 5"}}'
-        SENTENCE: >-
-          As commands, they are `gh pr create --draft --title TITLE`, `gh pr
-          edit NUMBER -R HOST/OWNER/REPO --body BODY` where NUMBER is an open
-          draft pull request, `gh release create TAG --draft --title TITLE`, and
-          `gh release edit TAG -R HOST/OWNER/REPO --notes NOTES` where TAG is
-          the tag the draft release was created with.
+          which are put to the user for approval instead. As commands, they are
+          `gh pr create --draft --title TITLE`, `gh pr edit NUMBER -R
+          HOST/OWNER/REPO --body BODY` where NUMBER is an open draft pull
+          request, `gh release create TAG --draft --title TITLE`, and `gh
+          release edit TAG -R HOST/OWNER/REPO --notes NOTES` where TAG is the
+          tag the draft release was created with.
       # Act & Assert
       run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe | grep -F -- "$SENTENCE"
 
