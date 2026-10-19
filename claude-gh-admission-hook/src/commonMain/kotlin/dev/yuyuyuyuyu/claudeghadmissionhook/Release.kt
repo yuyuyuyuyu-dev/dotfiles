@@ -80,15 +80,20 @@ private fun isDraft(release: Release): Boolean {
 private fun hasPublishedTwin(release: Release): Boolean {
     val repository = release.repository
     val endpoint = "repos/${repository.owner}/${repository.name}/releases/tags/${release.tag.replace("/", "%2F")}"
-    val answer = ask(listOf("api", "--hostname", repository.host, "--include", "--silent", endpoint))
-    return when (
+    val answer = ask(listOf("api", "--hostname", repository.host, "--include", "--jq", ".draft", endpoint))
+    val lines =
         answer.stdout
-            .split(Regex("""[$WHITE_SPACE]+"""))
+            .split('\n')
+            .map { it.trimWhiteSpace() }
             .filter { it.isNotEmpty() }
-            .getOrNull(1)
-    ) {
-        "404" -> false
-        "200" -> true
+    val status =
+        lines
+            .firstOrNull()
+            ?.split(Regex("""[$WHITE_SPACE]+"""))
+            ?.getOrNull(1)
+    return when (if (status == "200") lines.last() else status) {
+        "404", "true" -> false
+        "false" -> true
         else -> throw Unanswered(answer.failure())
     }
 }
