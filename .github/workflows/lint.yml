@@ -51,34 +51,16 @@ jobs:
 
       - run: uv run --frozen ruff format --check --diff .
 
-  detekt:
-    name: detekt
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
+  oxfmt:
+    name: Oxfmt
+    permissions:
+      contents: read
+    uses: yuyuyuyuyu-dev/repo-config/.github/workflows/oxfmt.yml@main
 
-      - uses: actions/setup-java@v6
-        with:
-          distribution: zulu
-          java-version: "25"
-
-      - uses: gradle/actions/setup-gradle@v6
-
-      - run: ./gradlew detekt
-        working-directory: claude-gh-admission-hook
-
-  ktlint:
-    name: ktlint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-java@v6
-        with:
-          distribution: zulu
-          java-version: "25"
-
-      - uses: gradle/actions/setup-gradle@v6
-
-      - run: ./gradlew ktlintCheck
-        working-directory: claude-gh-admission-hook
+  kotlin-lint:
+    name: Kotlin lint
+    permissions:
+      contents: read
+    uses: yuyuyuyuyu-dev/repo-config/.github/workflows/kotlin-lint.yml@main
+    with:
+      working-directory: claude-gh-admission-hook

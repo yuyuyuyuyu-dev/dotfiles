@@ -373,7 +373,9 @@ private fun valueOf(token: Token): Value {
     }
     return when (shape(token.raw)) {
         Shape.LITERAL -> Value(token.value, literal = true)
+
         Shape.OPAQUE -> Value(token.value, literal = false)
+
         Shape.SPLITTING -> throw Unreadable(
             "${shown(token)} contains an unquoted shell expansion or pattern, which can turn into several " +
                 "arguments. Quote it, or write the arguments out literally.",
@@ -399,21 +401,27 @@ private fun editedPullRequest(arguments: Arguments): Verdict {
     val number = selector?.takeIf { NUMBER.containsMatchIn(it) }
     val repository = arguments.namedRepository()
     return when {
-        number == null ->
+        number == null -> {
             Verdict.Deny(
                 "`gh pr edit` is only allowed for a draft pull request, and this hook can only look one up by its " +
                     "number: with no number, or with a branch or a URL in its place, it cannot be sure which pull " +
                     "request the command would edit. Name the pull request by its number, as in " +
                     "`gh pr edit 123 -R github.com/OWNER/REPO`." + numbered(selector.orEmpty(), repository),
             )
-        repository == null ->
+        }
+
+        repository == null -> {
             Verdict.Deny(
                 "`gh pr edit` is only allowed for a draft pull request, and this hook has to look the pull request " +
                     "up in the very repository the command would edit, which it can only be sure of when the " +
                     "command names it in full. Name that repository in full: pass -R HOST/OWNER/REPO, for example " +
                     "-R github.com/OWNER/REPO." + arguments.repositoryInFull(),
             )
-        else -> Verdict.AskIfDraftPullRequest(PullRequest(repository, number))
+        }
+
+        else -> {
+            Verdict.AskIfDraftPullRequest(PullRequest(repository, number))
+        }
     }
 }
 
@@ -453,30 +461,40 @@ private fun editedRelease(arguments: Arguments): Verdict {
     val tag = arguments.words.getOrNull(2)
     val repository = arguments.namedRepository()
     return when {
-        arguments.draft != null ->
+        arguments.draft != null -> {
             Verdict.Deny(
                 "`gh release edit` was given --draft, which changes whether the release is published. Publishing " +
                     "a draft, or turning a published release back into a draft, is for the user to do. Leave " +
                     "--draft out: a draft release stays a draft when it is edited.",
             )
-        tag == null ->
+        }
+
+        tag == null -> {
             Verdict.Deny(
                 "`gh release edit` names no release, so there is nothing this hook can show to be a draft. Give " +
                     "the tag of the draft release to edit, as in `gh release edit TAG -R HOST/OWNER/REPO`.",
             )
-        !TAG.containsMatchIn(tag) ->
+        }
+
+        !TAG.containsMatchIn(tag) -> {
             Verdict.Deny(
                 "`gh release edit` names the release $tag, and this hook only looks up tags made of letters, " +
                     "digits and the characters . _ / + @ - to find out whether a release is a draft. Ask the " +
                     "user to edit this one.",
             )
-        repository == null ->
+        }
+
+        repository == null -> {
             Verdict.Deny(
                 "`gh release edit` is only allowed for a draft release, and this hook has to look the release up " +
                     "in the very repository the command would edit, which it can only be sure of when the command " +
                     "names it in full. Name that repository in full: pass -R HOST/OWNER/REPO, for example " +
                     "-R github.com/OWNER/REPO." + arguments.repositoryInFull(),
             )
-        else -> Verdict.AskIfDraftRelease(Release(repository, tag))
+        }
+
+        else -> {
+            Verdict.AskIfDraftRelease(Release(repository, tag))
+        }
     }
 }

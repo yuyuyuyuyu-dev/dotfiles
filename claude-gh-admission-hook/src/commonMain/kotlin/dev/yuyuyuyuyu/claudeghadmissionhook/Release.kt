@@ -82,17 +82,23 @@ private fun draftsSharing(release: Release): String {
             emptyList()
         }
     return when (names.size) {
-        0 -> ""
-        1 ->
+        0 -> {
+            ""
+        }
+
+        1 -> {
             " While a release is a draft, GitHub also knows it by a name of its own, and the draft with " +
                 "the tag ${release.tag} goes by ${names[0]}. To edit that draft, " +
                 "name it that way: here that is `gh release edit ${names[0]} -R $repository`, with the other " +
                 "arguments as they are."
-        else ->
+        }
+
+        else -> {
             " While a release is a draft, GitHub also knows it by a name of its own, and the drafts with " +
                 "the tag ${release.tag} go by ${names.joinToString(", ")}. " +
                 "To edit one of those drafts, name it that way, as in " +
                 "`gh release edit ${names[0]} -R $repository`, with the other arguments as they are."
+        }
     }
 }
 

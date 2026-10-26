@@ -42,17 +42,23 @@ fun checkPush(
 private fun checkPushedTags(rest: List<Token>): Verdict? {
     val found = matched(flagNames(rest), PUSH_TAG_FLAGS)
     return when {
-        found != null ->
+        found != null -> {
             Verdict.Deny(
                 "`git push` was given $found, which sends tags to the remote and so creates them there. Push the " +
                     "branch on its own, and ask the user to push tags.",
             )
-        rest.any { TAG_REF in it.value } ->
+        }
+
+        rest.any { TAG_REF in it.value } -> {
             Verdict.Deny(
                 "`git push` names a refs/tags/ refspec, which creates a tag on the remote even when no local tag " +
                     "exists. Push to refs/heads/ instead, and ask the user to push tags.",
             )
-        else -> null
+        }
+
+        else -> {
+            null
+        }
     }
 }
 
@@ -121,34 +127,46 @@ private fun checkSentTags(
     key: String,
     value: String?,
 ) = when {
-    key == "push.followtags" && on(value) ->
+    key == "push.followtags" && on(value) -> {
         Verdict.Deny(
             "`git push` would also send tags, because push.followTags is on in the git configuration, and sending " +
                 "a tag creates it on the remote. Ask the user to push, or to turn push.followTags off.",
         )
-    key.startsWith("remote.") && key.endsWith(".mirror") && on(value) ->
+    }
+
+    key.startsWith("remote.") && key.endsWith(".mirror") && on(value) -> {
         Verdict.Deny(
             "`git push` could mirror every ref, tags included, because $key is on in the git configuration. Ask " +
                 "the user to push.",
         )
-    else -> null
+    }
+
+    else -> {
+        null
+    }
 }
 
 private fun checkPushDefault(
     key: String,
     shown: String,
 ) = when {
-    key.startsWith("remote.") && key.endsWith(".push") && !reachesABranch(shown) ->
+    key.startsWith("remote.") && key.endsWith(".push") && !reachesABranch(shown) -> {
         Verdict.Deny(
             "`git push` names nothing to push, and $key in the git configuration makes that $shown, which does not " +
                 "surely reach a branch. Name what to push, as in `git push origin HEAD`.",
         )
-    key.startsWith("branch.") && key.endsWith(".merge") && !shown.startsWith(BRANCH_REF) ->
+    }
+
+    key.startsWith("branch.") && key.endsWith(".merge") && !shown.startsWith(BRANCH_REF) -> {
         Verdict.Deny(
             "`git push` names nothing to push, and $key in the git configuration points at $shown, which is not a " +
                 "branch. Name what to push, as in `git push origin HEAD`.",
         )
-    else -> null
+    }
+
+    else -> {
+        null
+    }
 }
 
 private fun on(given: String?): Boolean {

@@ -93,14 +93,21 @@ fun checkGit(
     aliases: Boolean,
 ): Verdict? =
     when (val found = subcommand(args)) {
-        is Found.Command -> checkInvocation(found.invocation, aliases)
-        Found.Nothing -> null
-        is Found.Undeterminable ->
+        is Found.Command -> {
+            checkInvocation(found.invocation, aliases)
+        }
+
+        Found.Nothing -> {
+            null
+        }
+
+        is Found.Undeterminable -> {
             Verdict.Deny(
                 "${shown(found.token)} comes before the end of the git subcommand and contains a shell expansion " +
                     "or pattern, so which subcommand git would run cannot be determined. Quote it if it is the " +
                     "value of a flag, and write the subcommand out literally.",
             )
+        }
     }
 
 private fun checkInvocation(
@@ -110,18 +117,40 @@ private fun checkInvocation(
     val name = invocation.name
     val rest = invocation.rest
     return when (name) {
-        "tag" -> checkTag(rest)
-        "push" -> checkPush(invocation.globals, rest)
-        "config" -> checkConfig(rest)
-        "remote" -> checkRemote(rest)
-        in REF_WRITERS -> readsStandardInput(name, rest) ?: checkRefWriter(name, rest)
-        in FETCHERS -> readsStandardInput(name, rest) ?: checkFetch(name, rest)
-        in PUSH_PLUMBING ->
+        "tag" -> {
+            checkTag(rest)
+        }
+
+        "push" -> {
+            checkPush(invocation.globals, rest)
+        }
+
+        "config" -> {
+            checkConfig(rest)
+        }
+
+        "remote" -> {
+            checkRemote(rest)
+        }
+
+        in REF_WRITERS -> {
+            readsStandardInput(name, rest) ?: checkRefWriter(name, rest)
+        }
+
+        in FETCHERS -> {
+            readsStandardInput(name, rest) ?: checkFetch(name, rest)
+        }
+
+        in PUSH_PLUMBING -> {
             Verdict.Deny(
                 "`git $name` sends refs to a remote the way `git push` does, and this hook only reads `git push`, " +
                     "so it cannot be shown that no tag is sent. Use `git push`.",
             )
-        else -> if (aliases) checkAlias(invocation) else null
+        }
+
+        else -> {
+            if (aliases) checkAlias(invocation) else null
+        }
     }
 }
 

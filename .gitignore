@@ -18,3 +18,4 @@ __pycache__/
 claude-gh-admission-hook/.gradle/
 claude-gh-admission-hook/.kotlin/
 claude-gh-admission-hook/build/
+node_modules/

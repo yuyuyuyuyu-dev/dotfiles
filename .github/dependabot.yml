@@ -30,3 +30,13 @@ updates:
       minor-and-patch:
         patterns: ["*"]
         update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 1
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]

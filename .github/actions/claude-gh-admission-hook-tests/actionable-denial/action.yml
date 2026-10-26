@@ -9,7 +9,6 @@ inputs:
 runs:
   using: composite
   steps:
-
     - name: should return a reason alongside a denial
       shell: bash
       env:

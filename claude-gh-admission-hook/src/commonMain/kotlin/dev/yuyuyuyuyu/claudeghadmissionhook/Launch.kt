@@ -116,18 +116,31 @@ private class SourceReader(
         val value = token.value
         index += 1
         return when {
-            value == "-" -> Source.Input
+            value == "-" -> {
+                Source.Input
+            }
+
             value.startsWith("--") -> {
                 if (value in SHELL_VALUE_FLAGS) index += 1
                 null
             }
+
             value.startsWith('-') || value.startsWith('+') -> {
                 option(value)
                 null
             }
-            inline -> Source.Inline(token)
-            input -> Source.Input
-            else -> Source.File
+
+            inline -> {
+                Source.Inline(token)
+            }
+
+            input -> {
+                Source.Input
+            }
+
+            else -> {
+                Source.File
+            }
         }
     }
 

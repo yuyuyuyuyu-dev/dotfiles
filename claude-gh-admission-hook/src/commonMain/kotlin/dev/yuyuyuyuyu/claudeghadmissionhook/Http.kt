@@ -123,30 +123,40 @@ private class Request(
     private fun unreadable(): Verdict? {
         val raw = methodRaw
         return when {
-            splitting != null ->
+            splitting != null -> {
                 Verdict.Deny(
                     "An argument of `$name` contains an unquoted shell expansion or pattern ($splitting), which " +
                         "can turn into further arguments, so the request that would be sent to the GitHub API " +
                         "cannot be determined. Quote it, or write the request out with literal values.",
                 )
-            options != null ->
+            }
+
+            options != null -> {
                 Verdict.Deny(
                     "`$name` was given $options, which makes it read further options from somewhere this hook " +
                         "cannot see, so the request that would be sent to the GitHub API cannot be determined. " +
                         "Write the options out on the command line.",
                 )
-            flagLike != null ->
+            }
+
+            flagLike != null -> {
                 Verdict.Deny(
                     "An argument of `$name` ($flagLike) comes out of a shell expansion and is not the value of a " +
                         "flag this hook knows, so it could turn out to be a flag that changes the request sent to " +
                         "the GitHub API. Start it with literal text, or write it out literally.",
                 )
-            raw != null && hasExpansion(raw) ->
+            }
+
+            raw != null && hasExpansion(raw) -> {
                 Verdict.Deny(
                     "The HTTP method given to `$name` is a shell expansion ($raw), so it cannot be shown to be GET " +
                         "or HEAD. Write the method out literally.",
                 )
-            else -> null
+            }
+
+            else -> {
+                null
+            }
         }
     }
 
@@ -190,16 +200,25 @@ private fun unseenOptions(
     name: String,
     args: List<Token>,
 ) = when {
-    name == "wget" && args.any { it.raw == "--no-config" } -> null
-    name == "wget" ->
+    name == "wget" && args.any { it.raw == "--no-config" } -> {
+        null
+    }
+
+    name == "wget" -> {
         Verdict.Deny(
             "`wget` reads further options from its wgetrc file unless --no-config is given, and those options " +
                 "could change the request sent to the GitHub API. Add --no-config.",
         )
-    args.firstOrNull()?.raw in CURL_WITHOUT_FILE -> null
-    else ->
+    }
+
+    args.firstOrNull()?.raw in CURL_WITHOUT_FILE -> {
+        null
+    }
+
+    else -> {
         Verdict.Deny(
             "`curl` reads further options from its .curlrc file unless -q is its first argument, and those options " +
                 "could change the request sent to the GitHub API. Put -q first, as in `curl -q URL`.",
         )
+    }
 }
