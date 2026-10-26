@@ -2,10 +2,15 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.detekt)
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.version.catalog.update)
 }
 
 detekt {
     source.setFrom("src")
+}
+
+ktlint {
+    version = libs.versions.ktlintCli.get()
 }
 
 kotlin {

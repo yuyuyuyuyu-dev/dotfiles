@@ -195,17 +195,23 @@ fun checkAlias(invocation: Invocation): Verdict? {
     val globals = invocation.globals
     val unreadable = globals.find { !literal(it) }
     return when {
-        !couldBeAlias(name) -> null
-        unreadable != null ->
+        !couldBeAlias(name) -> {
+            null
+        }
+
+        unreadable != null -> {
             Verdict.Deny(
                 "`git $name` is not a command git ships, so it may be an alias, and ${shown(unreadable)} comes ahead " +
                     "of it and out of a shell expansion, so the git configuration that would say so cannot be " +
                     "looked up. Write it out literally.",
             )
-        else ->
+        }
+
+        else -> {
             Verdict.PassIfNotAlias(
                 Alias(globals.map { it.value }, name, written(globals), written(invocation.rest)),
             )
+        }
     }
 }
 

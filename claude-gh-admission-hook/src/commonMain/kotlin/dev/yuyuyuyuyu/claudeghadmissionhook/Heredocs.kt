@@ -131,19 +131,36 @@ private class HeredocStripper(
                 level.quote = quoteOf(char)
                 false
             }
-            '(' -> openParenthesis()
+
+            '(' -> {
+                openParenthesis()
+            }
+
             'c', 'e' -> {
                 countCases(char)
                 false
             }
+
             ')' -> {
                 closeParenthesis()
                 false
             }
-            '#' -> cursor.startsWord && comment()
-            '<' -> cursor.next == '<' && heredocs.redirect()
-            '\n' -> heredocs.waiting && heredocs.readBodies()
-            else -> false
+
+            '#' -> {
+                cursor.startsWord && comment()
+            }
+
+            '<' -> {
+                cursor.next == '<' && heredocs.redirect()
+            }
+
+            '\n' -> {
+                heredocs.waiting && heredocs.readBodies()
+            }
+
+            else -> {
+                false
+            }
         }
 
     private fun arithmetic(from: Int): Boolean {

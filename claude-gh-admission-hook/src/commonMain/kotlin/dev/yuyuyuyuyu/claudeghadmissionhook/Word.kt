@@ -28,9 +28,18 @@ private class WordReader(
 
     private fun visit(char: Char) {
         when (char) {
-            '\'' -> singleQuoted()
-            '"' -> doubleQuoted()
-            '\\' -> escaped()
+            '\'' -> {
+                singleQuoted()
+            }
+
+            '"' -> {
+                doubleQuoted()
+            }
+
+            '\\' -> {
+                escaped()
+            }
+
             else -> {
                 value.append(char)
                 raw.append(char)

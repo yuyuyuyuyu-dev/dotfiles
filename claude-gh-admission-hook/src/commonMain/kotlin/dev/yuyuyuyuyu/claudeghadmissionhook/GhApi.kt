@@ -194,59 +194,88 @@ private fun judgeApi(api: Api): Verdict? {
     val flagLike = api.flagLike
     val endpoint = api.endpoint
     return when {
-        flagLike != null ->
+        flagLike != null -> {
             Verdict.Deny(
                 "An argument of `gh api` ($flagLike) comes out of a shell expansion and is not the value of a " +
                     "flag, so it could turn out to be a flag that changes the request. Start it with literal " +
                     "text, or write it out literally.",
             )
-        endpoint == null -> throw Unanalyzable("no endpoint")
-        normalizeEndpoint(endpoint) == "graphql" -> judgeGraphql(api)
-        else -> judgeMethod(api)
+        }
+
+        endpoint == null -> {
+            throw Unanalyzable("no endpoint")
+        }
+
+        normalizeEndpoint(endpoint) == "graphql" -> {
+            judgeGraphql(api)
+        }
+
+        else -> {
+            judgeMethod(api)
+        }
     }
 }
 
 private fun judgeGraphql(api: Api) =
     when {
-        api.opaqueQuery ->
+        api.opaqueQuery -> {
             Verdict.Deny(
                 "The query body of `gh api graphql` is read from a file or stdin, so it cannot be shown to be " +
                     "free of mutations. Pass the query inline, as -f query='query { ... }', and it can be checked.",
             )
-        api.expandedQuery ->
+        }
+
+        api.expandedQuery -> {
             Verdict.Deny(
                 "A field of `gh api graphql` comes out of a shell expansion and could be the query, so the query " +
                     "cannot be shown to be free of mutations. Write the query out literally, and pass what varies " +
                     "as a GraphQL variable with -F.",
             )
-        api.queries.isEmpty() -> throw Unanalyzable("graphql without inline query")
-        api.queries.any { MUTATION.containsMatchIn(it) } ->
+        }
+
+        api.queries.isEmpty() -> {
+            throw Unanalyzable("graphql without inline query")
+        }
+
+        api.queries.any { MUTATION.containsMatchIn(it) } -> {
             Verdict.Deny(
                 "The query passed to `gh api graphql` contains a mutation, which changes GitHub state. Send a " +
                     "query instead, or ask the user to run the mutation.",
             )
-        else -> null
+        }
+
+        else -> {
+            null
+        }
     }
 
 private fun judgeMethod(api: Api): Verdict? {
     val raw = api.methodRaw
     val effective = api.method?.uppercase() ?: if (api.bodyParams) "POST" else "GET"
     return when {
-        raw != null && hasExpansion(raw) ->
+        raw != null && hasExpansion(raw) -> {
             Verdict.Deny(
                 "The method given to `gh api` is a shell expansion ($raw), so it cannot be shown to be GET or " +
                     "HEAD. Write the method out literally.",
             )
-        effective in READ_METHODS -> null
-        api.method == null ->
+        }
+
+        effective in READ_METHODS -> {
+            null
+        }
+
+        api.method == null -> {
             Verdict.Deny(
                 "`gh api` was given -f/-F/--input with no method, and gh sends POST rather than GET as soon as it " +
                     "has fields, so this would write. Add --method GET if the fields are query parameters of a read.",
             )
-        else ->
+        }
+
+        else -> {
             Verdict.Deny(
                 "`gh api` would send $effective, which is not a read and can change GitHub state. Only GET and " +
                     "HEAD are allowed here.",
             )
+        }
     }
 }
