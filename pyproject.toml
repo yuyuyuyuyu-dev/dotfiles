@@ -7,6 +7,4 @@ requires-python = ">=3.9"
 package = false
 
 [dependency-groups]
-dev = [
-    "ruff>=0.16.3",
-]
+dev = ["ruff>=0.16.3"]

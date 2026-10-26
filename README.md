@@ -12,6 +12,6 @@ python3 -m deploy <platform>
 
 ### Supported Platforms
 
-*   `android`
-*   `linux`
-*   `mac`
+- `android`
+- `linux`
+- `mac`

@@ -9,7 +9,6 @@ inputs:
 runs:
   using: composite
   steps:
-
     - name: should ask when the edit is hidden in a nested shell
       shell: bash
       env:
