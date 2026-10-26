@@ -22,14 +22,8 @@ jobs:
       - &check-out
         uses: actions/checkout@v7
 
-      - &set-up-java
-        uses: actions/setup-java@v6
-        with:
-          distribution: zulu
-          java-version: "25"
-
-      - &set-up-gradle
-        uses: gradle/actions/setup-gradle@v6
+      - &set-up-jdk-and-gradle
+        uses: yuyuyuyuyu-dev/repo-config/.github/actions/setup-jdk-and-gradle@main
 
       - run: curl -fsSL https://raw.githubusercontent.com/yuyuyuyuyu-dev/kotlinstall/main/install-kotlinstall.main.kts | kotlinr -howtorun .main.kts /dev/stdin
 
@@ -48,9 +42,7 @@ jobs:
       # Arrange
       - *check-out
 
-      - *set-up-java
-
-      - *set-up-gradle
+      - *set-up-jdk-and-gradle
 
       - &build
         run: ./gradlew linkReleaseExecutableMacosArm64
@@ -66,9 +58,7 @@ jobs:
       # Arrange
       - *check-out
 
-      - *set-up-java
-
-      - *set-up-gradle
+      - *set-up-jdk-and-gradle
 
       - *build
 
@@ -93,9 +83,7 @@ jobs:
       # Arrange
       - *check-out
 
-      - *set-up-java
-
-      - *set-up-gradle
+      - *set-up-jdk-and-gradle
 
       - *build
 
@@ -124,9 +112,7 @@ jobs:
       # Arrange
       - *check-out
 
-      - *set-up-java
-
-      - *set-up-gradle
+      - *set-up-jdk-and-gradle
 
       - *build
 
@@ -145,9 +131,7 @@ jobs:
       # Arrange
       - *check-out
 
-      - *set-up-java
-
-      - *set-up-gradle
+      - *set-up-jdk-and-gradle
 
       - *build
 
@@ -179,9 +163,7 @@ jobs:
       # Arrange
       - *check-out
 
-      - *set-up-java
-
-      - *set-up-gradle
+      - *set-up-jdk-and-gradle
 
       - *build
 
