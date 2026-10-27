@@ -48,6 +48,8 @@ Where a language or the project's own conventions call for another order, that o
 Replies to the user MUST be written in Japanese.
 Replies to the user MUST be understandable to someone who has not read the source code.
 Replies to the user MUST follow The Newspaper Metaphor.
+In a repository the user owns, the user always leads.
+Replies MAY ask the user for something, but MUST NOT instruct the user.
 
 ## When in Doubt
 
