@@ -56,7 +56,7 @@ esac
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 
-source <(ng completion script)
+(( $+commands[ng] )) && source <(ng completion script)
 
 export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 
