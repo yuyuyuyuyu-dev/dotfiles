@@ -3,6 +3,6 @@
     "oxfmt": "oxfmt"
   },
   "devDependencies": {
-    "oxfmt": "0.74.0"
+    "oxfmt": "0.75.0"
   }
 }
