@@ -17,6 +17,7 @@ private const val BRANCH_REF = "refs/heads/"
 class Push(
     val globals: List<String>,
     val bare: Boolean,
+    val forced: Boolean,
 )
 
 fun checkPush(
@@ -37,7 +38,13 @@ fun checkPush(
             "${shown(token)} comes ahead of `git push` and out of a shell expansion, so the git configuration " +
                 "the push would run under cannot be looked up. Write it out literally.",
         )
-    } ?: Verdict.PassIfPushLeavesTags(Push(globals.map { it.value }, bare = refspecs(rest).isEmpty()))
+    } ?: Verdict.PassIfPushLeavesTags(
+        Push(
+            globals.map { it.value },
+            bare = refspecs(rest).isEmpty(),
+            forced = forces(rest) || refspecs(rest).any { it.startsWith('+') },
+        ),
+    )
 
 private fun checkPushedTags(rest: List<Token>): Verdict? {
     val found = matched(flagNames(rest), PUSH_TAG_FLAGS)
@@ -111,7 +118,10 @@ fun judge(
                     "under, and that could not be done: `git config` ${unanswered.failure}.",
             )
         }
-    return found.split('\u0000').filter { it.isNotEmpty() }.firstNotNullOfOrNull { judgeSetting(it, push.bare) }
+    val verdicts = found.split('\u0000').filter { it.isNotEmpty() }.mapNotNull { judgeSetting(it, push.bare) }
+    return verdicts.find { it is Verdict.Deny }
+        ?: verdicts.firstOrNull()
+        ?: if (push.forced) forcedPush("`git push` would be forced") else null
 }
 
 private fun judgeSetting(
@@ -154,6 +164,13 @@ private fun checkPushDefault(
         Verdict.Deny(
             "`git push` names nothing to push, and $key in the git configuration makes that $shown, which does not " +
                 "surely reach a branch. Name what to push, as in `git push origin HEAD`.",
+        )
+    }
+
+    key.startsWith("remote.") && key.endsWith(".push") && shown.startsWith('+') -> {
+        forcedPush(
+            "`git push` names nothing to push, and $key in the git configuration makes that $shown, which is " +
+                "forced",
         )
     }
 

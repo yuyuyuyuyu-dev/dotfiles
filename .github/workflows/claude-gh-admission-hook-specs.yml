@@ -51,6 +51,44 @@ jobs:
       # Act & Assert
       - uses: ./.github/actions/claude-gh-admission-hook-specs/read-only
 
+  topic-branch-push:
+    name: should let a topic branch be pushed, because a pull request needs one
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - *check-out
+
+      - *set-up-jdk-and-gradle
+
+      - *build
+
+      # Act
+      - env:
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git switch -c feat/x && git push -u origin HEAD"}}'
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
+
+      # Assert
+      - run: test ! -s "$RUNNER_TEMP/decision"
+
+  amended-push:
+    name: should ask before a forced push that replaces an amended commit on a topic branch
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - *check-out
+
+      - *set-up-jdk-and-gradle
+
+      - *build
+
+      # Act
+      - env:
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git commit --amend --no-edit && git push --force-with-lease origin HEAD"}}'
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
+
+      # Assert
+      - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
+
   pull-request-create:
     name: should let a draft pull request be created, as an exception, once the user explicitly approves it
     runs-on: macos-latest
