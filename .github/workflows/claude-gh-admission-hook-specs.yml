@@ -73,8 +73,8 @@ jobs:
       # Assert
       - run: test ! -s "$RUNNER_TEMP/decision"
 
-  amended-push:
-    name: should ask before a forced push that replaces an amended commit on a non-default branch
+  forced-push:
+    name: should ask before a forced push to a non-default branch
     runs-on: macos-latest
     steps:
       # Arrange
@@ -88,7 +88,7 @@ jobs:
 
       # Act
       - env:
-          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git commit --amend --no-edit && git push --force-with-lease origin HEAD"}}'
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --force-with-lease origin HEAD"}}'
         run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
 
       # Assert
