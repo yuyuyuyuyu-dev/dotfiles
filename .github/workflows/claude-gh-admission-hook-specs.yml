@@ -51,6 +51,49 @@ jobs:
       # Act & Assert
       - uses: ./.github/actions/claude-gh-admission-hook-specs/read-only
 
+  branch-push:
+    name: should let a non-default branch be pushed, because a pull request needs one
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - *check-out
+
+      - *set-up-jdk-and-gradle
+
+      - *build
+
+      - &switch-to-a-non-default-branch
+        run: git switch -c feat/x
+
+      # Act
+      - env:
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -u origin refs/heads/feat/x"}}'
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
+
+      # Assert
+      - run: test ! -s "$RUNNER_TEMP/decision"
+
+  forced-push:
+    name: should ask before a forced push to a non-default branch
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - *check-out
+
+      - *set-up-jdk-and-gradle
+
+      - *build
+
+      - *switch-to-a-non-default-branch
+
+      # Act
+      - env:
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --force-with-lease -u origin refs/heads/feat/x"}}'
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
+
+      # Assert
+      - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
+
   pull-request-create:
     name: should let a draft pull request be created, as an exception, once the user explicitly approves it
     runs-on: macos-latest
@@ -62,9 +105,11 @@ jobs:
 
       - *build
 
+      - *switch-to-a-non-default-branch
+
       # Act
       - env:
-          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -u origin HEAD"}}'
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -u origin refs/heads/feat/x"}}'
         run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/push-decision"
 
       - env:

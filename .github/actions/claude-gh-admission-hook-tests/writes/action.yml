@@ -566,7 +566,8 @@ runs:
           An argument of `git push` (\"$BRANCH\") comes out of a shell expansion,
           so it could turn out to be --tags or a refs/tags/ refspec, and it cannot
           be shown that no tag is sent to the remote. Write the remote and the
-          branch out literally, or push HEAD.
+          branch out literally, as in `git push -u origin
+          refs/heads/NON-DEFAULT-BRANCH`.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -679,9 +680,9 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin v1.0.0"}}'
         SENTENCE: >-
           `git push` names v1.0.0, and a bare name reaches a tag when a tag has
-          that name, so it cannot be shown that no tag is sent to the remote. Push
-          the branch that is checked out with `git push origin HEAD`, or name the
-          branch in full, as in refs/heads/NAME or SOURCE:refs/heads/NAME.
+          that name, so it cannot be shown that no tag is sent to the remote. Name
+          the branch in full, as in `git push -u origin
+          refs/heads/NON-DEFAULT-BRANCH`.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -695,8 +696,8 @@ runs:
         SENTENCE: >-
           `git push` names HEAD:v1.0.0, and a bare name reaches a tag when a tag
           has that name, so it cannot be shown that no tag is sent to the remote.
-          Push the branch that is checked out with `git push origin HEAD`, or name
-          the branch in full, as in refs/heads/NAME or SOURCE:refs/heads/NAME.
+          Name the branch in full, as in `git push -u origin
+          refs/heads/NON-DEFAULT-BRANCH`.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -709,9 +710,9 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --delete origin v1.0.0"}}'
         SENTENCE: >-
           `git push` names v1.0.0, and a bare name reaches a tag when a tag has
-          that name, so it cannot be shown that no tag is sent to the remote. Push
-          the branch that is checked out with `git push origin HEAD`, or name the
-          branch in full, as in refs/heads/NAME or SOURCE:refs/heads/NAME.
+          that name, so it cannot be shown that no tag is sent to the remote. Name
+          the branch in full, as in `git push -u origin
+          refs/heads/NON-DEFAULT-BRANCH`.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -766,7 +767,8 @@ runs:
         SENTENCE: >-
           `git push` names nothing to push, and remote.origin.push in the git
           configuration makes that refs/tags/*:refs/tags/*, which does not surely
-          reach a branch. Name what to push, as in `git push origin HEAD`.
+          reach a branch. Name what to push, as in `git push -u origin
+          refs/heads/NON-DEFAULT-BRANCH`.
       run: |
         cd "$(mktemp -d)"
         git init --quiet
@@ -786,7 +788,7 @@ runs:
         SENTENCE: >-
           `git push` names nothing to push, and branch.main.merge in the git
           configuration points at refs/tags/v1.0.0, which is not a branch. Name
-          what to push, as in `git push origin HEAD`.
+          what to push, as in `git push -u origin refs/heads/NON-DEFAULT-BRANCH`.
       run: |
         cd "$(mktemp -d)"
         git init --quiet
@@ -867,10 +869,10 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git config push.followTags true && git push origin HEAD"}}'
         SENTENCE: >-
           `git push` and git commands that may be aliases are let through only
-          after this hook has looked at the git configuration they would run
-          under, and this command also changes the git configuration with `git
-          config`, so that configuration could be another one by the time they
-          run. Run the git command in a call of its own.
+          after this hook has looked at the git configuration they would run under
+          and the branch that is checked out, and this command also changes the
+          git configuration with `git config`, so either could be another one by
+          the time they run. Run the git command in a call of its own.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -883,10 +885,10 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git remote add mirror https://github.com/owner/mirror && git push mirror HEAD"}}'
         SENTENCE: >-
           `git push` and git commands that may be aliases are let through only
-          after this hook has looked at the git configuration they would run
-          under, and this command also changes a remote with `git remote`, so that
-          configuration could be another one by the time they run. Run the git
-          command in a call of its own.
+          after this hook has looked at the git configuration they would run under
+          and the branch that is checked out, and this command also changes a
+          remote with `git remote`, so either could be another one by the time
+          they run. Run the git command in a call of its own.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -899,10 +901,10 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"cd ../other && git push origin HEAD"}}'
         SENTENCE: >-
           `git push` and git commands that may be aliases are let through only
-          after this hook has looked at the git configuration they would run
-          under, and this command also changes the directory, so that
-          configuration could be another one by the time they run. Run the git
-          command in a call of its own.
+          after this hook has looked at the git configuration they would run under
+          and the branch that is checked out, and this command also changes the
+          directory, so either could be another one by the time they run. Run the
+          git command in a call of its own.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -915,10 +917,10 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=push.followTags GIT_CONFIG_VALUE_0=true git push origin HEAD"}}'
         SENTENCE: >-
           `git push` and git commands that may be aliases are let through only
-          after this hook has looked at the git configuration they would run
-          under, and this command also sets a GIT_ environment variable, so that
-          configuration could be another one by the time they run. Run the git
-          command in a call of its own.
+          after this hook has looked at the git configuration they would run under
+          and the branch that is checked out, and this command also sets a GIT_
+          environment variable, so either could be another one by the time they
+          run. Run the git command in a call of its own.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -931,10 +933,10 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"echo followTags=true >> .git/config; git push origin HEAD"}}'
         SENTENCE: >-
           `git push` and git commands that may be aliases are let through only
-          after this hook has looked at the git configuration they would run
-          under, and this command also names the .git directory or a git
-          configuration file, so that configuration could be another one by the
-          time they run. Run the git command in a call of its own.
+          after this hook has looked at the git configuration they would run under
+          and the branch that is checked out, and this command also names the .git
+          directory or a git configuration file, so either could be another one by
+          the time they run. Run the git command in a call of its own.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -1209,10 +1211,10 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"cd ../other && git p origin"}}'
         SENTENCE: >-
           `git push` and git commands that may be aliases are let through only
-          after this hook has looked at the git configuration they would run
-          under, and this command also changes the directory, so that
-          configuration could be another one by the time they run. Run the git
-          command in a call of its own.
+          after this hook has looked at the git configuration they would run under
+          and the branch that is checked out, and this command also changes the
+          directory, so either could be another one by the time they run. Run the
+          git command in a call of its own.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'

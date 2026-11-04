@@ -118,7 +118,9 @@ private val BARE_READ_GH_COMMANDS =
         listOf("codespace", "ports"),
     )
 
-private val GH_ALIASES = mapOf("co" to listOf("pr", "checkout"))
+private val PR_CHECKOUT = listOf("pr", "checkout")
+private val SWITCHED_BY_CHECKOUT = Verdict.Unsettling("may switch the branch that is checked out with `gh pr checkout`")
+private val GH_ALIASES = mapOf("co" to PR_CHECKOUT)
 
 fun namesCommand(word: String) =
     word == "api" ||
@@ -161,6 +163,7 @@ private class SubcommandReader(
         when {
             command != null -> settle(checkExceptional(command, args))
             path == AUTH_STATUS -> settle(checkAuthStatus())
+            path == PR_CHECKOUT -> settle(SWITCHED_BY_CHECKOUT)
             path in READ_GH_COMMANDS -> settle(null)
         }
     }

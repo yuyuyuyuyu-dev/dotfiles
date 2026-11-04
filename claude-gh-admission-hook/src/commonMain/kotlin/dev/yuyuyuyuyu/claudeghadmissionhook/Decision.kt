@@ -3,10 +3,14 @@ package dev.yuyuyuyuyu.claudeghadmissionhook
 private const val ALIAS_DEPTH = 3
 private const val DENY_NOTE =
     " GitHub access is read-only under this hook: every write is denied, and the only exceptions are " +
-        "creating a draft pull request, editing a draft pull request, creating a draft release and editing " +
-        "a draft release, which are put to the user for approval instead. As commands, they are " +
-        "`gh pr create --draft --title TITLE`, `gh pr edit NUMBER -R HOST/OWNER/REPO --body BODY` where " +
-        "NUMBER is an open draft pull request, `gh release create TAG --draft --title TITLE`, and " +
+        "pushing a non-default branch, creating a draft pull request, editing a draft pull request, creating " +
+        "a draft release and editing a draft release. Pushing a non-default branch is let through, because a " +
+        "pull request needs one, unless the push is forced, as after `git commit --amend`; a forced push and " +
+        "the other exceptions are put to the user for approval instead. As commands, they are " +
+        "$PUSH_COMMAND, " +
+        "`gh pr create --draft --title TITLE`, " +
+        "`gh pr edit NUMBER -R HOST/OWNER/REPO --body BODY` where NUMBER is an open draft pull request, " +
+        "`gh release create TAG --draft --title TITLE`, and " +
         "`gh release edit TAG -R HOST/OWNER/REPO --notes NOTES` where TAG is the tag the draft release was " +
         "created with. This is a permanent PreToolUse hook, not a transient failure: retrying the command, " +
         "or rewording or wrapping it to do the same thing, will not change the answer. Running the command " +
@@ -76,8 +80,9 @@ class Decision(
     private fun judgePushes() {
         val what = unsettling
         if (what != null && pushes.isNotEmpty()) throw Denied(stale(what))
-        val denial = pushes.firstNotNullOfOrNull { judge(it, directory) }
-        if (denial is Verdict.Deny) throw Denied(denial.reason)
+        val verdicts = pushes.mapNotNull { judge(it, directory) }
+        verdicts.filterIsInstance<Verdict.Deny>().firstOrNull()?.let { throw Denied(it.reason) }
+        approvals += verdicts
     }
 
     private fun ask(): Pair<String, String>? {
@@ -101,6 +106,7 @@ class Decision(
 
     private fun stale(what: String) =
         "`git push` and git commands that may be aliases are let through only after this hook has looked at " +
-            "the git configuration they would run under, and this command also $what, so that configuration " +
-            "could be another one by the time they run. Run the git command in a call of its own."
+            "the git configuration they would run under and the branch that is checked out, and this command " +
+            "also $what, so either could be another one by the time they run. Run the git command in a call of " +
+            "its own."
 }
