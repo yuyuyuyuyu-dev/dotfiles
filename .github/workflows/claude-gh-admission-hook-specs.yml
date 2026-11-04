@@ -67,7 +67,7 @@ jobs:
 
       # Act
       - env:
-          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -u origin HEAD"}}'
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -u origin refs/heads/feat/x"}}'
         run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
 
       # Assert
@@ -88,7 +88,7 @@ jobs:
 
       # Act
       - env:
-          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --force-with-lease origin HEAD"}}'
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --force-with-lease -u origin refs/heads/feat/x"}}'
         run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
 
       # Assert
@@ -109,7 +109,7 @@ jobs:
 
       # Act
       - env:
-          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -u origin HEAD"}}'
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -u origin refs/heads/feat/x"}}'
         run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/push-decision"
 
       - env:
