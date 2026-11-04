@@ -7,7 +7,7 @@ private const val DENY_NOTE =
         "a draft release and editing a draft release. Pushing a non-default branch is let through, because a " +
         "pull request needs one, unless the push is forced, as after `git commit --amend`; a forced push and " +
         "the other exceptions are put to the user for approval instead. As commands, they are " +
-        "$PUSH_COMMAND where BRANCH is a non-default branch, " +
+        "$PUSH_COMMAND, " +
         "`gh pr create --draft --title TITLE`, " +
         "`gh pr edit NUMBER -R HOST/OWNER/REPO --body BODY` where NUMBER is an open draft pull request, " +
         "`gh release create TAG --draft --title TITLE`, and " +

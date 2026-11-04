@@ -7,7 +7,7 @@ private val UPSTREAM_DEFAULTS = listOf("upstream", "tracking")
 private const val SYMREF = "ref: "
 private const val DEFAULT_REMOTE = "origin"
 private const val INSTEAD =
-    "Only a non-default branch may be pushed: create one with `git switch -c BRANCH`, and push it with " +
+    "Only a non-default branch may be pushed: create one with `git switch -c NON-DEFAULT-BRANCH`, and push it with " +
         "$PUSH_COMMAND."
 
 private class Unreached(
@@ -46,7 +46,7 @@ fun checkPushedBranches(rest: List<Token>) =
         Verdict.Deny(
             "`git push` was given $found, which either pushes every branch, the default branch among them, or " +
                 "names the remote in a way this hook does not read. Name the remote and the branch, as in " +
-                "$PUSH_COMMAND where BRANCH is a non-default branch.",
+                "$PUSH_COMMAND.",
         )
     }
 

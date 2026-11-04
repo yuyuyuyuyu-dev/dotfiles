@@ -14,7 +14,7 @@ private const val PUSH_SETTINGS =
     """^(push\.(followtags|default)|remote\.pushdefault|remote\..*\.(mirror|push)|branch\..*\.(merge|remote|pushremote))$"""
 private val FALSE_VALUES = listOf("false", "no", "off", "")
 const val BRANCH_REF = "refs/heads/"
-const val PUSH_COMMAND = "`git push -u origin refs/heads/BRANCH`"
+const val PUSH_COMMAND = "`git push -u origin refs/heads/NON-DEFAULT-BRANCH`"
 
 class Push(
     val globals: List<String>,
