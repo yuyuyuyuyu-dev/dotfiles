@@ -14,6 +14,7 @@ private const val PUSH_SETTINGS =
     """^(push\.(followtags|default)|remote\.pushdefault|remote\..*\.(mirror|push)|branch\..*\.(merge|remote|pushremote))$"""
 private val FALSE_VALUES = listOf("false", "no", "off", "")
 const val BRANCH_REF = "refs/heads/"
+const val PUSH_COMMAND = "`git push -u origin refs/heads/BRANCH`"
 
 class Push(
     val globals: List<String>,
@@ -34,9 +35,7 @@ fun checkPush(
         ?: refspecs(rest).find { !reachesABranch(it) }?.let { refspec ->
             Verdict.Deny(
                 "`git push` names $refspec, and a bare name reaches a tag when a tag has that name, so it cannot be " +
-                    "shown that no tag is sent to the remote. Push the branch that is checked out with " +
-                    "`git push origin HEAD`, or name the branch in full, as in refs/heads/NAME or " +
-                    "SOURCE:refs/heads/NAME.",
+                    "shown that no tag is sent to the remote. Name the branch in full, as in $PUSH_COMMAND.",
             )
         } ?: globals.find { !literal(it) }?.let { token ->
         Verdict.Deny(
@@ -81,7 +80,7 @@ private fun checkPushedWords(rest: List<Token>) =
             Verdict.Deny(
                 "An argument of `git push` (${shown(token)}) comes out of a shell expansion, so it could turn out to " +
                     "be --tags or a refs/tags/ refspec, and it cannot be shown that no tag is sent to the remote. " +
-                    "Write the remote and the branch out literally, or push HEAD.",
+                    "Write the remote and the branch out literally, as in $PUSH_COMMAND.",
             )
         }
 
@@ -173,7 +172,7 @@ private fun checkPushDefault(
     key.startsWith("remote.") && key.endsWith(".push") && !reachesABranch(shown) -> {
         Verdict.Deny(
             "`git push` names nothing to push, and $key in the git configuration makes that $shown, which does not " +
-                "surely reach a branch. Name what to push, as in `git push origin HEAD`.",
+                "surely reach a branch. Name what to push, as in $PUSH_COMMAND.",
         )
     }
 
@@ -187,7 +186,7 @@ private fun checkPushDefault(
     key.startsWith("branch.") && key.endsWith(".merge") && !shown.startsWith(BRANCH_REF) -> {
         Verdict.Deny(
             "`git push` names nothing to push, and $key in the git configuration points at $shown, which is not a " +
-                "branch. Name what to push, as in `git push origin HEAD`.",
+                "branch. Name what to push, as in $PUSH_COMMAND.",
         )
     }
 

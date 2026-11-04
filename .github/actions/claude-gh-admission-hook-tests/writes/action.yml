@@ -566,7 +566,7 @@ runs:
           An argument of `git push` (\"$BRANCH\") comes out of a shell expansion,
           so it could turn out to be --tags or a refs/tags/ refspec, and it cannot
           be shown that no tag is sent to the remote. Write the remote and the
-          branch out literally, or push HEAD.
+          branch out literally, as in `git push -u origin refs/heads/BRANCH`.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -679,9 +679,8 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin v1.0.0"}}'
         SENTENCE: >-
           `git push` names v1.0.0, and a bare name reaches a tag when a tag has
-          that name, so it cannot be shown that no tag is sent to the remote. Push
-          the branch that is checked out with `git push origin HEAD`, or name the
-          branch in full, as in refs/heads/NAME or SOURCE:refs/heads/NAME.
+          that name, so it cannot be shown that no tag is sent to the remote. Name
+          the branch in full, as in `git push -u origin refs/heads/BRANCH`.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -695,8 +694,7 @@ runs:
         SENTENCE: >-
           `git push` names HEAD:v1.0.0, and a bare name reaches a tag when a tag
           has that name, so it cannot be shown that no tag is sent to the remote.
-          Push the branch that is checked out with `git push origin HEAD`, or name
-          the branch in full, as in refs/heads/NAME or SOURCE:refs/heads/NAME.
+          Name the branch in full, as in `git push -u origin refs/heads/BRANCH`.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -709,9 +707,8 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --delete origin v1.0.0"}}'
         SENTENCE: >-
           `git push` names v1.0.0, and a bare name reaches a tag when a tag has
-          that name, so it cannot be shown that no tag is sent to the remote. Push
-          the branch that is checked out with `git push origin HEAD`, or name the
-          branch in full, as in refs/heads/NAME or SOURCE:refs/heads/NAME.
+          that name, so it cannot be shown that no tag is sent to the remote. Name
+          the branch in full, as in `git push -u origin refs/heads/BRANCH`.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -766,7 +763,8 @@ runs:
         SENTENCE: >-
           `git push` names nothing to push, and remote.origin.push in the git
           configuration makes that refs/tags/*:refs/tags/*, which does not surely
-          reach a branch. Name what to push, as in `git push origin HEAD`.
+          reach a branch. Name what to push, as in `git push -u origin
+          refs/heads/BRANCH`.
       run: |
         cd "$(mktemp -d)"
         git init --quiet
@@ -786,7 +784,7 @@ runs:
         SENTENCE: >-
           `git push` names nothing to push, and branch.main.merge in the git
           configuration points at refs/tags/v1.0.0, which is not a branch. Name
-          what to push, as in `git push origin HEAD`.
+          what to push, as in `git push -u origin refs/heads/BRANCH`.
       run: |
         cd "$(mktemp -d)"
         git init --quiet

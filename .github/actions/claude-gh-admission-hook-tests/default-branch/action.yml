@@ -19,7 +19,7 @@ runs:
         SENTENCE: >-
           `git push` would push to main, which is the default branch of origin.
           Only a non-default branch may be pushed: create one with `git switch -c
-          NAME`, and push it with `git push -u origin HEAD`.
+          BRANCH`, and push it with `git push -u origin refs/heads/BRANCH`.
       run: |
         cd "$(mktemp -d)"
         git init --quiet --initial-branch=main work
