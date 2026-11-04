@@ -56,8 +56,6 @@ esac
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 
-source <(ng completion script)
-
 export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 
 export PATH="$HOME/.antigravity-ide/antigravity-ide/bin:$PATH"
@@ -73,3 +71,7 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME/bin:$PATH" ;;
 esac
 # pnpm end
+
+if (( $+commands[ng] )); then
+  source <(ng completion script)
+fi
