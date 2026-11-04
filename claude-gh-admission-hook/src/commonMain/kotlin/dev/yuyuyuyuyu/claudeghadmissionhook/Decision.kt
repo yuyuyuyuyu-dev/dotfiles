@@ -3,12 +3,11 @@ package dev.yuyuyuyuyu.claudeghadmissionhook
 private const val ALIAS_DEPTH = 3
 private const val DENY_NOTE =
     " GitHub access is read-only under this hook: every write is denied, and the only exceptions are " +
-        "pushing a branch other than the default branch, creating a draft pull request, editing a draft pull " +
-        "request, creating a draft release and editing a draft release. Pushing a branch other than the default " +
-        "branch is let through, because a pull request needs one, unless the push is forced, as after " +
-        "`git commit --amend`; a forced push and the other exceptions are put to the user for approval " +
-        "instead. As commands, they are `git push -u origin HEAD` with a branch other than the default branch " +
-        "checked out, `gh pr create --draft --title TITLE`, " +
+        "pushing a non-default branch, creating a draft pull request, editing a draft pull request, creating " +
+        "a draft release and editing a draft release. Pushing a non-default branch is let through, because a " +
+        "pull request needs one, unless the push is forced, as after `git commit --amend`; a forced push and " +
+        "the other exceptions are put to the user for approval instead. As commands, they are " +
+        "`git push -u origin HEAD` with a non-default branch checked out, `gh pr create --draft --title TITLE`, " +
         "`gh pr edit NUMBER -R HOST/OWNER/REPO --body BODY` where NUMBER is an open draft pull request, " +
         "`gh release create TAG --draft --title TITLE`, and " +
         "`gh release edit TAG -R HOST/OWNER/REPO --notes NOTES` where TAG is the tag the draft release was " +

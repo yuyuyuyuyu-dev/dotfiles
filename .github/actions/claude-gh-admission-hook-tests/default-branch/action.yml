@@ -18,8 +18,8 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -u origin HEAD"}}'
         SENTENCE: >-
           `git push` would push to main, which is the default branch of origin.
-          Only a branch other than the default branch may be pushed: create one
-          with `git switch -c NAME`, and push it with `git push -u origin HEAD`.
+          Only a non-default branch may be pushed: create one with `git switch -c
+          NAME`, and push it with `git push -u origin HEAD`.
       run: |
         cd "$(mktemp -d)"
         git init --quiet --initial-branch=main work

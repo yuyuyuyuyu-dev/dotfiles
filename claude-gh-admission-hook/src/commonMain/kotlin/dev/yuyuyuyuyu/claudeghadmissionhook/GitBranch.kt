@@ -7,8 +7,8 @@ private val UPSTREAM_DEFAULTS = listOf("upstream", "tracking")
 private const val SYMREF = "ref: "
 private const val DEFAULT_REMOTE = "origin"
 private const val INSTEAD =
-    "Only a branch other than the default branch may be pushed: create one with `git switch -c NAME`, and push " +
-        "it with `git push -u origin HEAD`."
+    "Only a non-default branch may be pushed: create one with `git switch -c NAME`, and push it with " +
+        "`git push -u origin HEAD`."
 
 private class Unreached(
     val reason: String,

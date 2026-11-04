@@ -52,7 +52,7 @@ jobs:
       - uses: ./.github/actions/claude-gh-admission-hook-specs/read-only
 
   branch-push:
-    name: should let a branch other than the default branch be pushed, because a pull request needs one
+    name: should let a non-default branch be pushed, because a pull request needs one
     runs-on: macos-latest
     steps:
       # Arrange
@@ -62,7 +62,7 @@ jobs:
 
       - *build
 
-      - &switch-to-a-branch-other-than-the-default-branch
+      - &switch-to-a-non-default-branch
         run: git switch -c feat/x
 
       # Act
@@ -74,7 +74,7 @@ jobs:
       - run: test ! -s "$RUNNER_TEMP/decision"
 
   amended-push:
-    name: should ask before a forced push that replaces an amended commit on a branch other than the default branch
+    name: should ask before a forced push that replaces an amended commit on a non-default branch
     runs-on: macos-latest
     steps:
       # Arrange
@@ -84,7 +84,7 @@ jobs:
 
       - *build
 
-      - *switch-to-a-branch-other-than-the-default-branch
+      - *switch-to-a-non-default-branch
 
       # Act
       - env:
@@ -105,7 +105,7 @@ jobs:
 
       - *build
 
-      - *switch-to-a-branch-other-than-the-default-branch
+      - *switch-to-a-non-default-branch
 
       # Act
       - env:
