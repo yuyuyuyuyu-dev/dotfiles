@@ -867,10 +867,10 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git config push.followTags true && git push origin HEAD"}}'
         SENTENCE: >-
           `git push` and git commands that may be aliases are let through only
-          after this hook has looked at the git configuration they would run
-          under, and this command also changes the git configuration with `git
-          config`, so that configuration could be another one by the time they
-          run. Run the git command in a call of its own.
+          after this hook has looked at the git configuration they would run under
+          and the branch that is checked out, and this command also changes the
+          git configuration with `git config`, so either could be another one by
+          the time they run. Run the git command in a call of its own.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -883,10 +883,10 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git remote add mirror https://github.com/owner/mirror && git push mirror HEAD"}}'
         SENTENCE: >-
           `git push` and git commands that may be aliases are let through only
-          after this hook has looked at the git configuration they would run
-          under, and this command also changes a remote with `git remote`, so that
-          configuration could be another one by the time they run. Run the git
-          command in a call of its own.
+          after this hook has looked at the git configuration they would run under
+          and the branch that is checked out, and this command also changes a
+          remote with `git remote`, so either could be another one by the time
+          they run. Run the git command in a call of its own.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -899,10 +899,10 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"cd ../other && git push origin HEAD"}}'
         SENTENCE: >-
           `git push` and git commands that may be aliases are let through only
-          after this hook has looked at the git configuration they would run
-          under, and this command also changes the directory, so that
-          configuration could be another one by the time they run. Run the git
-          command in a call of its own.
+          after this hook has looked at the git configuration they would run under
+          and the branch that is checked out, and this command also changes the
+          directory, so either could be another one by the time they run. Run the
+          git command in a call of its own.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -915,10 +915,10 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=push.followTags GIT_CONFIG_VALUE_0=true git push origin HEAD"}}'
         SENTENCE: >-
           `git push` and git commands that may be aliases are let through only
-          after this hook has looked at the git configuration they would run
-          under, and this command also sets a GIT_ environment variable, so that
-          configuration could be another one by the time they run. Run the git
-          command in a call of its own.
+          after this hook has looked at the git configuration they would run under
+          and the branch that is checked out, and this command also sets a GIT_
+          environment variable, so either could be another one by the time they
+          run. Run the git command in a call of its own.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -931,10 +931,10 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"echo followTags=true >> .git/config; git push origin HEAD"}}'
         SENTENCE: >-
           `git push` and git commands that may be aliases are let through only
-          after this hook has looked at the git configuration they would run
-          under, and this command also names the .git directory or a git
-          configuration file, so that configuration could be another one by the
-          time they run. Run the git command in a call of its own.
+          after this hook has looked at the git configuration they would run under
+          and the branch that is checked out, and this command also names the .git
+          directory or a git configuration file, so either could be another one by
+          the time they run. Run the git command in a call of its own.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'
@@ -1209,10 +1209,10 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"cd ../other && git p origin"}}'
         SENTENCE: >-
           `git push` and git commands that may be aliases are let through only
-          after this hook has looked at the git configuration they would run
-          under, and this command also changes the directory, so that
-          configuration could be another one by the time they run. Run the git
-          command in a call of its own.
+          after this hook has looked at the git configuration they would run under
+          and the branch that is checked out, and this command also changes the
+          directory, so either could be another one by the time they run. Run the
+          git command in a call of its own.
       run: |
         decision=$(echo "$PAYLOAD" | "$HOOK")
         echo "$decision" | grep '"permissionDecision":"deny"'

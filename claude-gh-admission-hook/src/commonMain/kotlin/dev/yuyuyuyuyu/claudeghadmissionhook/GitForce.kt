@@ -11,6 +11,6 @@ fun forces(rest: List<Token>) =
 fun forcedPush(cause: String) =
     Verdict.Ask(
         "$cause, so it can replace commits that are already on the remote branch, as a push after " +
-            "`git commit --amend` does. Pushing a topic branch is let through, but a forced push needs the user " +
-            "to approve it.",
+            "`git commit --amend` does. Pushing a branch other than the default branch is let through, but a " +
+            "forced push needs the user to approve it.",
     )

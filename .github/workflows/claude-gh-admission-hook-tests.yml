@@ -100,6 +100,21 @@ jobs:
         with:
           hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/linuxX64/releaseExecutable/claude-gh-admission-hook.kexe
 
+  default-branch:
+    name: should deny a push to the default branch
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: yuyuyuyuyu-dev/repo-config/.github/actions/setup-jdk-and-gradle@main
+
+      - run: ./gradlew linkReleaseExecutableLinuxX64
+        working-directory: claude-gh-admission-hook
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/default-branch
+        with:
+          hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/linuxX64/releaseExecutable/claude-gh-admission-hook.kexe
+
   forced-push:
     name: should ask about a push only when it is forced
     runs-on: ubuntu-latest
@@ -181,6 +196,10 @@ jobs:
         with:
           hook: ${{ env.HOOK }}
 
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/default-branch
+        with:
+          hook: ${{ env.HOOK }}
+
       - uses: ./.github/actions/claude-gh-admission-hook-tests/forced-push
         with:
           hook: ${{ env.HOOK }}
@@ -242,6 +261,10 @@ jobs:
           hook: ${{ env.HOOK }}
 
       - uses: ./.github/actions/claude-gh-admission-hook-tests/release-edit
+        with:
+          hook: ${{ env.HOOK }}
+
+      - uses: ./.github/actions/claude-gh-admission-hook-tests/default-branch
         with:
           hook: ${{ env.HOOK }}
 

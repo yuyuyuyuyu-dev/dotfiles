@@ -134,7 +134,7 @@ private fun checkInvocation(
         }
 
         in REF_WRITERS -> {
-            readsStandardInput(name, rest) ?: checkRefWriter(name, rest)
+            readsStandardInput(name, rest) ?: checkRefWriter(name, rest) ?: checkSwitch(name, rest)
         }
 
         in FETCHERS -> {
@@ -149,7 +149,7 @@ private fun checkInvocation(
         }
 
         else -> {
-            if (aliases) checkAlias(invocation) else null
+            checkSwitch(name, rest) ?: if (aliases) checkAlias(invocation) else null
         }
     }
 }

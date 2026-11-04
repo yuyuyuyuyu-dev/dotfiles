@@ -10,21 +10,26 @@ private val PUSH_VALUE_FLAGS =
         "--exec",
         "--recurse-submodules",
     )
-private const val PUSH_SETTINGS = """^(push\.followtags|remote\..*\.(mirror|push)|branch\..*\.merge)$"""
+private const val PUSH_SETTINGS =
+    """^(push\.(followtags|default)|remote\.pushdefault|remote\..*\.(mirror|push)|branch\..*\.(merge|remote|pushremote))$"""
 private val FALSE_VALUES = listOf("false", "no", "off", "")
-private const val BRANCH_REF = "refs/heads/"
+const val BRANCH_REF = "refs/heads/"
 
 class Push(
     val globals: List<String>,
-    val bare: Boolean,
+    val remote: String?,
+    val refspecs: List<String>,
     val forced: Boolean,
-)
+) {
+    val bare get() = refspecs.isEmpty()
+}
 
 fun checkPush(
     globals: List<Token>,
     rest: List<Token>,
 ): Verdict =
     checkPushedTags(rest)
+        ?: checkPushedBranches(rest)
         ?: checkPushedWords(rest)
         ?: refspecs(rest).find { !reachesABranch(it) }?.let { refspec ->
             Verdict.Deny(
@@ -41,7 +46,8 @@ fun checkPush(
     } ?: Verdict.PassIfPushLeavesTags(
         Push(
             globals.map { it.value },
-            bare = refspecs(rest).isEmpty(),
+            remote = words(rest).firstOrNull(),
+            refspecs = refspecs(rest),
             forced = forces(rest) || refspecs(rest).any { it.startsWith('+') },
         ),
     )
@@ -79,7 +85,9 @@ private fun checkPushedWords(rest: List<Token>) =
             )
         }
 
-private fun refspecs(args: List<Token>): List<String> {
+private fun refspecs(args: List<Token>) = words(args).drop(1)
+
+private fun words(args: List<Token>): List<String> {
     val words = mutableListOf<String>()
     var flagsEnded = false
     val rest = args.iterator()
@@ -93,7 +101,7 @@ private fun refspecs(args: List<Token>): List<String> {
         }
     }
 
-    return words.drop(1)
+    return words
 }
 
 private fun reachesABranch(given: String): Boolean {
@@ -118,8 +126,10 @@ fun judge(
                     "under, and that could not be done: `git config` ${unanswered.failure}.",
             )
         }
-    val verdicts = found.split('\u0000').filter { it.isNotEmpty() }.mapNotNull { judgeSetting(it, push.bare) }
+    val pairs = found.split('\u0000').filter { it.isNotEmpty() }
+    val verdicts = pairs.mapNotNull { judgeSetting(it, push.bare) }
     return verdicts.find { it is Verdict.Deny }
+        ?: checkDestination(push, pairs.map { it.substringBefore('\n') to it.substringAfter('\n', "") }, directory)
         ?: verdicts.firstOrNull()
         ?: if (push.forced) forcedPush("`git push` would be forced") else null
 }

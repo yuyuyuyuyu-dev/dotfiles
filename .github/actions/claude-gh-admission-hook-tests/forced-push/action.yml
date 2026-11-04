@@ -13,50 +13,120 @@ runs:
       shell: bash
       env:
         HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --force origin HEAD"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet --initial-branch=main work
+        git -C work -c user.name=x -c user.email=x@example.com commit --quiet --allow-empty -m x
+        git clone --quiet --bare work remote.git
+        cd work
+        git remote add origin ../remote.git
+        git switch --quiet -c feature/x
+        echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the force flag is given in its short form
       shell: bash
       env:
         HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -f origin HEAD"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet --initial-branch=main work
+        git -C work -c user.name=x -c user.email=x@example.com commit --quiet --allow-empty -m x
+        git clone --quiet --bare work remote.git
+        cd work
+        git remote add origin ../remote.git
+        git switch --quiet -c feature/x
+        echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the force flag is grouped with other short flags
       shell: bash
       env:
         HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -uf origin HEAD"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet --initial-branch=main work
+        git -C work -c user.name=x -c user.email=x@example.com commit --quiet --allow-empty -m x
+        git clone --quiet --bare work remote.git
+        cd work
+        git remote add origin ../remote.git
+        git switch --quiet -c feature/x
+        echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the force flag is abbreviated
       shell: bash
       env:
         HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --forc origin HEAD"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet --initial-branch=main work
+        git -C work -c user.name=x -c user.email=x@example.com commit --quiet --allow-empty -m x
+        git clone --quiet --bare work remote.git
+        cd work
+        git remote add origin ../remote.git
+        git switch --quiet -c feature/x
+        echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the push is forced with a lease
       shell: bash
       env:
         HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --force-with-lease origin HEAD"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet --initial-branch=main work
+        git -C work -c user.name=x -c user.email=x@example.com commit --quiet --allow-empty -m x
+        git clone --quiet --bare work remote.git
+        cd work
+        git remote add origin ../remote.git
+        git switch --quiet -c feature/x
+        echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
 
     - name: should ask when the lease names what it expects
       shell: bash
       env:
         HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --force-with-lease=feature/x:abc123 origin HEAD"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet --initial-branch=main work
+        git -C work -c user.name=x -c user.email=x@example.com commit --quiet --allow-empty -m x
+        git clone --quiet --bare work remote.git
+        cd work
+        git remote add origin ../remote.git
+        git switch --quiet -c feature/x
+        echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
 
     - name: should ask when a refspec is forced with a plus sign
       shell: bash
       env:
         HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push origin +HEAD"}}'
-      run: echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet --initial-branch=main work
+        git -C work -c user.name=x -c user.email=x@example.com commit --quiet --allow-empty -m x
+        git clone --quiet --bare work remote.git
+        cd work
+        git remote add origin ../remote.git
+        git switch --quiet -c feature/x
+        echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
 
     - name: should ask when a push that names nothing is forced by the git configuration
       shell: bash
@@ -67,22 +137,36 @@ runs:
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push"}}'
       run: |
         cd "$(mktemp -d)"
-        git init --quiet
-        git config remote.origin.url 'https://github.com/owner/repo'
-        git config remote.origin.push '+refs/heads/*:refs/heads/*'
+        git init --quiet --initial-branch=main work
+        git -C work -c user.name=x -c user.email=x@example.com commit --quiet --allow-empty -m x
+        git clone --quiet --bare work remote.git
+        cd work
+        git remote add origin ../remote.git
+        git switch --quiet -c feature/x
+        git config remote.origin.push '+refs/heads/feature/x:refs/heads/feature/x'
         echo "$PAYLOAD" | "$HOOK" | grep '"permissionDecision":"ask"'
 
     - name: should say why a forced push is put to the user
       shell: bash
       env:
         HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push --force origin HEAD"}}'
         SENTENCE: >-
           `git push` would be forced, so it can replace commits that are already
-          on the remote branch, as a push after `git commit --amend` does.
-          Pushing a topic branch is let through, but a forced push needs the
-          user to approve it.
-      run: echo "$PAYLOAD" | "$HOOK" | grep -F -- "$SENTENCE"
+          on the remote branch, as a push after `git commit --amend` does. Pushing
+          a branch other than the default branch is let through, but a forced push
+          needs the user to approve it.
+      run: |
+        cd "$(mktemp -d)"
+        git init --quiet --initial-branch=main work
+        git -C work -c user.name=x -c user.email=x@example.com commit --quiet --allow-empty -m x
+        git clone --quiet --bare work remote.git
+        cd work
+        git remote add origin ../remote.git
+        git switch --quiet -c feature/x
+        echo "$PAYLOAD" | "$HOOK" | grep -F -- "$SENTENCE"
 
     - name: should deny a forced push that also sends tags
       shell: bash
@@ -95,7 +179,16 @@ runs:
       shell: bash
       env:
         HOOK: ${{ inputs.hook }}
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_NOSYSTEM: "1"
         PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -ofast origin HEAD"}}'
       run: |
+        cd "$(mktemp -d)"
+        git init --quiet --initial-branch=main work
+        git -C work -c user.name=x -c user.email=x@example.com commit --quiet --allow-empty -m x
+        git clone --quiet --bare work remote.git
+        cd work
+        git remote add origin ../remote.git
+        git switch --quiet -c feature/x
         decision=$(echo "$PAYLOAD" | "$HOOK")
         test -z "$decision" || { echo "expected no decision, got: $decision"; exit 1; }
