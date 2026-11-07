@@ -4,6 +4,7 @@
 .config/fish/*
 !.config/fish/config.fish
 !.config/fish/functions
+!.config/ghostty
 !.config/git
 !.config/kitty
 !.config/starship.toml

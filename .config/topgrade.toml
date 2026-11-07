@@ -1,4 +1,5 @@
 [misc]
+no_self_update = true
 [containers]
 ignored_containers = ["ghcr.io/rancher-sandbox/rancher-desktop/rdx-proxy:latest"]
 [commands]
