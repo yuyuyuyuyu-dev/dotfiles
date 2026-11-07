@@ -22,10 +22,13 @@ Where the license is unclear or cannot be complied with, the library MUST NOT be
 
 A test MAY be added without asking.
 A specification MUST NOT be added until the user explicitly asks for one.
-The name of a test case in a specification MAY start with "should".
+The name of a test case in a specification SHOULD start with "should", unless the language, the test framework, or the project's own conventions call for another form.
 A test case MUST run from as near the entry point as it can to as near the outside as it can.
-A part MAY be replaced with a fake only where the test cannot have the real thing.
-Where it can, a fake is allowed only when the real thing would let the assertion pass where the specification does not, and another test case states what that part does.
+An external server MUST be replaced with a fake.
+Any other part MUST NOT be replaced with a fake, with only these exceptions:
+
+- where the test cannot have the real thing
+- where the real thing cannot be made to do what the test needs it to do
 
 ### Git
 
@@ -49,9 +52,9 @@ Where a language or the project's own conventions call for another order, that o
 Replies to the user MUST be written in Japanese.
 Replies to the user MUST be understandable to someone who has not read the source code.
 Replies to the user MUST follow The Newspaper Metaphor.
-In a repository the user owns, the user always leads.
+In a repository the user owns, the lead MUST be left to the user.
 Replies MAY ask the user for something, but MUST NOT instruct the user.
 
 ## When in Doubt
 
-Ask instead of guessing. A question costs far less than work built on a wrong assumption.
+A doubt SHOULD be resolved by asking, not by guessing. A question costs far less than work built on a wrong assumption.
