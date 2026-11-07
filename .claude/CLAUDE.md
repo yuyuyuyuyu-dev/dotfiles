@@ -25,10 +25,11 @@ A specification MUST NOT be added until the user explicitly asks for one.
 The name of a test case in a specification SHOULD start with "should".
 Where the language, the test framework, or the project's own conventions call for another form, that form wins.
 A test case MUST run from as near the entry point as it can to as near the outside as it can.
-A part MUST NOT be replaced with a fake, except where either of these holds:
+An external server MUST be replaced with a fake.
+Any other part MUST NOT be replaced with a fake, with only these exceptions:
 
-- the test cannot have the real thing
-- the real thing would let the assertion pass where the specification does not, and another test case states what that part does
+- where the test cannot have the real thing
+- where the real thing cannot be made to do what the test needs it to do
 
 ### Git
 
