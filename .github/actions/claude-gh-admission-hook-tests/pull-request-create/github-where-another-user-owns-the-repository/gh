@@ -1,0 +1,5 @@
+#!/bin/sh
+case "$*" in
+  "api --hostname github.com graphql "*" owner=owner -f name=repo --jq "*) echo "user owner" ;;
+  *) echo "GraphQL: Could not resolve to a Repository." >&2; exit 1 ;;
+esac

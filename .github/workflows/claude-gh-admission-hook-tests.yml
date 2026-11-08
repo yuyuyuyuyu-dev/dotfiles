@@ -41,7 +41,7 @@ jobs:
           hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/linuxX64/releaseExecutable/claude-gh-admission-hook.kexe
 
   pull-request-create:
-    name: should ask about a new pull request only when it is surely a draft
+    name: should ask about a new pull request only when it is surely a draft in a repository the user owns
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -56,7 +56,7 @@ jobs:
           hook: ${{ github.workspace }}/claude-gh-admission-hook/build/bin/linuxX64/releaseExecutable/claude-gh-admission-hook.kexe
 
   pull-request-edit:
-    name: should ask about a pull request edit only when it surely reaches an open draft
+    name: should ask about a pull request edit only when it surely reaches an open draft in a repository the user owns
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

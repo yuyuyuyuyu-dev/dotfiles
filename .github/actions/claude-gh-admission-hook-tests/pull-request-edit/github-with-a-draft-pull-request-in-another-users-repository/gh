@@ -1,0 +1,6 @@
+#!/bin/sh
+case "$*" in
+  "pr view "*github.com/owner/repo*" -- 5") echo "OPEN true" ;;
+  "api --hostname github.com graphql "*" owner=owner -f name=repo --jq "*) echo "user owner" ;;
+  *) echo "GraphQL: Could not resolve to a PullRequest." >&2; exit 1 ;;
+esac
