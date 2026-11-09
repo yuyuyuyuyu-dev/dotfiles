@@ -107,13 +107,23 @@ jobs:
 
       - *switch-to-a-non-default-branch
 
+      - name: put a stand-in for gh on the PATH, for a GitHub where the user owns the repository
+        run: |
+          mkdir "$RUNNER_TEMP/github"
+          cat > "$RUNNER_TEMP/github/gh" <<'EOF'
+          #!/bin/sh
+          echo "owner owner"
+          EOF
+          chmod +x "$RUNNER_TEMP/github/gh"
+          echo "$RUNNER_TEMP/github" >> "$GITHUB_PATH"
+
       # Act
       - env:
           PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"git push -u origin refs/heads/feat/x"}}'
         run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/push-decision"
 
       - env:
-          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x --body y"}}'
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create -R github.com/owner/repo --draft --title x --body y"}}'
         run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
 
       # Assert
@@ -132,12 +142,15 @@ jobs:
 
       - *build
 
-      - name: put a stand-in for gh on the PATH, for a GitHub that holds a draft pull request
+      - name: put a stand-in for gh on the PATH, for a GitHub that holds a draft pull request in a repository the user owns
         run: |
           mkdir "$RUNNER_TEMP/github"
           cat > "$RUNNER_TEMP/github/gh" <<'EOF'
           #!/bin/sh
-          echo "OPEN true"
+          case "$1" in
+            pr) echo "OPEN true" ;;
+            *) echo "owner owner" ;;
+          esac
           EOF
           chmod +x "$RUNNER_TEMP/github/gh"
           echo "$RUNNER_TEMP/github" >> "$GITHUB_PATH"
