@@ -163,6 +163,67 @@ jobs:
       # Assert
       - run: grep '"permissionDecision":"ask"' "$RUNNER_TEMP/decision"
 
+  pull-request-create-in-fork-parent:
+    name: should deny opening a pull request in the repository a fork was made from
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - *check-out
+
+      - *set-up-jdk-and-gradle
+
+      - *build
+
+      - name: put a stand-in for gh on the PATH, for a GitHub where the user is signed in as the owner of a fork
+        run: |
+          mkdir "$RUNNER_TEMP/github"
+          cat > "$RUNNER_TEMP/github/gh" <<'EOF'
+          #!/bin/sh
+          echo "fork-owner upstream-owner"
+          EOF
+          chmod +x "$RUNNER_TEMP/github/gh"
+          echo "$RUNNER_TEMP/github" >> "$GITHUB_PATH"
+
+      # Act
+      - env:
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create -R github.com/upstream-owner/repo --draft --title x --body y"}}'
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
+
+      # Assert
+      - run: grep '"permissionDecision":"deny"' "$RUNNER_TEMP/decision"
+
+  pull-request-edit-in-fork-parent:
+    name: should deny editing a pull request the user opened in the repository a fork was made from
+    runs-on: macos-latest
+    steps:
+      # Arrange
+      - *check-out
+
+      - *set-up-jdk-and-gradle
+
+      - *build
+
+      - name: put a stand-in for gh on the PATH, for a GitHub where the user opened a draft pull request from a fork
+        run: |
+          mkdir "$RUNNER_TEMP/github"
+          cat > "$RUNNER_TEMP/github/gh" <<'EOF'
+          #!/bin/sh
+          case "$1" in
+            pr) echo "OPEN true" ;;
+            *) echo "fork-owner upstream-owner" ;;
+          esac
+          EOF
+          chmod +x "$RUNNER_TEMP/github/gh"
+          echo "$RUNNER_TEMP/github" >> "$GITHUB_PATH"
+
+      # Act
+      - env:
+          PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr edit 5 -R github.com/upstream-owner/repo --body z"}}'
+        run: echo "$PAYLOAD" | claude-gh-admission-hook/build/bin/macosArm64/releaseExecutable/claude-gh-admission-hook.kexe > "$RUNNER_TEMP/decision"
+
+      # Assert
+      - run: grep '"permissionDecision":"deny"' "$RUNNER_TEMP/decision"
+
   release-create:
     name: should ask before creating a draft release, as an exception
     runs-on: macos-latest
