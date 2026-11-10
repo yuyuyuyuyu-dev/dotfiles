@@ -55,7 +55,7 @@ jobs:
     name: Oxfmt
     permissions:
       contents: read
-    uses: yuyuyuyuyu-dev/repo-config/.github/workflows/oxfmt.yml@main
+    uses: yuyuyuyuyu-dev/repo-config/.github/workflows/oxfmt.yml@b25bdd75f46587874c415a0e54509138b9d21a48
 
   kotlin-lint:
     name: Kotlin lint
