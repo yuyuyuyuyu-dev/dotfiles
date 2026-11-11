@@ -1,3 +1,0 @@
-{
-  "ignorePatterns": ["claude-gh-admission-hook/gradle/libs.versions.toml"]
-}
