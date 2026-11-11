@@ -399,7 +399,7 @@ runs:
       shell: bash
       env:
         HOOK: ${{ inputs.hook }}
-        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create --draft --title x && gh pr merge 5"}}'
+        PAYLOAD: '{"tool_name":"Bash","tool_input":{"command":"gh pr create -R github.com/owner/repo --draft --title x && gh pr merge 5"}}'
         SENTENCE: >-
           `gh pr merge` is not on this hook's allow-list of gh subcommands that
           only read from GitHub, so it cannot be shown to leave GitHub unchanged.

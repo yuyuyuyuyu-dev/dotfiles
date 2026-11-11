@@ -9,6 +9,10 @@ sealed interface Verdict {
         val reason: String,
     ) : Verdict
 
+    class AskIfOwnRepository(
+        val newPullRequest: NewPullRequest,
+    ) : Verdict
+
     class AskIfDraftPullRequest(
         val pullRequest: PullRequest,
     ) : Verdict

@@ -383,18 +383,32 @@ private fun valueOf(token: Token): Value {
     }
 }
 
-private fun createdPullRequest(arguments: Arguments) =
-    if (arguments.draft == true) {
-        Verdict.Ask(
-            "`gh pr create` would open a draft pull request. That is one of the few writes this hook allows, so " +
-                "it needs the user to approve it rather than being denied.",
-        )
-    } else {
-        Verdict.Deny(
-            "`gh pr create` would open a pull request that is ready for review, because --draft is not in effect. " +
-                "Only a draft pull request may be created: pass --draft, and leave marking it as ready to the user.",
-        )
+private fun createdPullRequest(arguments: Arguments): Verdict {
+    val repository = arguments.namedRepository()
+    return when {
+        arguments.draft != true -> {
+            Verdict.Deny(
+                "`gh pr create` would open a pull request that is ready for review, because --draft is not in " +
+                    "effect. Only a draft pull request may be created: pass --draft, and leave marking it as " +
+                    "ready to the user.",
+            )
+        }
+
+        repository == null -> {
+            Verdict.Deny(
+                "`gh pr create` is only allowed in a repository the user owns, and this hook has to look up the " +
+                    "owner of the very repository the pull request would be opened in, which it can only be sure " +
+                    "of when the command names it in full. Left to itself, gh may pick another repository, such " +
+                    "as the one a fork was made from. Name that repository in full: pass -R HOST/OWNER/REPO, for " +
+                    "example -R github.com/OWNER/REPO." + arguments.repositoryInFull(),
+            )
+        }
+
+        else -> {
+            Verdict.AskIfOwnRepository(NewPullRequest(repository))
+        }
     }
+}
 
 private fun editedPullRequest(arguments: Arguments): Verdict {
     val selector = arguments.words.getOrNull(2)
