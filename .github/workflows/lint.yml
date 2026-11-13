@@ -51,11 +51,11 @@ jobs:
 
       - run: uv run --frozen ruff format --check --diff .
 
-  oxfmt:
-    name: Oxfmt
+  biome:
+    name: Biome
     permissions:
       contents: read
-    uses: yuyuyuyuyu-dev/repo-config/.github/workflows/oxfmt.yml@b25bdd75f46587874c415a0e54509138b9d21a48
+    uses: yuyuyuyuyu-dev/repo-config/.github/workflows/biome.yml@main
 
   kotlin-lint:
     name: Kotlin lint
