@@ -32,7 +32,7 @@ Any other part MUST NOT be replaced with a fake, with only these exceptions:
 
 ### Git
 
-Commit messages and pull requests MUST be written in plain English and be as concise as possible, so that as many people around the world as possible can read them.
+Commit messages and pull requests MUST be worded in plain English as concisely as possible, so that as many people around the world as possible can read them.
 Pull request descriptions MUST NOT be hard wrapped.
 Commit messages and pull request descriptions MUST carry the attribution of the AI agent that helped write the change.
 Branch names MUST follow Conventional Branch, and commit messages MUST follow Conventional Commits.
@@ -41,6 +41,11 @@ Work MUST be done on a topic branch unless the user explicitly says otherwise.
 Before a branch is created, the latest changes on the remote default branch MUST be pulled in.
 Changes MAY be committed and pushed to a topic branch without asking.
 A pull request MUST NOT be opened until the user asks for one.
+
+### Content
+
+Before anything is added to a document, a commit message, a pull request, or a reply, what it gives the reader MUST be weighed against the cognitive load it adds.
+What does not earn its load MUST NOT be written, because writing that costs too much to read goes unread.
 
 ### Structure
 
