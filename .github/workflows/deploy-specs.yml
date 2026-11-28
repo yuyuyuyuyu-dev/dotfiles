@@ -23,7 +23,7 @@ jobs:
               .bash_profile .bashrc
               .zshrc .zprofile .zshenv .zlogout
               .vimrc .ideavimrc .tmux.conf
-              .claude/CLAUDE.md .gemini/GEMINI.md
+              .claude/CLAUDE.md .claude/rules .gemini/GEMINI.md
               .config
           - platform: linux
             name: Linux
