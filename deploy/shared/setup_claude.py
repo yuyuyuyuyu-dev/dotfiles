@@ -5,10 +5,11 @@ from deploy.shared.paths import DOTFILES_ROOT, HOME_DIR
 
 
 def setup_claude():
-    source_path = os.path.join(DOTFILES_ROOT, ".claude", "CLAUDE.md")
-    dest_path = os.path.join(HOME_DIR, ".claude", "CLAUDE.md")
-
     print("--- Setting up Claude configurations ---")
-    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-    create_symlink_safely(source_path, dest_path)
+    os.makedirs(os.path.join(HOME_DIR, ".claude"), exist_ok=True)
+    for name in ("CLAUDE.md", "rules"):
+        create_symlink_safely(
+            os.path.join(DOTFILES_ROOT, ".claude", name),
+            os.path.join(HOME_DIR, ".claude", name),
+        )
     print("--- Claude setup complete ---\n")
